@@ -33,3 +33,6 @@ export const DEV_ENTRY_PATH = `/${DEV_MOUNT_PATH}/entry.bundle`;
 
 /** The websocket DOM components receive Fast Refresh updates on. */
 export const DEV_HOT_PATH = `/${DEV_MOUNT_PATH}/hot`;
+
+/** The attribute of the script a development page runs its bundle in that holds the bundle's URL. */
+export const DEV_BUNDLE_URL_ATTRIBUTE = 'data-bundle-url';

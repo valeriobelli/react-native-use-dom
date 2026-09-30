@@ -15,6 +15,7 @@ export const WEB_ENTRY_PATH = require.resolve('../web/entry');
 export const DOM_TRANSFORM_OPTION = 'dom';
 
 const MOUNT_MODULE_PATH = require.resolve('../web/mount');
+const DEV_CLIENT_MODULE_PATH = require.resolve('../web/dev-client');
 const REFRESH_BABEL_PLUGIN = require.resolve('react-refresh/babel');
 
 type BabelPlugins = NonNullable<BabelTransformerArgs['plugins']>;
@@ -63,10 +64,14 @@ function withRefreshPlugin(plugins: BabelTransformerArgs['plugins']): BabelPlugi
 	return [...(plugins ?? []), [REFRESH_BABEL_PLUGIN, { skipEnvCheck: true }]];
 }
 
-/** The entry module that renders the requested component, replacing the stub's body. */
+/**
+ * The entry module that renders the requested component, replacing the stub's body. In development
+ * it starts with the client for Fast Refresh, which has to run before React DOM loads.
+ */
 function synthesizeEntry(args: BabelTransformerArgs, settings: WebTransformerSettings): string {
 	const componentPath = readRequestedComponent(args, settings);
 	return [
+		...(args.options.dev ? [`import ${JSON.stringify(DEV_CLIENT_MODULE_PATH)};`] : []),
 		`import Component from ${JSON.stringify(componentPath)};`,
 		`import { mountDomComponent } from ${JSON.stringify(MOUNT_MODULE_PATH)};`,
 		'mountDomComponent(Component);',

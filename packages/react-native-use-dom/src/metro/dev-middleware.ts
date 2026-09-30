@@ -4,7 +4,13 @@ import path from 'node:path';
 import type { ConfigT } from 'metro-config';
 import Server from 'metro/private/Server';
 
-import { DEV_ENTRY_PATH, DEV_HOT_PATH, DEV_MOUNT_PATH, DEV_PAGE_PATH } from '../runtime/paths';
+import {
+	DEV_BUNDLE_URL_ATTRIBUTE,
+	DEV_ENTRY_PATH,
+	DEV_HOT_PATH,
+	DEV_MOUNT_PATH,
+	DEV_PAGE_PATH,
+} from '../runtime/paths';
 import type { HotSocketServer } from './hot-socket';
 import { createHotSocketServer } from './hot-socket';
 import { DOM_TRANSFORM_OPTION, WEB_ENTRY_PATH } from './transformer';
@@ -258,6 +264,7 @@ function loaderScript(bundleUrl: string): string {
 			return res.text().then(function (body) {
 				if (!res.ok) return showError(describe(body));
 				var script = document.createElement('script');
+				script.setAttribute(${inlineJson(DEV_BUNDLE_URL_ATTRIBUTE)}, bundleUrl);
 				script.text = body;
 				document.head.appendChild(script);
 			});

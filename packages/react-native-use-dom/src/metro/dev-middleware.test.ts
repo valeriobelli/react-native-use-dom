@@ -1,4 +1,4 @@
-import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -25,6 +25,11 @@ const WORKSPACE_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 
 const HELLO = "export default function Hello(props) { return 'hello ' + props.name; }\n";
 const BROKEN = 'export default function Hello( {\n';
+
+/** A component with state only the page holds: what an input's user typed. */
+function withInput(greeting: string): string {
+	return `export default function Hello(props) {\n\treturn <label>${greeting} {props.name}<input id="typed" /></label>;\n}\n`;
+}
 const PASSED_THROUGH = 'passed through';
 
 interface ReporterEvent {
@@ -125,6 +130,9 @@ beforeAll(async () => {
 		`module.exports = { presets: [${JSON.stringify(RN_BABEL_PRESET)}] };\n`,
 	);
 	writeComponent(HELLO);
+	// Components with JSX import React's runtime, which an app has installed.
+	mkdirSync(path.join(projectRoot, 'node_modules'));
+	symlinkSync(path.dirname(require.resolve('react/package.json')), path.join(projectRoot, 'node_modules', 'react'));
 
 	reported = [];
 	dev = createDomDevServer(projectConfig());
@@ -202,4 +210,81 @@ it('shows a build error with its location, reports it, and reloads once it is fi
 		writeComponent(HELLO);
 		dom.window.close();
 	}
+});
+
+/**
+ * Opens the page on a component greeting with `greeting`, once its bundle has it: Metro sees edits a
+ * moment after they are written. Each test greets differently, so none opens on a previous one's.
+ */
+async function openWith(greeting: string): Promise<Page> {
+	writeComponent(withInput(greeting));
+	await waitFor('the watcher to see the edit', async () => (await (await fetchBundle()).text()).includes(greeting));
+	const page = await openPage(pageUrl(component));
+	await waitFor('the component', () => page.dom.window.document.querySelector('#typed'));
+	// The page registers for updates as it starts; one sent before it did would never arrive.
+	await new Promise((resolve) => {
+		setTimeout(resolve, 500);
+	});
+	return page;
+}
+
+function textOf(page: Page): string {
+	return page.dom.window.document.querySelector('#root')?.textContent ?? '';
+}
+
+describe('hot updates', () => {
+	afterEach(() => {
+		writeComponent(HELLO);
+	});
+
+	it('updates the component in place, keeping what was typed into it', async () => {
+		const page = await openWith('hallo');
+		const input = await waitFor('the input', () => page.dom.window.document.querySelector<HTMLInputElement>('#typed'));
+		input.value = 'typed before the edit';
+
+		try {
+			writeComponent(withInput('bonjour'));
+			await waitFor('the update', () => textOf(page).includes('bonjour dom'));
+
+			expect(page.dom.window.document.querySelector<HTMLInputElement>('#typed')).toBe(input);
+			expect(input.value).toBe('typed before the edit');
+			expect(page.reloaded()).toBe(false);
+		} finally {
+			page.dom.window.close();
+		}
+	});
+
+	it('reloads the page for an edit that cannot be applied in place', async () => {
+		const page = await openWith('hola');
+
+		try {
+			// A module that exports more than components is no boundary Fast Refresh can stop at.
+			writeComponent(`${withInput('hola')}export const notAComponent = 1;\n`);
+			await waitFor('the reload', page.reloaded);
+
+			expect(page.reloaded()).toBe(true);
+		} finally {
+			page.dom.window.close();
+		}
+	});
+
+	it('shows a build error over the component, and takes it away once the edit builds', async () => {
+		const page = await openWith('ciao');
+		const { document } = page.dom.window;
+
+		try {
+			writeComponent(BROKEN);
+			const shown = await waitFor('the build error', () => document.querySelector('#use-dom-hot-error')?.textContent);
+			expect(shown).toContain(component);
+			// The component is still underneath, for when the edit is fixed.
+			expect(document.querySelector('#typed')).not.toBeNull();
+
+			writeComponent(withInput('fixed'));
+			await waitFor('the update', () => textOf(page).includes('fixed dom'));
+			expect(document.querySelector('#use-dom-hot-error')).toBeNull();
+			expect(page.reloaded()).toBe(false);
+		} finally {
+			page.dom.window.close();
+		}
+	});
 });
