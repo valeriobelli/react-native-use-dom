@@ -1,0 +1,18 @@
+packages:
+  - packages/*
+  - examples/*
+
+# Browser-data packages publish almost daily, so an unpinned install trips the workspace's
+# minimum-release-age policy on every refresh. Pinned to the newest builds that clear it.
+overrides:
+  browserslist: 4.29.1
+  caniuse-lite: 1.0.30001812
+  electron-to-chromium: 1.5.439
+
+# No dependency may run install scripts. Those that ask ship prebuilt binaries through optional
+# platform packages, so refusing costs nothing; lefthook's only installs the git hooks, which
+# `pnpm exec lefthook install` does instead.
+allowBuilds:
+  '@parcel/watcher': false
+  lefthook: false
+  unrs-resolver: false

@@ -1,0 +1,20 @@
+# Git hooks. Install scripts are disabled in this workspace, so run `pnpm exec lefthook install`
+# once after cloning.
+glob_matcher: doublestar
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: lint
+      glob: '**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}'
+      run: pnpm exec oxlint {staged_files}
+    - name: format
+      run: pnpm exec oxfmt --check --no-error-on-unmatched-pattern {staged_files}
+    - name: zizmor
+      glob: '.github/**'
+      run: zizmor --offline .github
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm exec commitlint --edit {1}

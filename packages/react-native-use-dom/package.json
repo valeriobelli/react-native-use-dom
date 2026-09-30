@@ -1,0 +1,89 @@
+{
+	"name": "react-native-use-dom",
+	"version": "0.0.0",
+	"description": "Render real React DOM components inside React Native with the 'use dom' directive. No Expo required.",
+	"keywords": [
+		"dom",
+		"metro",
+		"nitro",
+		"react-native",
+		"use dom",
+		"webview"
+	],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/valeriobelli/react-native-dom.git",
+		"directory": "packages/react-native-use-dom"
+	},
+	"files": [
+		"dist",
+		"src",
+		"ios",
+		"android",
+		"nitro.json",
+		"*.podspec",
+		"README.md"
+	],
+	"type": "commonjs",
+	"exports": {
+		".": {
+			"types": "./dist/native/index.d.ts",
+			"default": "./dist/native/index.js"
+		},
+		"./dom": {
+			"types": "./dist/web/index.d.ts",
+			"default": "./dist/web/index.js"
+		},
+		"./babel": {
+			"types": "./dist/babel/index.d.ts",
+			"default": "./dist/babel/index.js"
+		},
+		"./metro": {
+			"types": "./dist/metro/index.d.ts",
+			"default": "./dist/metro/index.js"
+		},
+		"./internal": {
+			"types": "./dist/runtime/index.d.ts",
+			"default": "./dist/runtime/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	},
+	"scripts": {
+		"build": "tsc --build tsconfig.build.json",
+		"clean": "rm -rf dist *.tsbuildinfo"
+	},
+	"dependencies": {
+		"@babel/runtime": "^7.29.7",
+		"react-refresh": "0.14.2"
+	},
+	"devDependencies": {
+		"@react-native/metro-config": "0.87.1",
+		"@types/jsdom": "21.1.7",
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"jsdom": "26.1.0",
+		"metro": "0.87.1",
+		"metro-babel-transformer": "0.87.1",
+		"metro-config": "0.87.1",
+		"metro-resolver": "0.87.1",
+		"metro-runtime": "0.87.1",
+		"nitrogen": "^0.37.1",
+		"react": "19.3.0",
+		"react-dom": "19.3.0",
+		"react-native": "0.87.1",
+		"react-native-nitro-modules": "0.37.1"
+	},
+	"peerDependencies": {
+		"metro": ">=0.83.1",
+		"metro-config": ">=0.83.1",
+		"react": ">=19.1.0",
+		"react-dom": ">=19.1.0",
+		"react-native": ">=0.81.0",
+		"react-native-nitro-modules": ">=0.29.0"
+	}
+}

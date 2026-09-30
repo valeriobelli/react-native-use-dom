@@ -1,0 +1,41 @@
+{
+	"name": "react-native-use-dom-monorepo",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"build": "pnpm --filter react-native-use-dom build",
+		"typecheck": "tsc --build --verbose",
+		"lint": "oxlint",
+		"format": "oxfmt .",
+		"format:check": "oxfmt --check .",
+		"test": "jest",
+		"changeset": "changeset",
+		"release": "pnpm build && changeset publish"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.29.7",
+		"@babel/preset-env": "^7.29.7",
+		"@babel/preset-react": "^7.29.7",
+		"@babel/preset-typescript": "^7.29.7",
+		"@babel/types": "^7.29.8",
+		"@changesets/changelog-github": "^1.0.1",
+		"@changesets/cli": "3.0.3",
+		"@changesets/config": "4.0.1",
+		"@commitlint/cli": "21.2.3",
+		"@commitlint/config-conventional": "21.2.3",
+		"@types/babel__core": "^7.20.5",
+		"@types/jest": "30.0.0",
+		"@types/node": "^26.6.3",
+		"babel-jest": "30.5.2",
+		"jest": "30.5.2",
+		"jest-environment-jsdom": "30.5.2",
+		"lefthook": "2.1.15",
+		"oxfmt": "0.71.0",
+		"oxlint": "1.86.0",
+		"typescript": "7.0.2"
+	},
+	"engines": {
+		"node": ">=22.12.0"
+	},
+	"packageManager": "pnpm@12.8.0"
+}

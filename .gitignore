@@ -1,0 +1,28 @@
+node_modules/
+dist/
+lib/
+coverage/
+*.tsbuildinfo
+
+# native
+ios/Pods/
+ios/build/
+android/build/
+android/.gradle/
+android/.cxx/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+DerivedData/
+
+# metro / rn
+.metro-health-check*
+*.jsbundle
+dom.bundle/
+
+# editors / os
+.DS_Store
+.idea/
+*.log
+
+.serena
+backlog/
