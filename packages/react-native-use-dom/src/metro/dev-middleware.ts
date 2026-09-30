@@ -4,8 +4,12 @@ import path from 'node:path';
 import type { ConfigT } from 'metro-config';
 import Server from 'metro/private/Server';
 
-import { DEV_ENTRY_PATH, DEV_MOUNT_PATH, DEV_PAGE_PATH } from '../runtime/paths';
+import { DEV_ENTRY_PATH, DEV_HOT_PATH, DEV_MOUNT_PATH, DEV_PAGE_PATH } from '../runtime/paths';
+import type { HotSocketServer } from './hot-socket';
+import { createHotSocketServer } from './hot-socket';
 import { DOM_TRANSFORM_OPTION, WEB_ENTRY_PATH } from './transformer';
+import type { UpgradeListener } from './upgrade-router';
+import { routeUpgrade } from './upgrade-router';
 import { createWebConfig, WEB_PLATFORM } from './web-config';
 
 /** A connect-style middleware, the shape `server.enhanceMiddleware` receives and returns. */
@@ -25,9 +29,14 @@ interface WebBundler {
 	server: Server;
 	/** The `bundleEntry` that makes Metro build the generated entry module. */
 	bundleEntry: string;
+	/** Hot updates for the bundles this server built, on the dev server's websocket. */
+	hot: HotSocketServer;
 }
 
 const MOUNT_PREFIX = `/${DEV_MOUNT_PATH}/`;
+
+/** The generated entry, as the file a request for its bundle names. */
+const ENTRY_BUNDLE_PATH = WEB_ENTRY_PATH.replace(/\.[^./\\]+$/u, '.bundle');
 
 /** How often a page showing a build error checks whether the build works again. */
 const RETRY_INTERVAL_MS = 1000;
@@ -39,9 +48,13 @@ const RETRY_INTERVAL_MS = 1000;
  * turn loads `/_dom/entry.bundle`: the component's bundle, built by a second Metro instance
  * configured for the web from `config`. That instance starts on the first bundle request, so apps
  * that render no DOM component never pay for it.
+ *
+ * Pages receive hot updates for their bundle on the `/_dom/hot` websocket of the same server, which
+ * speaks Metro's HMR protocol. The dev server's other websockets keep working as before.
  */
 export function createDomDevServer(config: ConfigT): DomDevServer {
 	let bundler: Promise<WebBundler> | null = null;
+	let routedUpgrades = false;
 
 	const getBundler = (): Promise<WebBundler> => {
 		bundler ??= startWebBundler(config);
@@ -54,6 +67,13 @@ export function createDomDevServer(config: ConfigT): DomDevServer {
 		if (!url.pathname.startsWith(MOUNT_PREFIX)) {
 			next();
 			return;
+		}
+		// The server is only reachable through a request, and a page makes one before it connects.
+		if (!routedUpgrades && req.socket.server !== null) {
+			routedUpgrades = true;
+			routeUpgrade(req.socket.server, DEV_HOT_PATH, (...upgrade) => {
+				void upgradeHot(getBundler, ...upgrade);
+			});
 		}
 		if (url.pathname === DEV_PAGE_PATH) {
 			servePage(url, res);
@@ -71,11 +91,30 @@ export function createDomDevServer(config: ConfigT): DomDevServer {
 		middleware,
 		getWebServer: async () => (await getBundler()).server,
 		close: async () => {
-			const started = bundler;
+			const started = await bundler;
 			bundler = null;
-			await (await started)?.server.end();
+			started?.hot.close();
+			await started?.server.end();
 		},
 	};
+}
+
+/** A hot socket before any bundle was built starts the web bundler, as a bundle request would. */
+async function upgradeHot(
+	getBundler: () => Promise<WebBundler>,
+	...[req, socket, head]: Parameters<UpgradeListener>
+): Promise<void> {
+	let hot: HotSocketServer;
+	try {
+		({ hot } = await getBundler());
+	} catch {
+		// The page learns why from its bundle request, which fails the same way.
+		socket.destroy();
+		return;
+	}
+	hot.handleUpgrade(req, socket, head, (ws) => {
+		hot.emit('connection', ws, req);
+	});
 }
 
 async function forwardBundleRequest(
@@ -100,7 +139,12 @@ async function startWebBundler(config: ConfigT): Promise<WebBundler> {
 	// start-up banner in the terminal of the dev server the developer already started.
 	const server = new Server(webConfig, { watch: true });
 	await server.ready();
-	return { server, bundleEntry: entryBundlePath(webConfig) };
+	const bundleEntry = entryBundlePath(webConfig);
+	// Metro's HMR server resolves entries from the server root, and knows no watch folder prefix.
+	const serverRoot = webConfig.server.unstable_serverRoot ?? webConfig.projectRoot;
+	const hotBundleEntry = toPosix(path.relative(serverRoot, ENTRY_BUNDLE_PATH));
+	const hot = createHotSocketServer(server, webConfig, (url) => toWebBundleUrl(url, hotBundleEntry));
+	return { server, bundleEntry, hot };
 }
 
 /**
@@ -109,11 +153,16 @@ async function startWebBundler(config: ConfigT): Promise<WebBundler> {
  * itself. The web config always watches the package.
  */
 function entryBundlePath(webConfig: ConfigT): string {
-	const bundlePath = WEB_ENTRY_PATH.replace(/\.[^./\\]+$/u, '.bundle');
-	const index = webConfig.watchFolders.findIndex((folder) => !path.relative(folder, bundlePath).startsWith('..'));
+	const index = webConfig.watchFolders.findIndex(
+		(folder) => !path.relative(folder, ENTRY_BUNDLE_PATH).startsWith('..'),
+	);
 	const root = webConfig.watchFolders[index] ?? webConfig.projectRoot;
-	const relative = path.relative(root, bundlePath).split(path.sep).join('/');
+	const relative = toPosix(path.relative(root, ENTRY_BUNDLE_PATH));
 	return index === -1 ? relative : `[metro-watchFolders]/${index}/${relative}`;
+}
+
+function toPosix(filePath: string): string {
+	return filePath.split(path.sep).join('/');
 }
 
 /** Source maps are inlined: the page has no route to fetch a separate one from. */

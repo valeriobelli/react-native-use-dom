@@ -8,7 +8,7 @@ import { runServer } from 'metro';
 import type { ConfigT, InputConfigT } from 'metro-config';
 import { mergeConfig } from 'metro-config';
 
-import { DEV_ENTRY_PATH, DEV_PAGE_PATH } from '../runtime/paths';
+import { DEV_ENTRY_PATH, DEV_HOT_PATH, DEV_PAGE_PATH } from '../runtime/paths';
 import { WEB_TRANSFORMER_ENV } from './web-config';
 import { withDom } from './with-dom';
 
@@ -126,4 +126,48 @@ describe('withDom', () => {
 			await server.close();
 		}
 	});
+
+	it('serves hot updates for DOM components on their own socket, next to the native ones', async () => {
+		const server = await serve((await withDom(projectConfig())) as ConfigT);
+		const socketOrigin = server.origin.replace(/^http/u, 'ws');
+
+		try {
+			const file = path.join(projectRoot, 'Hello.js');
+			await fetch(`${server.origin}${DEV_PAGE_PATH}?${new URLSearchParams({ file }).toString()}`);
+			const domBundle = `${DEV_ENTRY_PATH}?${new URLSearchParams({ platform: 'web', dev: 'true', 'transform.dom': file }).toString()}`;
+			await (await fetch(`${server.origin}${domBundle}`)).text();
+			const nativeBundle = '/index.bundle?platform=ios&dev=true';
+			await (await fetch(`${server.origin}${nativeBundle}`)).text();
+
+			await expect(registerBundle(`${socketOrigin}${DEV_HOT_PATH}`, `${server.origin}${domBundle}`)).resolves.toBe(
+				'bundle-registered',
+			);
+			await expect(registerBundle(`${socketOrigin}/hot`, `${server.origin}${nativeBundle}`)).resolves.toBe(
+				'bundle-registered',
+			);
+			// The DOM socket only knows DOM bundles, which is what keeps the two apart.
+			await expect(registerBundle(`${socketOrigin}${DEV_HOT_PATH}`, `${server.origin}${nativeBundle}`)).resolves.toBe(
+				'error',
+			);
+		} finally {
+			await server.close();
+		}
+	});
 });
+
+/** Registers a bundle with an HMR socket the way Metro's client does, and answers how the server replied. */
+function registerBundle(socketUrl: string, bundleUrl: string): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const socket = new WebSocket(socketUrl);
+		socket.addEventListener('open', () => {
+			socket.send(JSON.stringify({ type: 'register-entrypoints', entryPoints: [bundleUrl] }));
+		});
+		socket.addEventListener('message', (event: MessageEvent<string>) => {
+			const { type } = JSON.parse(event.data) as { type: string };
+			if (type !== 'bundle-registered' && type !== 'error') return;
+			socket.close();
+			resolve(type);
+		});
+		socket.addEventListener('error', () => reject(new Error(`${socketUrl} refused the connection.`)));
+	});
+}
