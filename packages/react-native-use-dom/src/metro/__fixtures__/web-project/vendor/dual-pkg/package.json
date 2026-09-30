@@ -1,0 +1,6 @@
+{
+	"name": "dual-pkg",
+	"main": "main.js",
+	"browser": "browser.js",
+	"react-native": "rn.js"
+}
