@@ -5,13 +5,13 @@ coverage/
 *.tsbuildinfo
 
 # native
-ios/Pods/
-ios/build/
-android/build/
-android/.gradle/
-android/.cxx/
-*.xcworkspace/xcuserdata/
-*.xcodeproj/xcuserdata/
+**/ios/Pods/
+**/ios/build/
+**/android/build/
+**/android/.gradle/
+**/android/.cxx/
+**/*.xcworkspace/xcuserdata/
+**/*.xcodeproj/xcuserdata/
 DerivedData/
 
 # metro / rn
@@ -26,3 +26,4 @@ dom.bundle/
 
 .serena
 backlog/
+.tmp-backlog/

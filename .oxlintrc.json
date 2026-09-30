@@ -11,7 +11,14 @@
 		"es2024": true,
 		"node": true
 	},
-	"ignorePatterns": ["**/dist/**", "**/lib/**", "**/node_modules/**", "**/Pods/**"],
+	"ignorePatterns": [
+		"**/dist/**",
+		"**/lib/**",
+		"**/node_modules/**",
+		"**/Pods/**",
+		"**/build/**",
+		"**/nitrogen/generated/**"
+	],
 	"rules": {
 		"typescript/no-explicit-any": "error",
 		"typescript/consistent-type-imports": "error",
@@ -24,7 +31,9 @@
 			}
 		],
 		"no-redeclare": "off",
-		"react/react-in-jsx-scope": "off"
+		"react/react-in-jsx-scope": "off",
+		"unicorn/no-array-sort": "off",
+		"unicorn/no-array-reverse": "off"
 	},
 	"overrides": [
 		{
