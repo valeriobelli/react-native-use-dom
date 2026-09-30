@@ -4,7 +4,7 @@ A [React Native Community CLI](https://github.com/react-native-community/cli) ap
 DOM components with `react-native-use-dom`. It shows:
 
 - a DOM component that receives props, calls native actions, and exposes a ref handle;
-- a component sized to its content with `matchContents`.
+- a component sized to its content with `matchContents`, whose external link the app opens itself.
 
 The components are in [`src`](./src), and [`App.tsx`](./App.tsx) renders them.
 

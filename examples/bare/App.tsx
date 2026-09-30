@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Button, Linking, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import type { DomRefHandle } from 'react-native-use-dom';
 
@@ -8,7 +8,6 @@ import Greeting from './src/Greeting';
 import Note from './src/Note';
 
 const greetingDom = { backgroundColor: '#f2f2f7' };
-const noteDom = { matchContents: true };
 
 export default function App() {
 	const greeting = useRef<DomRefHandle<GreetingHandle>>(null);
@@ -19,6 +18,18 @@ export default function App() {
 		setStatus(`The DOM component reported ${clicks} clicks.`);
 		return Promise.resolve(clicks % 2 === 0 ? 'Even.' : 'Odd.');
 	}, []);
+
+	// A DOM component never leaves its page: the app decides where a link goes.
+	const noteDom = useMemo(
+		() => ({
+			matchContents: true,
+			onNavigationBlocked: (url: string) => {
+				setStatus(`Opened ${url} outside the DOM component.`);
+				void Linking.openURL(url);
+			},
+		}),
+		[],
+	);
 
 	const reset = useCallback(async () => {
 		const clicks = await greeting.current?.getClicks();
