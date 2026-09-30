@@ -26,7 +26,12 @@ export interface DomProps {
 	/** Style applied to the native view. Sizing here wins over the DOM content's own size. */
 	style?: StyleProp<ViewStyle>;
 
-	/** Background colour of the native view, shown before the first paint. Defaults to white. */
+	/**
+	 * Background colour of the native view, in any format React Native accepts. It shows before the
+	 * first paint and wherever the page itself is transparent. A `backgroundColor` in `style` wins.
+	 *
+	 * @default 'white'
+	 */
 	backgroundColor?: string;
 
 	/**

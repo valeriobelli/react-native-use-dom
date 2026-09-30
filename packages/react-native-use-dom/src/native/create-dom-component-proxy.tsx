@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { ComponentType, RefObject, Ref } from 'react';
+import { View } from 'react-native';
 import { callback } from 'react-native-nitro-modules';
 
 import type { ConsoleMessage } from '../runtime/protocol';
@@ -17,6 +18,8 @@ export interface DomComponentProxyOptions {
 	/** Name of the pre-built page inside the app bundle. Written by the Babel plugin on release. */
 	bundleFile?: string;
 }
+
+const FILL_PARENT = { flex: 1 } as const;
 
 /** Stable default, so a component rendered without a `dom` prop does not see a new object each render. */
 const NO_DOM_PROPS: DomProps = {};
@@ -48,7 +51,8 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 		);
 
 		const { data: props, actions } = splitProps(rest, componentName);
-		const actionNames = useMemo(() => Object.keys(actions).toSorted(), [actions]);
+		// Hermes has no `toSorted`, and `Object.keys` returns a fresh array, so sorting it in place is safe.
+		const actionNames = useMemo(() => Object.keys(actions).sort(), [actions]);
 		bridge.setActions(actions);
 
 		const [contentSize, setContentSize] = useState<{ width: number; height: number } | null>(null);
@@ -183,38 +187,47 @@ interface DomWebViewProps {
 /**
  * Renders the native view. Separated from the component above so that everything crossing into
  * Nitro — including the `callback(...)` wrapping every function prop needs — reads in one place.
+ *
+ * The style goes on a plain view around the WebView, which fills it: on Android, a Nitro view on
+ * React Native 0.86 or newer receives none of the base view props, such as `backgroundColor`,
+ * `opacity` or `testID` (https://github.com/margelo/nitro/issues/1656).
  */
 function DomWebView({ bridge, contentSize, dom, injectedObjectJson, source, viewRef }: DomWebViewProps) {
 	const style = useMemo(
-		() => [dom.matchContents ? contentSize : null, dom.style],
-		[dom.matchContents, dom.style, contentSize],
+		() => [
+			{ backgroundColor: dom.backgroundColor ?? 'white' },
+			// Without content to measure, the view takes the space its parent gives it.
+			dom.matchContents ? contentSize : FILL_PARENT,
+			dom.style,
+		],
+		[dom.backgroundColor, dom.matchContents, dom.style, contentSize],
 	);
 
 	return (
-		<RNUseDomWebView
-			source={source}
-			injectedObjectJson={injectedObjectJson}
-			scrollEnabled={dom.scrollEnabled ?? true}
-			{...(dom.backgroundColor === undefined ? {} : { backgroundColor: dom.backgroundColor })}
-			{...(dom.testID === undefined ? {} : { testID: dom.testID })}
-			inspectable={__DEV__}
-			style={style}
-			hybridRef={callback((instance: RNUseDomWebViewMethods) => {
-				holdNativeView(viewRef, instance);
-			})}
-			onMessage={callback((message: string) => {
-				bridge.receive(message);
-			})}
-			onLoadEnd={callback(() => {
-				dom.onLoad?.();
-			})}
-			onLoadError={callback((reason: string) => {
-				dom.onError?.(new Error(reason));
-			})}
-			onNavigationBlocked={callback((url: string) => {
-				dom.onNavigationBlocked?.(url);
-			})}
-		/>
+		<View style={style} {...(dom.testID === undefined ? {} : { testID: dom.testID })}>
+			<RNUseDomWebView
+				source={source}
+				injectedObjectJson={injectedObjectJson}
+				scrollEnabled={dom.scrollEnabled ?? true}
+				inspectable={__DEV__}
+				style={FILL_PARENT}
+				hybridRef={callback((instance: RNUseDomWebViewMethods) => {
+					holdNativeView(viewRef, instance);
+				})}
+				onMessage={callback((message: string) => {
+					bridge.receive(message);
+				})}
+				onLoadEnd={callback(() => {
+					dom.onLoad?.();
+				})}
+				onLoadError={callback((reason: string) => {
+					dom.onError?.(new Error(reason));
+				})}
+				onNavigationBlocked={callback((url: string) => {
+					dom.onNavigationBlocked?.(url);
+				})}
+			/>
+		</View>
 	);
 }
 
