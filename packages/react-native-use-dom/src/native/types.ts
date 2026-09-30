@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, Ref } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import type { Serializable } from '../runtime/serializable';
@@ -13,8 +13,9 @@ import type { Serializable } from '../runtime/serializable';
  */
 export interface DomProps {
 	/**
-	 * Sizes the native view to the rendered content, remeasuring as the content changes — including
-	 * after fonts and images finish loading.
+	 * Sizes the native view's height to the rendered content, remeasuring as the content changes —
+	 * including after fonts and images finish loading. The width comes from layout, as for any view:
+	 * the page is as wide as the view it renders in.
 	 *
 	 * Leave it off when the component should fill the space its parent gives it; a component that
 	 * lays out at zero height in both directions is usually this flag missing.
@@ -85,3 +86,39 @@ export type DomComponent<TProps, THandle extends DomComponentHandle = Record<str
  * one is asynchronous even when its DOM-side implementation is not.
  */
 export type DomComponentHandle = Record<string, (...args: never[]) => Promise<Serializable>>;
+
+/**
+ * A method of a handle as the native side calls it: it crosses into the WebView, so it resolves
+ * with the DOM-side result, and with `null` when that returns nothing.
+ */
+export type DomHandleCall<TMethod> = TMethod extends (...args: infer TArgs) => infer TResult
+	? (...args: TArgs) => Promise<Exclude<Awaited<TResult>, void> | (undefined extends Awaited<TResult> ? null : never)>
+	: never;
+
+/**
+ * The type of a DOM component's `ref` prop, for the handle `THandle` it exposes through
+ * `useDOMImperativeHandle`. Declaring it among the component's props is what lets native code pass
+ * a typed ref:
+ *
+ * ```tsx
+ * 'use dom';
+ *
+ * export interface EditorHandle {
+ *   getText(): string;
+ *   clear(): void;
+ * }
+ *
+ * export default function Editor(_: { ref?: DomRef<EditorHandle>; dom?: DomProps }) {
+ *   // ...
+ * }
+ * ```
+ *
+ * ```tsx
+ * const editor = useRef<DomRefHandle<EditorHandle>>(null);
+ * const text: string | undefined = await editor.current?.getText();
+ * ```
+ */
+export type DomRef<THandle extends object> = Ref<DomRefHandle<THandle>>;
+
+/** What a DOM component's native `ref` holds: every method of `THandle`, called asynchronously. */
+export type DomRefHandle<THandle extends object> = { [K in keyof THandle]: DomHandleCall<THandle[K]> };

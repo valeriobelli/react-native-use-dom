@@ -52,12 +52,13 @@ export function reportUncaughtErrors(bridge: DomBridge): () => void {
 /**
  * Reports the rendered content's size so a `matchContents` component can resize itself (E6-AC1).
  *
+ * The document is measured rather than `element`, so that the body's margins count as content.
  * `ResizeObserver` covers late layout shifts — a web font arriving, an image decoding — which a
  * one-shot measurement after mount would miss.
  */
 export function reportContentSize(bridge: DomBridge, element: HTMLElement): () => void {
 	const measure = () => {
-		const rect = element.getBoundingClientRect();
+		const rect = document.documentElement.getBoundingClientRect();
 		bridge.reportSize(rect.width, rect.height);
 	};
 
@@ -68,6 +69,7 @@ export function reportContentSize(bridge: DomBridge, element: HTMLElement): () =
 
 	const observer = new ResizeObserver(measure);
 	observer.observe(element);
+	observer.observe(document.documentElement);
 	return () => {
 		observer.disconnect();
 	};

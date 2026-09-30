@@ -9,7 +9,15 @@
 export { createDomComponentProxy } from './create-dom-component-proxy';
 export type { DomComponentProxyOptions } from './create-dom-component-proxy';
 
-export type { DomComponent, DomComponentHandle, DomComponentProps, DomProps } from './types';
+export type {
+	DomComponent,
+	DomComponentHandle,
+	DomComponentProps,
+	DomHandleCall,
+	DomProps,
+	DomRef,
+	DomRefHandle,
+} from './types';
 
 export { DomError, DomErrorCode, isDomError } from '../runtime/errors';
 export type { DomErrorOptions } from '../runtime/errors';

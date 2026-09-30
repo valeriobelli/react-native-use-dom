@@ -55,8 +55,8 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 		const actionNames = useMemo(() => Object.keys(actions).sort(), [actions]);
 		bridge.setActions(actions);
 
-		const [contentSize, setContentSize] = useState<{ width: number; height: number } | null>(null);
-		useBridgeCallbacks(bridge, dom, props, actionNames, setContentSize);
+		const [contentHeight, setContentHeight] = useState<number | null>(null);
+		useBridgeCallbacks(bridge, dom, props, actionNames, setContentHeight);
 
 		// The payload the page reads before its first script runs, so the first paint already has
 		// real data. Frozen at mount: later changes travel as messages, which is what keeps a prop
@@ -72,7 +72,7 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 			<DomWebView
 				bridge={bridge}
 				dom={dom}
-				contentSize={contentSize}
+				contentHeight={contentHeight}
 				injectedObjectJson={injectedObjectJson}
 				source={source}
 				viewRef={view}
@@ -124,14 +124,15 @@ function useBridgeCallbacks(
 	dom: DomProps,
 	props: Record<string, Serializable>,
 	actionNames: readonly string[],
-	setContentSize: (size: { width: number; height: number }) => void,
+	setContentHeight: (height: number) => void,
 ): void {
 	const onConsole = useCallback((level: ConsoleMessage['level'], args: readonly Serializable[]) => {
 		console[level](...args);
 	}, []);
 
-	const onResize = (width: number, height: number) => {
-		setContentSize({ width, height });
+	// The page is as wide as the view, whatever it shows: only its height is the content's own.
+	const onResize = (_width: number, height: number) => {
+		setContentHeight(height);
 	};
 
 	bridge.setCallbacks({
@@ -178,7 +179,7 @@ function describeComponent(filePath: string): string {
 interface DomWebViewProps {
 	bridge: NativeDomBridge;
 	dom: DomProps;
-	contentSize: { width: number; height: number } | null;
+	contentHeight: number | null;
 	injectedObjectJson: string;
 	source: string;
 	viewRef: RefObject<RNUseDomWebViewMethods | null>;
@@ -192,15 +193,15 @@ interface DomWebViewProps {
  * React Native 0.86 or newer receives none of the base view props, such as `backgroundColor`,
  * `opacity` or `testID` (https://github.com/margelo/nitro/issues/1656).
  */
-function DomWebView({ bridge, contentSize, dom, injectedObjectJson, source, viewRef }: DomWebViewProps) {
+function DomWebView({ bridge, contentHeight, dom, injectedObjectJson, source, viewRef }: DomWebViewProps) {
 	const style = useMemo(
-		() => [
-			{ backgroundColor: dom.backgroundColor ?? 'white' },
-			// Without content to measure, the view takes the space its parent gives it.
-			dom.matchContents ? contentSize : FILL_PARENT,
-			dom.style,
-		],
-		[dom.backgroundColor, dom.matchContents, dom.style, contentSize],
+		() => [{ backgroundColor: dom.backgroundColor ?? 'white' }, dom.matchContents ? null : FILL_PARENT, dom.style],
+		[dom.backgroundColor, dom.matchContents, dom.style],
+	);
+	// Sized inside the view's own style, so that its borders and padding add to the content's size.
+	const webViewStyle = useMemo(
+		() => (dom.matchContents ? { height: contentHeight ?? 0 } : FILL_PARENT),
+		[dom.matchContents, contentHeight],
 	);
 
 	return (
@@ -210,7 +211,7 @@ function DomWebView({ bridge, contentSize, dom, injectedObjectJson, source, view
 				injectedObjectJson={injectedObjectJson}
 				scrollEnabled={dom.scrollEnabled ?? true}
 				inspectable={__DEV__}
-				style={FILL_PARENT}
+				style={webViewStyle}
 				hybridRef={callback((instance: RNUseDomWebViewMethods) => {
 					holdNativeView(viewRef, instance);
 				})}
