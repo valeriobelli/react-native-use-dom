@@ -48,6 +48,10 @@ Then:
 pnpm ios
 ```
 
+React Native 0.87 apps don't launch on iOS 27, which requires the UIScene life cycle that React Native adopts in
+0.88. Run the example on an iOS 26 or earlier simulator, and pick one with `pnpm ios --udid <id>` when several are
+booted (`xcrun simctl list devices booted` lists them).
+
 ### Android
 
 ```sh
