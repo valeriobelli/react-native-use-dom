@@ -1,0 +1,24 @@
+{
+	"$schema": "https://nitro.margelo.com/nitro.schema.json",
+	"cxxNamespace": ["usedom"],
+	"ios": {
+		"iosModuleName": "ReactNativeUseDom"
+	},
+	"android": {
+		"androidNamespace": ["usedom"],
+		"androidCxxLibName": "ReactNativeUseDom"
+	},
+	"autolinking": {
+		"RNUseDomWebView": {
+			"ios": {
+				"language": "swift",
+				"implementationClassName": "HybridRNUseDomWebView"
+			},
+			"android": {
+				"language": "kotlin",
+				"implementationClassName": "HybridRNUseDomWebView"
+			}
+		}
+	},
+	"ignorePaths": ["node_modules", "dist"]
+}
