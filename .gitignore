@@ -27,3 +27,5 @@ dom.bundle/
 .serena
 backlog/
 .tmp-backlog/
+
+vendor/
