@@ -116,12 +116,6 @@ using namespace margelo::nitro::usedom::views;
           : !newViewProps.scrollEnabled.hasSameValue(oldViewProps->scrollEnabled)) {
       swiftPart.setScrollEnabled(newViewProps.scrollEnabled.get());
     }
-    // backgroundColor: optional
-    if (oldViewProps == nullptr
-          ? newViewProps.backgroundColor.isProvided()
-          : !newViewProps.backgroundColor.hasSameValue(oldViewProps->backgroundColor)) {
-      swiftPart.setBackgroundColor(newViewProps.backgroundColor.get());
-    }
     // inspectable: boolean
     if (oldViewProps == nullptr
           ? newViewProps.inspectable.isProvided()

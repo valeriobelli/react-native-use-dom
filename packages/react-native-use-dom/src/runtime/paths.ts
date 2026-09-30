@@ -4,13 +4,23 @@
  */
 
 /**
- * The origin release builds serve DOM components from.
+ * The origins release builds serve DOM components from, by platform.
  *
- * A real origin rather than `file://`, so that `localStorage`, `fetch` and module scripts behave the
+ * Real origins rather than `file://`, so that `localStorage`, `fetch` and module scripts behave the
  * way they do on the web. Nothing is fetched over the network: the native side answers every request
- * from the app bundle.
+ * from the app bundle. iOS needs a scheme of its own, because WebKit does not let apps answer
+ * `https` requests themselves.
  */
-export const OFFLINE_ORIGIN = 'https://use-dom.localhost';
+export const OFFLINE_ORIGINS = {
+	ios: 'use-dom://localhost',
+	android: 'https://use-dom.localhost',
+} as const;
+
+/** A platform DOM components can be rendered on natively. */
+export type NativePlatform = keyof typeof OFFLINE_ORIGINS;
+
+/** The folder of the app bundle, and path on the offline origin, that pre-built pages live in. */
+export const OFFLINE_BUNDLE_DIR = 'dom.bundle';
 
 /** The path the development middleware is mounted at on the React Native dev server. */
 export const DEV_MOUNT_PATH = '_dom';

@@ -10,7 +10,6 @@
 
 
 #include <string>
-#include <optional>
 #include <functional>
 #include "JFunc_void_std__string.hpp"
 #include <NitroModules/JNICallable.hpp>
@@ -72,15 +71,6 @@ namespace margelo::nitro::usedom {
   void JHybridRNUseDomWebViewSpec::setScrollEnabled(bool scrollEnabled) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jboolean /* scrollEnabled */)>("setScrollEnabled");
     method(_javaPart, scrollEnabled);
-  }
-  std::optional<std::string> JHybridRNUseDomWebViewSpec::getBackgroundColor() {
-    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JString>()>("getBackgroundColor");
-    auto __result = method(_javaPart);
-    return __result != nullptr ? std::make_optional(__result->toStdString()) : std::nullopt;
-  }
-  void JHybridRNUseDomWebViewSpec::setBackgroundColor(const std::optional<std::string>& backgroundColor) {
-    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* backgroundColor */)>("setBackgroundColor");
-    method(_javaPart, backgroundColor.has_value() ? jni::make_jstring(backgroundColor.value()) : nullptr);
   }
   bool JHybridRNUseDomWebViewSpec::getInspectable() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jboolean()>("getInspectable");

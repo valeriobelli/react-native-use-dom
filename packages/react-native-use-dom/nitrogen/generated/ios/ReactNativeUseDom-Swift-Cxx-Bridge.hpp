@@ -21,7 +21,6 @@ namespace ReactNativeUseDom { class HybridRNUseDomWebViewSpec_cxx; }
 #include <exception>
 #include <functional>
 #include <memory>
-#include <optional>
 #include <string>
 
 /**
@@ -30,21 +29,6 @@ namespace ReactNativeUseDom { class HybridRNUseDomWebViewSpec_cxx; }
  */
 namespace margelo::nitro::usedom::bridge::swift {
 
-  // pragma MARK: std::optional<std::string>
-  /**
-   * Specialized version of `std::optional<std::string>`.
-   */
-  using std__optional_std__string_ = std::optional<std::string>;
-  inline std::optional<std::string> create_std__optional_std__string_(const std::string& value) noexcept {
-    return std::optional<std::string>(value);
-  }
-  inline bool has_value_std__optional_std__string_(const std::optional<std::string>& optional) noexcept {
-    return optional.has_value();
-  }
-  inline std::string get_std__optional_std__string_(const std::optional<std::string>& optional) noexcept {
-    return optional.value();
-  }
-  
   // pragma MARK: std::function<void(const std::string& /* message */)>
   /**
    * Specialized version of `std::function<void(const std::string&)>`.

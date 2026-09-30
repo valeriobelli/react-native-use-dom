@@ -23,7 +23,6 @@ namespace margelo::nitro::usedom::views {
     source(nitro::ReactProp<std::string>::fromRawValue("RNUseDomWebView", "source", rawProps, sourceProps.source)),
     injectedObjectJson(nitro::ReactProp<std::string>::fromRawValue("RNUseDomWebView", "injectedObjectJson", rawProps, sourceProps.injectedObjectJson)),
     scrollEnabled(nitro::ReactProp<bool>::fromRawValue("RNUseDomWebView", "scrollEnabled", rawProps, sourceProps.scrollEnabled)),
-    backgroundColor(nitro::ReactProp<std::optional<std::string>>::fromRawValue("RNUseDomWebView", "backgroundColor", rawProps, sourceProps.backgroundColor)),
     inspectable(nitro::ReactProp<bool>::fromRawValue("RNUseDomWebView", "inspectable", rawProps, sourceProps.inspectable)),
     onMessage(nitro::ReactProp<std::function<void(const std::string& /* message */)>>::fromRawValue("RNUseDomWebView", "onMessage", rawProps, sourceProps.onMessage)),
     onLoadEnd(nitro::ReactProp<std::function<void()>>::fromRawValue("RNUseDomWebView", "onLoadEnd", rawProps, sourceProps.onLoadEnd)),
@@ -36,7 +35,6 @@ namespace margelo::nitro::usedom::views {
       case hashString("source"): return true;
       case hashString("injectedObjectJson"): return true;
       case hashString("scrollEnabled"): return true;
-      case hashString("backgroundColor"): return true;
       case hashString("inspectable"): return true;
       case hashString("onMessage"): return true;
       case hashString("onLoadEnd"): return true;

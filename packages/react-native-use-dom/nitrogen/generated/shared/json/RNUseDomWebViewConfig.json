@@ -1,18 +1,17 @@
 {
-	"uiViewClassName": "RNUseDomWebView",
-	"supportsRawText": false,
-	"bubblingEventTypes": {},
-	"directEventTypes": {},
-	"validAttributes": {
-		"source": true,
-		"injectedObjectJson": true,
-		"scrollEnabled": true,
-		"backgroundColor": true,
-		"inspectable": true,
-		"onMessage": true,
-		"onLoadEnd": true,
-		"onLoadError": true,
-		"onNavigationBlocked": true,
-		"hybridRef": true
-	}
+  "uiViewClassName": "RNUseDomWebView",
+  "supportsRawText": false,
+  "bubblingEventTypes": {},
+  "directEventTypes": {},
+  "validAttributes": {
+    "source": true,
+    "injectedObjectJson": true,
+    "scrollEnabled": true,
+    "inspectable": true,
+    "onMessage": true,
+    "onLoadEnd": true,
+    "onLoadError": true,
+    "onNavigationBlocked": true,
+    "hybridRef": true
+  }
 }

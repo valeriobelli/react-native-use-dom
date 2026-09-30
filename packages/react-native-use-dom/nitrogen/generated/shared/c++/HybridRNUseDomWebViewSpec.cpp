@@ -20,8 +20,6 @@ namespace margelo::nitro::usedom {
       prototype.registerHybridSetter("injectedObjectJson", &HybridRNUseDomWebViewSpec::setInjectedObjectJson);
       prototype.registerHybridGetter("scrollEnabled", &HybridRNUseDomWebViewSpec::getScrollEnabled);
       prototype.registerHybridSetter("scrollEnabled", &HybridRNUseDomWebViewSpec::setScrollEnabled);
-      prototype.registerHybridGetter("backgroundColor", &HybridRNUseDomWebViewSpec::getBackgroundColor);
-      prototype.registerHybridSetter("backgroundColor", &HybridRNUseDomWebViewSpec::setBackgroundColor);
       prototype.registerHybridGetter("inspectable", &HybridRNUseDomWebViewSpec::getInspectable);
       prototype.registerHybridSetter("inspectable", &HybridRNUseDomWebViewSpec::setInspectable);
       prototype.registerHybridGetter("onMessage", &HybridRNUseDomWebViewSpec::getOnMessage);

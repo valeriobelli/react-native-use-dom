@@ -10,19 +10,27 @@
 		"use dom",
 		"webview"
 	],
+	"homepage": "https://github.com/valeriobelli/react-native-use-dom#readme",
 	"license": "MIT",
+	"author": "Valerio Belli",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/valeriobelli/react-native-dom.git",
+		"url": "git+https://github.com/valeriobelli/react-native-use-dom.git",
 		"directory": "packages/react-native-use-dom"
 	},
 	"files": [
 		"dist",
 		"src",
-		"ios",
-		"android",
+		"nitrogen",
 		"nitro.json",
+		"react-native.config.js",
 		"*.podspec",
+		"ios/**/*.swift",
+		"android/build.gradle",
+		"android/gradle.properties",
+		"android/fix-prefab.gradle",
+		"android/CMakeLists.txt",
+		"android/src",
 		"README.md"
 	],
 	"type": "commonjs",
@@ -55,7 +63,8 @@
 	},
 	"scripts": {
 		"build": "tsc --build tsconfig.build.json",
-		"clean": "rm -rf dist *.tsbuildinfo"
+		"clean": "rm -rf dist *.tsbuildinfo",
+		"codegen": "nitrogen"
 	},
 	"dependencies": {
 		"@babel/runtime": "^7.29.7",

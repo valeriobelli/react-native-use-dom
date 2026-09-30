@@ -15,7 +15,6 @@ namespace ReactNativeUseDom { class HybridRNUseDomWebViewSpec_cxx; }
 
 
 #include <string>
-#include <optional>
 #include <functional>
 
 #include "ReactNativeUseDom-Swift-Cxx-Umbrella.hpp"
@@ -83,13 +82,6 @@ namespace margelo::nitro::usedom {
     }
     inline void setScrollEnabled(bool scrollEnabled) noexcept override {
       _swiftPart.setScrollEnabled(std::forward<decltype(scrollEnabled)>(scrollEnabled));
-    }
-    inline std::optional<std::string> getBackgroundColor() noexcept override {
-      auto __result = _swiftPart.getBackgroundColor();
-      return __result;
-    }
-    inline void setBackgroundColor(const std::optional<std::string>& backgroundColor) noexcept override {
-      _swiftPart.setBackgroundColor(backgroundColor);
     }
     inline bool getInspectable() noexcept override {
       return _swiftPart.getInspectable();

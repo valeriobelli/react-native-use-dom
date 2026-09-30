@@ -13,7 +13,6 @@ public protocol HybridRNUseDomWebViewSpec_protocol: HybridObject, HybridView {
   var source: String { get set }
   var injectedObjectJson: String { get set }
   var scrollEnabled: Bool { get set }
-  var backgroundColor: String? { get set }
   var inspectable: Bool { get set }
   var onMessage: (_ message: String) -> Void { get set }
   var onLoadEnd: () -> Void { get set }

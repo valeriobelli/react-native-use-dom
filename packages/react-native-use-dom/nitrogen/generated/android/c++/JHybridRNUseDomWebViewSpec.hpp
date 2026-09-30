@@ -56,8 +56,6 @@ namespace margelo::nitro::usedom {
     void setInjectedObjectJson(const std::string& injectedObjectJson) override;
     bool getScrollEnabled() override;
     void setScrollEnabled(bool scrollEnabled) override;
-    std::optional<std::string> getBackgroundColor() override;
-    void setBackgroundColor(const std::optional<std::string>& backgroundColor) override;
     bool getInspectable() override;
     void setInspectable(bool inspectable) override;
     std::function<void(const std::string& /* message */)> getOnMessage() override;

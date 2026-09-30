@@ -5,8 +5,9 @@ import type { HybridView, HybridViewMethods, HybridViewProps } from 'react-nativ
  *
  * This is not a general-purpose WebView and is not part of the public API. It carries exactly what
  * the DOM runtime needs: a page to load, the props to hand it before its first script runs, and a
- * string channel in each direction. Everything else — prop updates, native actions, imperative
- * handles, sizing — rides over that channel as protocol messages rather than as native props.
+ * string channel in each direction. The view is transparent, so whatever is behind it shows until
+ * the page paints. Everything else — prop updates, native actions, imperative handles, sizing —
+ * rides over that channel as protocol messages rather than as native props.
  */
 export interface RNUseDomWebViewProps extends HybridViewProps {
 	/** The page to load: the dev server's DOM entry, or the offline bundle's own origin. */
@@ -20,9 +21,6 @@ export interface RNUseDomWebViewProps extends HybridViewProps {
 
 	/** Whether the user can scroll the content, rather than the surrounding native scroll view. */
 	scrollEnabled: boolean;
-
-	/** Background shown until the DOM component's first paint. A CSS colour string. */
-	backgroundColor?: string;
 
 	/** Whether to expose the page to Safari Web Inspector and Chrome DevTools. */
 	inspectable: boolean;

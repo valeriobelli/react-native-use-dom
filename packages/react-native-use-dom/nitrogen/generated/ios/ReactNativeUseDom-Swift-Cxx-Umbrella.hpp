@@ -17,7 +17,6 @@ namespace margelo::nitro::usedom { class HybridRNUseDomWebViewSpec; }
 #include <exception>
 #include <functional>
 #include <memory>
-#include <optional>
 #include <string>
 
 // C++ helpers for Swift

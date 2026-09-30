@@ -18,10 +18,10 @@
 #include <string>
 
 #include <string>
-#include <optional>
 #include <functional>
 #include <memory>
 #include "HybridRNUseDomWebViewSpec.hpp"
+#include <optional>
 
 namespace margelo::nitro::usedom::views {
 
@@ -46,7 +46,6 @@ namespace margelo::nitro::usedom::views {
     nitro::ReactProp<std::string> source;
     nitro::ReactProp<std::string> injectedObjectJson;
     nitro::ReactProp<bool> scrollEnabled;
-    nitro::ReactProp<std::optional<std::string>> backgroundColor;
     nitro::ReactProp<bool> inspectable;
     nitro::ReactProp<std::function<void(const std::string& /* message */)>> onMessage;
     nitro::ReactProp<std::function<void()>> onLoadEnd;
@@ -59,7 +58,6 @@ namespace margelo::nitro::usedom::views {
       return source.hasSameValue(other.source) &&
              injectedObjectJson.hasSameValue(other.injectedObjectJson) &&
              scrollEnabled.hasSameValue(other.scrollEnabled) &&
-             backgroundColor.hasSameValue(other.backgroundColor) &&
              inspectable.hasSameValue(other.inspectable) &&
              onMessage.hasSameValue(other.onMessage) &&
              onLoadEnd.hasSameValue(other.onLoadEnd) &&
@@ -73,7 +71,6 @@ namespace margelo::nitro::usedom::views {
       return source.isProvided() ||
              injectedObjectJson.isProvided() ||
              scrollEnabled.isProvided() ||
-             backgroundColor.isProvided() ||
              inspectable.isProvided() ||
              onMessage.isProvided() ||
              onLoadEnd.isProvided() ||

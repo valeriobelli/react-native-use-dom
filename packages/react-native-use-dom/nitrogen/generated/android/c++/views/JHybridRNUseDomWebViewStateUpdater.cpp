@@ -69,11 +69,6 @@ void JHybridRNUseDomWebViewStateUpdater::updateViewProps(jni::alias_ref<jni::JCl
     hybridView->setScrollEnabled(newProps->scrollEnabled.get());
   }
   if (oldProps == nullptr
-        ? newProps->backgroundColor.isProvided()
-        : !newProps->backgroundColor.hasSameValue(oldProps->backgroundColor)) {
-    hybridView->setBackgroundColor(newProps->backgroundColor.get());
-  }
-  if (oldProps == nullptr
         ? newProps->inspectable.isProvided()
         : !newProps->inspectable.hasSameValue(oldProps->inspectable)) {
     hybridView->setInspectable(newProps->inspectable.get());

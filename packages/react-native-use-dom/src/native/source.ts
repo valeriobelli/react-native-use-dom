@@ -1,11 +1,24 @@
-// A deep import, because React Native does not re-export this from its package entry. It is the
-// only supported way to tell "loaded from a dev server" apart from "loaded from the app bundle",
-// which is a sharper distinction than `__DEV__`: a release-mode reload from Metro is still a dev
-// server. Pinned, and covered by the bundler-contract smoke test.
-import getDevServer from 'react-native/Libraries/Core/Devtools/getDevServer';
+import type { TurboModule } from 'react-native';
+import { Platform, TurboModuleRegistry } from 'react-native';
 
 import { DomError, DomErrorCode } from '../runtime/errors';
-import { DEV_PAGE_PATH, OFFLINE_ORIGIN } from '../runtime/paths';
+import type { NativePlatform } from '../runtime/paths';
+import { DEV_PAGE_PATH, OFFLINE_BUNDLE_DIR, OFFLINE_ORIGINS } from '../runtime/paths';
+
+interface SourceCodeSpec extends TurboModule {
+	getConstants(): { scriptURL: string };
+}
+
+/**
+ * The origin of the dev server the running bundle came from, with a trailing slash, or `null` when
+ * it came from the app binary. That is a sharper distinction than `__DEV__`: a release-mode reload
+ * from Metro is still a dev server. This reads what React Native's own dev tools read, through its
+ * public module registry rather than a deep import, which React Native deprecates.
+ */
+function devServerOrigin(): string | null {
+	const scriptUrl = TurboModuleRegistry.get<SourceCodeSpec>('SourceCode')?.getConstants().scriptURL ?? '';
+	return /^https?:\/\/.*?\//u.exec(scriptUrl)?.[0] ?? null;
+}
 
 export interface DomSourceOptions {
 	/** Absolute path of the `'use dom'` module, as the Babel plugin recorded it. */
@@ -19,14 +32,14 @@ export interface DomSourceOptions {
 
 /** Resolves the URL the native view loads for a DOM component. */
 export function resolveDomSource(options: DomSourceOptions): string {
-	const devServer = getDevServer();
-	if (devServer.bundleLoadedFromServer) {
+	const devServer = devServerOrigin();
+	if (devServer !== null) {
 		const query = new URLSearchParams({
 			file: options.filePath,
 			platform: 'web',
 			dev: 'true',
 		});
-		return `${new URL(DEV_PAGE_PATH, devServer.url).href}?${query.toString()}`;
+		return `${new URL(DEV_PAGE_PATH, devServer).href}?${query.toString()}`;
 	}
 
 	if (options.bundleFile === undefined) {
@@ -39,5 +52,5 @@ export function resolveDomSource(options: DomSourceOptions): string {
 		);
 	}
 
-	return `${OFFLINE_ORIGIN}/dom.bundle/${options.bundleFile}`;
+	return `${OFFLINE_ORIGINS[Platform.OS as NativePlatform]}/${OFFLINE_BUNDLE_DIR}/${options.bundleFile}`;
 }
