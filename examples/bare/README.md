@@ -58,6 +58,16 @@ booted (`xcrun simctl list devices booted` lists them).
 pnpm android
 ```
 
+## Build for release
+
+```sh
+pnpm android --mode release
+pnpm ios --mode Release
+```
+
+A release build embeds the page of every DOM component the app renders, so the components show with Metro
+stopped and without a network connection.
+
 ## Edit it
 
 Edit a DOM component in `src` and save: it updates in place, and keeps its state where Fast Refresh can. Edits to
