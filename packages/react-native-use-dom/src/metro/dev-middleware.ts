@@ -134,9 +134,7 @@ async function forwardBundleRequest(
 }
 
 async function startWebBundler(config: ConfigT): Promise<WebBundler> {
-	const webConfig = createWebConfig(config);
-	// Metro's own `runMetro` also announces the server to the reporter, which would print a second
-	// start-up banner in the terminal of the dev server the developer already started.
+	const webConfig = withoutStartupBanner(createWebConfig(config));
 	const server = new Server(webConfig, { watch: true });
 	await server.ready();
 	const bundleEntry = entryBundlePath(webConfig);
@@ -145,6 +143,22 @@ async function startWebBundler(config: ConfigT): Promise<WebBundler> {
 	const hotBundleEntry = toPosix(path.relative(serverRoot, ENTRY_BUNDLE_PATH));
 	const hot = createHotSocketServer(server, webConfig, (url) => toWebBundleUrl(url, hotBundleEntry));
 	return { server, bundleEntry, hot };
+}
+
+/**
+ * Every Metro server reports that it is loading its dependency graph as it starts, which the terminal
+ * shows as Metro's welcome banner. The dev server the developer started has already shown it.
+ */
+function withoutStartupBanner(config: ConfigT): ConfigT {
+	const { reporter } = config;
+	return {
+		...config,
+		reporter: {
+			update: (event) => {
+				if (event.type !== 'dep_graph_loading') reporter.update(event);
+			},
+		},
+	};
 }
 
 /**

@@ -176,6 +176,11 @@ it('builds the bundle for the web, with an inline source map', async () => {
 	expect(bundle).toContain('//# sourceMappingURL=data:application/json');
 });
 
+it('leaves the start-up banner to the dev server the developer started', () => {
+	// By now the pages and bundles above have started the web bundler.
+	expect(reported.map((event) => event.type)).not.toContain('dep_graph_loading');
+});
+
 it('shows a build error with its location, reports it, and reloads once it is fixed', async () => {
 	writeComponent(BROKEN);
 	reported.length = 0;
