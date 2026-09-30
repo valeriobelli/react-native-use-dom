@@ -8,6 +8,8 @@
 export const DomErrorCode = {
 	/** The project's Metro config was never wrapped with `withDom()`. */
 	MissingMetroConfig: 'ERR_USE_DOM_MISSING_METRO_CONFIG',
+	/** A release build did not say where the app's resources go, so its DOM component pages had nowhere to be written. */
+	MissingBundleOutput: 'ERR_USE_DOM_MISSING_BUNDLE_OUTPUT',
 	/** A `'use dom'` module exported something other than a single default export. */
 	InvalidModuleExports: 'ERR_USE_DOM_INVALID_MODULE_EXPORTS',
 	/** A DOM component was rendered with `children`, which cannot cross the boundary. */

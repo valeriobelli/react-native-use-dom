@@ -1,5 +1,6 @@
 import type { NodePath, PluginObj, PluginPass, types as BabelTypes } from '@babel/core';
 
+import { domBundleFileName } from '../metro/bundle-file';
 import { DomError, DomErrorCode } from '../runtime/errors';
 
 /** The directive that marks a module as a DOM component. */
@@ -163,8 +164,11 @@ function invalidExports(filePath: string, what: string): DomError {
  * Builds:
  * ```js
  * import { createDomComponentProxy } from 'react-native-use-dom';
- * export default createDomComponentProxy({ filePath: '<abs path>' });
+ * export default createDomComponentProxy({ filePath: '<abs path>', bundleFile: '<page>.html' });
  * ```
+ *
+ * `bundleFile` names the page a release build embeds for this module. It is written on every
+ * build, because the same native bundle can load from the dev server or from the app.
  */
 function buildProxyModule(t: typeof BabelTypes, filePath: string): BabelTypes.Statement[] {
 	const factory = t.identifier(FACTORY);
@@ -173,7 +177,10 @@ function buildProxyModule(t: typeof BabelTypes, filePath: string): BabelTypes.St
 		t.importDeclaration([t.importSpecifier(factory, t.identifier(FACTORY))], t.stringLiteral(RUNTIME_MODULE)),
 		t.exportDefaultDeclaration(
 			t.callExpression(t.cloneNode(factory), [
-				t.objectExpression([t.objectProperty(t.identifier('filePath'), t.stringLiteral(filePath))]),
+				t.objectExpression([
+					t.objectProperty(t.identifier('filePath'), t.stringLiteral(filePath)),
+					t.objectProperty(t.identifier('bundleFile'), t.stringLiteral(domBundleFileName(filePath))),
+				]),
 			]),
 		),
 	];

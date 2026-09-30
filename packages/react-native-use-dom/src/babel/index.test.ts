@@ -1,5 +1,6 @@
 import { transformSync } from '@babel/core';
 
+import { domBundleFileName } from '../metro/bundle-file';
 import type { DomError } from '../runtime/errors';
 import { DomErrorCode } from '../runtime/errors';
 import useDomPlugin from './index';
@@ -41,6 +42,11 @@ describe('on a native platform', () => {
 		expect(code).toContain('createDomComponentProxy');
 		expect(code).toContain('react-native-use-dom');
 		expect(code).toContain('/app/src/Chart.tsx');
+	});
+
+	it('names the page a release build embeds for the file', () => {
+		const { code } = compile(COMPONENT, { platform: 'ios' });
+		expect(code).toContain(`bundleFile: "${domBundleFileName('/app/src/Chart.tsx')}"`);
 	});
 
 	it('leaves the proxy for the rest of the transform to finish, as React Native bundles it', () => {

@@ -1,7 +1,10 @@
 import type { ConfigT, InputConfigT } from 'metro-config';
+import { getDefaultConfig, mergeConfig } from 'metro-config';
 
+import { readBundleCommand } from './bundle-command';
 import type { Middleware } from './dev-middleware';
 import { createDomDevServer } from './dev-middleware';
+import { withReleaseBuild } from './release-build';
 
 /** A Metro config as `metro.config.js` can export it. */
 export type MetroConfigInput = InputConfigT | ConfigT;
@@ -23,6 +26,11 @@ type MetroServer = Parameters<EnhanceMiddleware>[1];
  * During development, the dev server also serves DOM component pages, from the same port. They are
  * built from your config, so resolver customisations (`resolveRequest`, `extraNodeModules`,
  * `blockList`, `watchFolders`) apply to them too.
+ *
+ * Release builds — `react-native bundle`, and the Xcode and Gradle builds that run it — also build
+ * every DOM component the app renders and embed its page with the bundle, so the app loads it
+ * without a network connection. An existing `serializer.customSerializer` keeps producing the
+ * native bundle.
  *
  * Metro accepts the returned Promise (or function) as a `metro.config.js` export as it is.
  *
@@ -52,9 +60,21 @@ export function withDom(
 
 function addDom(config: MetroConfigInput): MetroConfigInput {
 	const enhanceMiddleware = config.server?.enhanceMiddleware;
+	// The config as Metro resolves it: what the project exported, over Metro's own defaults.
+	const resolveConfig = async (projectRoot: string): Promise<ConfigT> =>
+		mergeConfig(await getDefaultConfig(projectRoot), config as InputConfigT);
+
+	// The dev server serializes bundles the same way, and leaves the pages to its own routes.
+	const command = readBundleCommand(process.argv);
 
 	return {
 		...config,
+		...(command && {
+			serializer: {
+				...config.serializer,
+				customSerializer: withReleaseBuild(config.serializer?.customSerializer, resolveConfig, command),
+			},
+		}),
 		server: {
 			...config.server,
 			enhanceMiddleware: (middleware, metroServer) => {

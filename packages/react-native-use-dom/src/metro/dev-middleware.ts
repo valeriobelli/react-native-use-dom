@@ -13,6 +13,7 @@ import {
 } from '../runtime/paths';
 import type { HotSocketServer } from './hot-socket';
 import { createHotSocketServer } from './hot-socket';
+import { inlineJson, renderPage } from './page';
 import { DOM_TRANSFORM_OPTION, WEB_ENTRY_PATH } from './transformer';
 import type { UpgradeListener } from './upgrade-router';
 import { routeUpgrade } from './upgrade-router';
@@ -155,7 +156,7 @@ async function startWebBundler(config: ConfigT): Promise<WebBundler> {
  * Every Metro server reports that it is loading its dependency graph as it starts, which the terminal
  * shows as Metro's welcome banner. The dev server the developer started has already shown it.
  */
-function withoutStartupBanner(config: ConfigT): ConfigT {
+export function withoutStartupBanner(config: ConfigT): ConfigT {
 	const { reporter } = config;
 	return {
 		...config,
@@ -208,7 +209,7 @@ function servePage(url: URL, res: ServerResponse): void {
 		[`transform.${DOM_TRANSFORM_OPTION}`]: file,
 	});
 	res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' });
-	res.end(renderPage(`${DEV_ENTRY_PATH}?${bundleQuery.toString()}`));
+	res.end(renderDevPage(`${DEV_ENTRY_PATH}?${bundleQuery.toString()}`));
 }
 
 /**
@@ -216,19 +217,8 @@ function servePage(url: URL, res: ServerResponse): void {
  * read the error Metro answers a failed build with. The error is shown in place of the component,
  * and the page reloads itself once the build succeeds again.
  */
-function renderPage(bundleUrl: string): string {
-	return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head>
-<body>
-<div id="root"></div>
-<script>${loaderScript(bundleUrl)}</script>
-</body>
-</html>
-`;
+function renderDevPage(bundleUrl: string): string {
+	return renderPage(`<script>${loaderScript(bundleUrl)}</script>`);
 }
 
 /** Runs in the WebView, as written: it is not built by Metro, so it sticks to what every engine runs. */
@@ -272,9 +262,4 @@ function loaderScript(bundleUrl: string): string {
 		.catch(function (error) { showError(String(error)); });
 })();
 `;
-}
-
-/** JSON is valid JavaScript, but `</script>` inside it would end the script element early. */
-function inlineJson(value: string): string {
-	return JSON.stringify(value).replaceAll('<', '\\u003c');
 }
