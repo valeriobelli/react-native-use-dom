@@ -30,6 +30,8 @@ function projectConfig(overrides: InputConfigT = {}): ConfigT {
 		getDefaultConfig(projectRoot),
 		{
 			cacheStores: [],
+			// Metro keeps its file map in the OS temp folder across runs, which a stale copy can break.
+			resetCache: true,
 			maxWorkers: 1,
 			reporter: { update: () => {} },
 			resolver: { useWatchman: false },

@@ -42,6 +42,8 @@ const aliasIntoReactNative = (): Resolution => ({
 function projectConfig(): ConfigT {
 	return mergeConfig(getDefaultConfig(FIXTURE_ROOT), {
 		cacheStores: [],
+		// Metro keeps its file map in the OS temp folder across runs, which a stale copy can break.
+		resetCache: true,
 		maxWorkers: 1,
 		reporter: silentReporter,
 		watchFolders: [FIXTURE_ROOT, EXTRA_WATCH_FOLDER],
