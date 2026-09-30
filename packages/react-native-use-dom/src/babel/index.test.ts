@@ -43,6 +43,22 @@ describe('on a native platform', () => {
 		expect(code).toContain('/app/src/Chart.tsx');
 	});
 
+	it('leaves the proxy for the rest of the transform to finish, as React Native bundles it', () => {
+		const preset = require.resolve('@react-native/babel-preset', {
+			paths: [require.resolve('@react-native/metro-config')],
+		});
+		const result = transformSync(COMPONENT, {
+			filename: '/app/src/Chart.tsx',
+			babelrc: false,
+			configFile: false,
+			caller: { name: 'metro', platform: 'ios' } as never,
+			presets: [preset],
+			plugins: [useDomPlugin],
+		});
+		expect(result?.code).toContain('require("react-native-use-dom")');
+		expect(result?.code).not.toMatch(/^\s*(import|export) /mu);
+	});
+
 	it('leaves none of the original body in the native bundle', () => {
 		const { code } = compile(COMPONENT, { platform: 'ios' });
 		expect(code).not.toContain('svg');

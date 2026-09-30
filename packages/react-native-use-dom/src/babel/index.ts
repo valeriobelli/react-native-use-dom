@@ -69,8 +69,8 @@ export default function useDomPlugin(
 				assertOnlyDefaultExport(path, filePath);
 
 				path.node.directives = [];
+				// Not skipped: the other plugins still visit the proxy, and leave it as the rest of the bundle.
 				path.node.body = buildProxyModule(t, filePath);
-				path.skip();
 
 				state.file.metadata = Object.assign(state.file.metadata as object, {
 					useDom: { filePath, erased: true } satisfies UseDomMetadata,
