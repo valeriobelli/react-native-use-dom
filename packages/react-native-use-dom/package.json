@@ -32,7 +32,8 @@
 		"android/CMakeLists.txt",
 		"android/src",
 		"css.d.ts",
-		"README.md"
+		"README.md",
+		"AGENTS.md"
 	],
 	"type": "commonjs",
 	"exports": {
