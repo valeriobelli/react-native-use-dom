@@ -48,12 +48,12 @@ jobs:
           require-lockfile: true
       - uses: changesets/action/version@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
-          script: pnpm changeset version
+          script: pnpm changeset  version
 
   pack:
     name: Build and pack
     needs: select-mode
-    if: needs.select-mode.outputs.mode == 'publish' && github.event_name == 'workflow_dispatch'
+    if: needs.select-mode.outputs.mode == 'publish'
     runs-on: ubuntu-latest
     permissions:
       contents: read
