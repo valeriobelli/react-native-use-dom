@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`warns with the likely cause and the fixes 1`] = `
+"The DOM component Chart has a height of 0, so it doesn't show. In development, it is outlined in red and given a minimum height, so that it can be found.
+
+By default a DOM component fills its parent, which needs a size of its own. Give the parent one, size the component with \`dom={{ style: { height: 200 } }}\`, or size it to its content with \`dom={{ matchContents: true }}\`."
+`;

@@ -10,6 +10,7 @@ import { resolveDomSource } from './source';
 import type { DomComponentHandle, DomProps } from './types';
 import { loadNativeView } from './web-view';
 import type { RNUseDomWebViewMethods } from './web-view';
+import { useZeroHeightCheck } from './zero-height';
 
 /** What identifies the `'use dom'` module a proxy renders, as the Babel plugin writes it. */
 export interface DomComponentProxyOptions {
@@ -71,6 +72,7 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 		return (
 			<DomWebView
 				bridge={bridge}
+				componentName={componentName}
 				dom={dom}
 				contentHeight={contentHeight}
 				injectedObjectJson={injectedObjectJson}
@@ -185,6 +187,7 @@ function describeComponent(filePath: string): string {
 
 interface DomWebViewProps {
 	bridge: NativeDomBridge;
+	componentName: string;
 	dom: DomProps;
 	contentHeight: number | null;
 	injectedObjectJson: string;
@@ -200,20 +203,24 @@ interface DomWebViewProps {
  * React Native 0.86 or newer receives none of the base view props, such as `backgroundColor`,
  * `opacity` or `testID` (https://github.com/margelo/nitro/issues/1656).
  */
-function DomWebView({ bridge, contentHeight, dom, injectedObjectJson, source, viewRef }: DomWebViewProps) {
+function DomWebView({
+	bridge,
+	componentName,
+	contentHeight,
+	dom,
+	injectedObjectJson,
+	source,
+	viewRef,
+}: DomWebViewProps) {
 	const { RNUseDomWebView, callback } = loadNativeView();
-	const style = useMemo(
-		() => [{ backgroundColor: dom.backgroundColor ?? 'white' }, dom.matchContents ? null : FILL_PARENT, dom.style],
-		[dom.backgroundColor, dom.matchContents, dom.style],
-	);
-	// Sized inside the view's own style, so that its borders and padding add to the content's size.
-	const webViewStyle = useMemo(
-		() => (dom.matchContents ? { height: contentHeight ?? 0 } : FILL_PARENT),
-		[dom.matchContents, contentHeight],
-	);
+	const { style, webViewStyle, onLayout } = useViewStyles(componentName, dom, contentHeight);
 
 	return (
-		<View style={style} {...(dom.testID === undefined ? {} : { testID: dom.testID })}>
+		<View
+			style={style}
+			{...(__DEV__ ? { onLayout } : {})}
+			{...(dom.testID === undefined ? {} : { testID: dom.testID })}
+		>
 			<RNUseDomWebView
 				source={source}
 				injectedObjectJson={injectedObjectJson}
@@ -238,6 +245,29 @@ function DomWebView({ bridge, contentHeight, dom, injectedObjectJson, source, vi
 			/>
 		</View>
 	);
+}
+
+/**
+ * The styles of the view and of the WebView inside it, and the layout listener that, in development,
+ * outlines a view with no height.
+ */
+function useViewStyles(componentName: string, dom: DomProps, contentHeight: number | null) {
+	const { debugStyle, onLayout } = useZeroHeightCheck(componentName, dom.matchContents ?? false);
+	const style = useMemo(
+		() => [
+			{ backgroundColor: dom.backgroundColor ?? 'white' },
+			dom.matchContents ? null : FILL_PARENT,
+			dom.style,
+			debugStyle,
+		],
+		[dom.backgroundColor, dom.matchContents, dom.style, debugStyle],
+	);
+	// Sized inside the view's own style, so that its borders and padding add to the content's size.
+	const webViewStyle = useMemo(
+		() => (dom.matchContents ? { height: contentHeight ?? 0 } : FILL_PARENT),
+		[dom.matchContents, contentHeight],
+	);
+	return { style, webViewStyle, onLayout };
 }
 
 /**

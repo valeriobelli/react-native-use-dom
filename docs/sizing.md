@@ -17,6 +17,8 @@ Give the parent a size, or let it grow:
 
 A parent that has no size of its own, such as a row in a `ScrollView`, gives the view zero height, and the
 component doesn't show. Use `matchContents` there, or give the view a size through `dom.style`.
+In development, such a component logs a warning and is outlined in red, with a minimum height, so that it can be
+found.
 
 ## Size to the content
 

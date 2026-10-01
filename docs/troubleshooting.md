@@ -5,8 +5,8 @@ Errors the library raises carry a stable code, starting `ERR_USE_DOM_`. Look it 
 ## The component doesn't show
 
 - **Zero height.** Without `matchContents`, the view fills its parent, and a parent with no size of its own gives
-  it none. Give the parent a size, set `dom.matchContents`, or set a size in `dom.style`. See
-  [Sizing](./sizing.md).
+  it none. In development, the component is outlined in red and a warning names it. Give the parent a size, set
+  `dom.matchContents`, or set a size in `dom.style`. See [Sizing](./sizing.md).
 - **White box.** The page failed to load or threw. Pass `dom.onError` to see the error, and check the dev server's
   terminal, where the page's logs and build errors print.
 - **The module renders as native code, or `'use dom'` has no effect.** The Babel plugin isn't running. Check that
