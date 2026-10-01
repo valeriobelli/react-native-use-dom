@@ -3,9 +3,12 @@
 A [React Native Community CLI](https://github.com/react-native-community/cli) app, without Expo, that renders
 DOM components with `react-native-use-dom`. It shows:
 
-- a DOM component that receives props, calls native actions, and exposes a ref handle;
+- a DOM component that receives props, calls native actions, and exposes a ref handle, rendered twice: each
+  instance keeps its own state, and only the first is reached by the ref;
+- a prop the app changes, which reaches the page without reloading it;
 - a component sized to its content with `matchContents`, whose external link the app opens itself, styled by a
-  stylesheet it imports, with an icon from [`public`](./public).
+  stylesheet it imports, with an icon from [`public`](./public);
+- a component that fills the space the app gives it and scrolls its own content.
 
 The components are in [`src`](./src), and [`App.tsx`](./App.tsx) renders them. [`use-dom-env.d.ts`](./use-dom-env.d.ts)
 references `react-native-use-dom/css`, which lets TypeScript accept the stylesheet import. A page loads the files of

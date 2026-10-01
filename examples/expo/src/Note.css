@@ -1,12 +1,15 @@
 .note {
+	display: block;
 	margin: 0;
 	padding: 16px;
 	font: 14px/1.5 system-ui;
 	color: #3c3c43;
+	text-decoration: none;
 }
 
-.note a {
+.note .link {
 	color: #af52de;
+	text-decoration: underline;
 }
 
 .note img {

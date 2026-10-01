@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import type { DomProps, DomRef } from 'react-native-use-dom';
 import { useDOMImperativeHandle } from 'react-native-use-dom/dom';
 
-const buttonStyle = { font: '16px system-ui', padding: 16 };
+import './Greeting.css';
 
 /** What the app can do to the greeting through its ref. */
 export interface GreetingHandle {
@@ -42,8 +42,8 @@ export default function Greeting({ name, onClick }: GreetingProps) {
 	}, [clicks, onClick]);
 
 	return (
-		<button type="button" style={buttonStyle} onClick={click}>
-			Hello, {name}, from the DOM. Clicked {clicks} times. {reply}
+		<button type="button" className="greeting" onClick={click}>
+			Hello, {name}. Clicked {clicks} times. {reply}
 		</button>
 	);
 }
