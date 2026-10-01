@@ -20,6 +20,14 @@ Every error `react-native-use-dom` throws is a `DomError` with a stable `code`, 
 
 **Fix.** Pass `--assets-dest` with the folder the app's resources are copied from. Xcode's “Bundle React Native code and images” build phase and React Native's Gradle plugin already pass it.
 
+## `ERR_USE_DOM_EXPO_GO_UNSUPPORTED`
+
+**What happens.** Rendering a DOM component in Expo Go throws.
+
+**Why.** A DOM component renders in the library's native view, and Expo Go includes only the native code Expo ships with it.
+
+**Fix.** Run the app as a [development build](https://docs.expo.dev/develop/development-builds/create-a-build/), built with `npx expo run:ios` or `npx expo run:android`, or with EAS Build.
+
 ## `ERR_USE_DOM_INVALID_MODULE_EXPORTS`
 
 **What happens.** The build fails on a module marked `'use dom'`.

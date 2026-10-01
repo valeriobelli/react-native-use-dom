@@ -31,10 +31,12 @@ Errors the library raises carry a stable code, starting `ERR_USE_DOM_`. Look it 
   Architecture and React Native 0.81 or later. Run `pod install` again after fixing it.
 - **Android: `minSdkVersion 24 or higher is required`.** Raise `minSdkVersion` in the app's Gradle config.
 - **An error that the native view or a Nitro module can't be found.** The app was not rebuilt after the library
-  was installed, or runs in Expo Go. Rebuild the native app.
+  was installed. Rebuild the native app.
 
 ## Runtime errors
 
+- **`ERR_USE_DOM_EXPO_GO_UNSUPPORTED`.** The app runs in Expo Go, which doesn't include the library's native view.
+  Run it as a [development build](https://docs.expo.dev/develop/development-builds/create-a-build/).
 - **`ERR_USE_DOM_NON_SERIALIZABLE_PROP` or `ERR_USE_DOM_NESTED_FUNCTION_PROP`.** A prop can't be sent. The message
   names the path to the value. See [Data in](./data-in.md).
 - **`ERR_USE_DOM_BRIDGE_CLOSED` from a ref or an action.** The component unmounted while the call was pending,

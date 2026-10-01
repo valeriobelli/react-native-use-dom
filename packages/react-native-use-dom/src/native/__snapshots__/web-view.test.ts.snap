@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`loadNativeView refuses to render in Expo Go, saying how to make a development build 1`] = `
+"DOM components can't render in Expo Go.
+
+Expo Go doesn't include react-native-use-dom's native view. Run the app as a development build: \`npx expo run:ios\`, \`npx expo run:android\` or EAS Build (https://docs.expo.dev/develop/development-builds/create-a-build/)."
+`;

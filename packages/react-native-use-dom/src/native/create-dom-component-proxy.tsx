@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useId, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { ComponentType, RefObject, Ref } from 'react';
 import { View } from 'react-native';
-import { callback } from 'react-native-nitro-modules';
 
 import type { ConsoleMessage } from '../runtime/protocol';
 import type { Serializable } from '../runtime/serializable';
@@ -9,7 +8,7 @@ import { splitProps } from '../runtime/split-props';
 import { NativeDomBridge } from './host-bridge';
 import { resolveDomSource } from './source';
 import type { DomComponentHandle, DomProps } from './types';
-import { RNUseDomWebView } from './web-view';
+import { loadNativeView } from './web-view';
 import type { RNUseDomWebViewMethods } from './web-view';
 
 /** What identifies the `'use dom'` module a proxy renders, as the Babel plugin writes it. */
@@ -202,6 +201,7 @@ interface DomWebViewProps {
  * `opacity` or `testID` (https://github.com/margelo/nitro/issues/1656).
  */
 function DomWebView({ bridge, contentHeight, dom, injectedObjectJson, source, viewRef }: DomWebViewProps) {
+	const { RNUseDomWebView, callback } = loadNativeView();
 	const style = useMemo(
 		() => [{ backgroundColor: dom.backgroundColor ?? 'white' }, dom.matchContents ? null : FILL_PARENT, dom.style],
 		[dom.backgroundColor, dom.matchContents, dom.style],

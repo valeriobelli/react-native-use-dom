@@ -22,6 +22,11 @@ export const ERROR_DOCS: { readonly [Code in DomErrorCode]: ErrorDoc } = {
 		why: "A release bundle with DOM components writes their pages next to the app's other resources. The command was given no `--assets-dest`, so there is nowhere to write them.",
 		fix: "Pass `--assets-dest` with the folder the app's resources are copied from. Xcode's “Bundle React Native code and images” build phase and React Native's Gradle plugin already pass it.",
 	},
+	[DomErrorCode.ExpoGoUnsupported]: {
+		what: 'Rendering a DOM component in Expo Go throws.',
+		why: "A DOM component renders in the library's native view, and Expo Go includes only the native code Expo ships with it.",
+		fix: 'Run the app as a [development build](https://docs.expo.dev/develop/development-builds/create-a-build/), built with `npx expo run:ios` or `npx expo run:android`, or with EAS Build.',
+	},
 	[DomErrorCode.InvalidModuleExports]: {
 		what: "The build fails on a module marked `'use dom'`.",
 		why: "On a native platform a `'use dom'` module is replaced by a component that renders it in a WebView, and only its default export can be replaced that way. Other values it exports would never reach native code, so the module must export only the component, as its default export.",
