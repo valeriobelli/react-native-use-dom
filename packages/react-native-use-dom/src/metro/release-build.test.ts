@@ -49,6 +49,9 @@ describe('a release build', () => {
 		writeFileSync(path.join(projectRoot, 'Hello.js'), COMPONENT);
 		writeFileSync(path.join(projectRoot, 'Hello.css'), 'p { color: rebeccapurple; }\n');
 		writeFileSync(path.join(projectRoot, 'Unused.js'), COMPONENT);
+		mkdirSync(path.join(projectRoot, 'public', 'fonts'), { recursive: true });
+		writeFileSync(path.join(projectRoot, 'public', 'logo.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
+		writeFileSync(path.join(projectRoot, 'public', 'fonts', 'Inter.woff2'), 'wOF2');
 		writeFileSync(path.join(projectRoot, 'index.js'), "global.hello = require('./Hello');\n");
 		mkdirSync(path.join(projectRoot, 'node_modules'));
 		symlinkSync(path.dirname(require.resolve('react/package.json')), path.join(projectRoot, 'node_modules', 'react'));
@@ -91,12 +94,13 @@ describe('a release build', () => {
 		return path.join(path.dirname(bundleOutput), OFFLINE_BUNDLE_DIR);
 	}
 
-	it('embeds a page for each DOM component the app renders, and none for the rest', async () => {
+	it('embeds a page for each DOM component the app renders, none for the rest, and the public folder', async () => {
 		const pages = await bundleForAndroid();
 		const page = domBundleFileName(path.join(projectRoot, 'Hello.js'));
 		const script = page.replace(/\.html$/u, '.js');
 
-		expect(readdirSync(pages).sort()).toEqual([page, script].sort());
+		expect(readdirSync(pages).sort()).toEqual([page, script, 'fonts', 'logo.svg'].sort());
+		expect(readFileSync(path.join(pages, 'fonts', 'Inter.woff2'), 'utf8')).toBe('wOF2');
 		expect(readFileSync(path.join(pages, page), 'utf8')).toContain(`<script src="${script}"></script>`);
 
 		const code = readFileSync(path.join(pages, script), 'utf8');

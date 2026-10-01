@@ -5,9 +5,9 @@ import type { ConfigT } from 'metro-config';
 import type Server from 'metro/private/Server';
 
 import { domBundleFileName } from './bundle-file';
-import { withoutStartupBanner } from './dev-middleware';
 import type { Metro } from './host-metro';
 import { renderPage } from './page';
+import { copyPublicDirectory, publicDirectory } from './public-directory';
 import { DOM_TRANSFORM_OPTION, WEB_ENTRY_PATH } from './transformer';
 import { createWebConfig, WEB_PLATFORM } from './web-config';
 
@@ -16,7 +16,7 @@ import { createWebConfig, WEB_PLATFORM } from './web-config';
  *
  * Pages are built for production whatever the native bundle is: an app that loads its bundle from
  * the app has no dev server to reach. They carry no source map and nothing that points outside the
- * app.
+ * app. The project's `public` folder is copied next to them, for pages to load by relative URL.
  */
 export async function buildPages(
 	metro: Metro,
@@ -24,11 +24,13 @@ export async function buildPages(
 	components: readonly string[],
 	outputDirectory: string,
 ): Promise<void> {
-	const server = new metro.Server(withoutStartupBanner(createWebConfig(config, metro)), { watch: false });
+	const server = new metro.Server(createWebConfig(config, metro), { watch: false });
 	try {
 		await server.ready();
 		await rm(outputDirectory, { recursive: true, force: true });
 		await mkdir(outputDirectory, { recursive: true });
+		// Before the pages, which take precedence over a public file of the same name.
+		await copyPublicDirectory(publicDirectory(config.projectRoot), outputDirectory);
 		const options = { ...metro.Server.DEFAULT_BUNDLE_OPTIONS };
 		await Promise.all(components.map((component) => buildPage(server, options, component, outputDirectory)));
 	} finally {

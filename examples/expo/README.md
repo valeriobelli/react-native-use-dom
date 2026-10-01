@@ -5,10 +5,11 @@ An [Expo](https://docs.expo.dev) app that renders the same DOM components as the
 
 - a DOM component that receives props, calls native actions, and exposes a ref handle;
 - a component sized to its content with `matchContents`, whose external link the app opens itself, styled by a
-  stylesheet it imports.
+  stylesheet it imports, with an icon from [`public`](./public).
 
 The components are in [`src`](./src), and [`App.tsx`](./App.tsx) renders them. [`use-dom-env.d.ts`](./use-dom-env.d.ts)
-references `react-native-use-dom/css`, which lets TypeScript accept the stylesheet import. The app runs as a
+references `react-native-use-dom/css`, which lets TypeScript accept the stylesheet import. A page loads the files of
+`public` by URLs relative to it, from the dev server in development and from the app in a release build. The app runs as a
 [development build](https://docs.expo.dev/develop/development-builds/introduction/): Expo Go does not include the
 library's native view.
 

@@ -63,12 +63,7 @@ const REACT_NATIVE_PACKAGE_PATH = /[/\\]node_modules[/\\]react-native[/\\]/u;
  * @param metro - The Metro that builds the bundles, which resolves the project's transform worker.
  */
 export function createWebConfig(config: ConfigT, metro: Metro): ConfigT {
-	const settings: WebTransformerSettings = {
-		upstreamTransformerPath: resolveUpstreamTransformer(config),
-		upstreamWorkerPath: metro.resolve(config.transformerPath),
-		allowedRoots: unique([config.projectRoot, ...config.watchFolders]),
-	};
-	process.env[WEB_TRANSFORMER_ENV] = JSON.stringify(settings);
+	process.env[WEB_TRANSFORMER_ENV] = JSON.stringify(webTransformerSettings(config, metro));
 
 	return {
 		...config,
@@ -99,6 +94,7 @@ export function createWebConfig(config: ConfigT, metro: Metro): ConfigT {
 			// bundles are loaded by the page this library generates.
 			customSerializer: null,
 		},
+		reporter: withoutStartupBanner(config.reporter),
 		transformerPath: WEB_WORKER_PATH,
 		transformer: {
 			...config.transformer,
@@ -167,4 +163,24 @@ function resolveUpstreamTransformer(config: ConfigT): string {
 
 function unique<T>(values: readonly T[]): T[] {
 	return [...new Set(values)];
+}
+
+function webTransformerSettings(config: ConfigT, metro: Metro): WebTransformerSettings {
+	return {
+		upstreamTransformerPath: resolveUpstreamTransformer(config),
+		upstreamWorkerPath: metro.resolve(config.transformerPath),
+		allowedRoots: unique([config.projectRoot, ...config.watchFolders]),
+	};
+}
+
+/**
+ * Every Metro server reports that it is loading its dependency graph as it starts, which the terminal
+ * shows as Metro's welcome banner. The dev server the developer started has already shown it.
+ */
+function withoutStartupBanner(reporter: ConfigT['reporter']): ConfigT['reporter'] {
+	return {
+		update: (event) => {
+			if (event.type !== 'dep_graph_loading') reporter.update(event);
+		},
+	};
 }

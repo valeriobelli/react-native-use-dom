@@ -37,6 +37,10 @@ export function withStylesheet(greeting: string): string {
 	return `import './${STYLESHEET}';\n${withInput(greeting)}`;
 }
 
+/** A file of the fixture's `public` folder, and what it holds. */
+export const PUBLIC_IMAGE = 'logo.svg';
+export const PUBLIC_IMAGE_SOURCE = '<svg xmlns="http://www.w3.org/2000/svg"/>';
+
 export interface ReporterEvent {
 	type: string;
 }
@@ -98,6 +102,9 @@ function createProject(): string {
 		`module.exports = { presets: [${JSON.stringify(RN_BABEL_PRESET)}] };\n`,
 	);
 	writeFileSync(path.join(projectRoot, 'Hello.js'), HELLO);
+	mkdirSync(path.join(projectRoot, 'public', 'fonts'), { recursive: true });
+	writeFileSync(path.join(projectRoot, 'public', PUBLIC_IMAGE), PUBLIC_IMAGE_SOURCE);
+	writeFileSync(path.join(projectRoot, 'public', 'fonts', 'Inter.woff2'), 'wOF2');
 	// Components with JSX import React's runtime, which an app has installed.
 	mkdirSync(path.join(projectRoot, 'node_modules'));
 	symlinkSync(path.dirname(require.resolve('react/package.json')), path.join(projectRoot, 'node_modules', 'react'));

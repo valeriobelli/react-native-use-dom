@@ -5,10 +5,11 @@ DOM components with `react-native-use-dom`. It shows:
 
 - a DOM component that receives props, calls native actions, and exposes a ref handle;
 - a component sized to its content with `matchContents`, whose external link the app opens itself, styled by a
-  stylesheet it imports.
+  stylesheet it imports, with an icon from [`public`](./public).
 
 The components are in [`src`](./src), and [`App.tsx`](./App.tsx) renders them. [`use-dom-env.d.ts`](./use-dom-env.d.ts)
-references `react-native-use-dom/css`, which lets TypeScript accept the stylesheet import.
+references `react-native-use-dom/css`, which lets TypeScript accept the stylesheet import. A page loads the files of
+`public` by URLs relative to it, from the dev server in development and from the app in a release build.
 
 ## Requirements
 

@@ -1,6 +1,14 @@
 import { DEV_PAGE_PATH } from '../runtime/paths';
 import type { DevFixture } from './__fixtures__/dev-server';
-import { BROKEN, HELLO, PASSED_THROUGH, startDevFixture, waitFor } from './__fixtures__/dev-server';
+import {
+	BROKEN,
+	HELLO,
+	PASSED_THROUGH,
+	PUBLIC_IMAGE,
+	PUBLIC_IMAGE_SOURCE,
+	startDevFixture,
+	waitFor,
+} from './__fixtures__/dev-server';
 
 jest.setTimeout(120_000);
 
@@ -22,6 +30,25 @@ it('passes requests outside /_dom to the next middleware untouched', async () =>
 
 it('answers unknown /_dom routes itself', async () => {
 	expect((await fetch(`${fixture.origin}/_dom/elsewhere.js`)).status).toBe(404);
+});
+
+it("serves the files of the project's public folder", async () => {
+	const image = await fetch(`${fixture.origin}/_dom/${PUBLIC_IMAGE}`);
+	const font = await fetch(`${fixture.origin}/_dom/fonts/Inter.woff2`);
+
+	expect(image.headers.get('content-type')).toBe('image/svg+xml');
+	expect(await image.text()).toBe(PUBLIC_IMAGE_SOURCE);
+	expect(font.headers.get('content-type')).toBe('font/woff2');
+});
+
+it('serves nothing outside the public folder', async () => {
+	// Encoded, so that the URL keeps the dots a client would otherwise resolve before sending it.
+	const outside = ['..%2Fpackage.json', 'fonts/..%2F..%2Fpackage.json', 'fonts'];
+	const statuses = await Promise.all(
+		outside.map(async (escape) => (await fetch(`${fixture.origin}/_dom/${escape}`)).status),
+	);
+
+	expect(statuses).toStrictEqual([404, 404, 404]);
 });
 
 it('refuses a page without a component', async () => {
