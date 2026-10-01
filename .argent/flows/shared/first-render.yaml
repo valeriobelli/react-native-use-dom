@@ -1,0 +1,16 @@
+# Both DOM components render, each at its size: the note at the height of its text, the
+# greetings at the height the app gives them. iOS flows can't read inside a web view, so there
+# the screenshots are the proof; Android also checks the text.
+executionPrerequisite: The example app has just launched.
+steps:
+  - echo: The screen and its DOM components render
+  - run: ready
+  - assert: { visible: { text: Not clicked yet } }
+  - when: { platform: android }
+    steps:
+      - assert: { visible: { text: This note is a DOM component } }
+      - assert: { visible: { text: 'Hello, React Native. Clicked 0 times.' } }
+      - assert: { visible: { text: 'Hello, a second instance. Clicked 0 times.' } }
+  - snapshot: { name: note, cropOn: { id: note } }
+  - snapshot: { name: first-greeting, cropOn: { id: first-greeting } }
+  - snapshot: { name: second-greeting, cropOn: { id: second-greeting } }

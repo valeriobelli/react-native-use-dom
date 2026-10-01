@@ -1,0 +1,15 @@
+# A DOM component that fills its space scrolls its own content. A swipe scrolls a web view by a
+# different distance each time, so the flow scrolls to the end, which is the same every time.
+executionPrerequisite: The example app has just launched.
+steps:
+  - echo: The lines scroll inside their DOM component
+  - run: ready
+  - snapshot: { name: lines, cropOn: { id: lines } }
+  - swipe: { from: { id: lines }, direction: up }
+  - swipe: { from: { id: lines }, direction: up }
+  - swipe: { from: { id: lines }, direction: up }
+  - await: { idle: true, stableFor: 1000 }
+  - when: { platform: android }
+    steps:
+      - assert: { visible: { text: Line 40 of the page } }
+  - snapshot: { name: lines-scrolled-to-end, cropOn: { id: lines } }

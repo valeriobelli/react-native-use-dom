@@ -1,0 +1,21 @@
+# An edit to a DOM component's source reaches its page as a hot update that keeps its state.
+# Needs the dev server; the scripts edit and restore the examples' Greeting.tsx.
+executionPrerequisite: The example app runs from the dev server, freshly launched, and no greeting was clicked.
+steps:
+  - echo: Fast Refresh updates the DOM component and keeps its state
+  - script: { path: ../../scripts/restore-greeting.mjs }
+  - run: ready
+  - tap: { id: first-greeting }
+  - await: { visible: { text: The first greeting reported 1 clicks } }
+  - tap: { id: first-greeting }
+  - await: { visible: { text: The first greeting reported 2 clicks } }
+  - script: { path: ../../scripts/edit-greeting.mjs }
+  - when: { platform: android }
+    steps:
+      - await: { visible: { text: 'Pressed 2 times.' }, timeout: 15000 }
+  - wait: 3000
+  - await: { idle: true, stableFor: 500 }
+  - snapshot: { name: first-greeting-refreshed, cropOn: { id: first-greeting } }
+  - tap: { id: first-greeting }
+  - await: { visible: { text: The first greeting reported 3 clicks } }
+  - script: { path: ../../scripts/restore-greeting.mjs }

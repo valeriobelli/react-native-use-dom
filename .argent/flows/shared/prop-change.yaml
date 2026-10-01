@@ -1,0 +1,16 @@
+# A new prop reaches a rendered DOM component without reloading its page: its state survives.
+executionPrerequisite: The example app has just launched and no greeting was clicked.
+steps:
+  - echo: A prop change re-renders the DOM component and keeps its state
+  - run: ready
+  - tap: { id: first-greeting }
+  - await: { visible: { text: The first greeting reported 1 clicks } }
+  - tap: { text: Rename to Metro }
+  - await: { visible: { text: Rename to React Native } }
+  - when: { platform: android }
+    steps:
+      - await: { visible: { text: 'Hello, Metro. Clicked 1 times.' } }
+  - await: { idle: true }
+  - snapshot: { name: first-greeting-renamed, cropOn: { id: first-greeting } }
+  - tap: { id: first-greeting }
+  - await: { visible: { text: The first greeting reported 2 clicks } }

@@ -40,6 +40,31 @@ marks code that must not compile, so an expectation that stops failing is itself
 `packages/react-native-use-dom/src/docs/errors.ts` and run `pnpm docs:errors`. `pnpm test` fails when
 the two differ.
 
+## End-to-end tests
+
+[`.argent/flows`](./.argent/flows) holds [Argent](https://github.com/software-mansion/argent) flows that drive
+each example app on a simulator or emulator. They cover the first render, native actions, prop changes, refs, a
+blocked navigation, scrolling and Fast Refresh, and compare screenshots of the DOM components with the baselines in
+`__baselines__`.
+
+They run against a debug build that loads from the example's own dev server, on port 8081, so run one example at a
+time: start its dev server and install its app as its README says. Then, from the repository root:
+
+```sh
+pnpm e2e:bare --device <simulator udid or emulator serial>
+pnpm e2e:expo --device <simulator udid or emulator serial>
+```
+
+On Android, run `adb reverse tcp:8081 tcp:8081` first. The Fast Refresh flow edits and restores
+`src/Greeting.tsx` in both examples, so don't edit it while the flows run.
+
+The baselines are keyed by platform and screen size: they were taken on an iPhone 16 Pro (iOS 18) and a
+1080x2400 Android emulator. On another device, or after changing what a DOM component looks like, write new ones
+with `--update-baselines`, check them, and run the flows again to compare.
+
+On iOS a flow can't find text inside a WebView, so the flows tap the native views that hold the DOM components
+and check the results in native text and screenshots. On Android they also check the text of the pages.
+
 ## Releasing
 
 Releases are made with [Changesets](https://changesets.dev) and published from GitHub Actions with

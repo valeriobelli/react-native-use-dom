@@ -13,6 +13,11 @@ overrides:
 # platform packages, so refusing costs nothing; lefthook's only installs the git hooks, which
 # `pnpm exec lefthook install` does instead.
 allowBuilds:
+  '@fails-components/webtransport-transport-http3-quiche': false
   '@parcel/watcher': false
   lefthook: false
+  node-pty: false
+  tree-sitter: false
+  tree-sitter-javascript: false
+  tree-sitter-typescript: false
   unrs-resolver: false

@@ -1,0 +1,3 @@
+steps:
+  - launch: { ios: org.reactjs.native.example.BareExample, android: com.bareexample }
+  - run: ../shared/scroll

@@ -1,0 +1,17 @@
+# A ref call reaches the instance it belongs to, and only that one.
+executionPrerequisite: The example app has just launched and no greeting was clicked.
+steps:
+  - echo: A ref resets the first greeting and leaves the second alone
+  - run: ready
+  - tap: { id: first-greeting }
+  - await: { visible: { text: The first greeting reported 1 clicks } }
+  - tap: { id: first-greeting }
+  - await: { visible: { text: The first greeting reported 2 clicks } }
+  - tap: { id: second-greeting }
+  - await: { visible: { text: The second greeting reported 1 clicks } }
+  - tap: { text: Reset the first }
+  - await: { visible: { text: Reset the first greeting after 2 clicks } }
+  - tap: { id: second-greeting }
+  - await: { visible: { text: The second greeting reported 2 clicks } }
+  - tap: { id: first-greeting }
+  - await: { visible: { text: The first greeting reported 1 clicks } }

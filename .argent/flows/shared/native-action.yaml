@@ -1,0 +1,14 @@
+# A DOM component calls a native action and renders what the app answers.
+executionPrerequisite: The example app has just launched and no greeting was clicked.
+steps:
+  - echo: A click in the DOM reaches the app, and the app's answer reaches the DOM
+  - run: ready
+  - tap: { id: first-greeting }
+  - await: { visible: { text: The first greeting reported 1 clicks } }
+  - when: { platform: android }
+    steps:
+      - await: { visible: { text: 'Clicked 1 times. Odd.' } }
+  - await: { idle: true }
+  - snapshot: { name: first-greeting-answered, cropOn: { id: first-greeting } }
+  - tap: { id: first-greeting }
+  - await: { visible: { text: The first greeting reported 2 clicks } }

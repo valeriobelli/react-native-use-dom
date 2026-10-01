@@ -1,0 +1,3 @@
+steps:
+  - launch: com.expoexample
+  - run: ../shared/fast-refresh

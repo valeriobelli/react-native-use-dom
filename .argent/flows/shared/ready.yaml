@@ -1,0 +1,15 @@
+# The screen is laid out and every DOM component has rendered. The note takes its height only once
+# its page has measured it, which moves everything under it, so nothing is tapped before then.
+# Android flows can read inside a web view and wait for the text; iOS flows wait for the screen to
+# settle.
+executionPrerequisite: The example app has just launched.
+steps:
+  - await: { visible: { id: first-greeting } }
+  - await: { visible: { id: lines } }
+  - when: { platform: android }
+    steps:
+      - await: { visible: { text: This note is a DOM component }, timeout: 15000 }
+      - await: { visible: { text: 'Hello, React Native.' }, timeout: 15000 }
+      - await: { visible: { text: 'Hello, a second instance.' }, timeout: 15000 }
+      - await: { visible: { text: Line 1 of the page }, timeout: 15000 }
+  - await: { idle: true, stableFor: 1000 }

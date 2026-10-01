@@ -9,6 +9,8 @@
 		"format": "oxfmt .",
 		"format:check": "oxfmt --check .",
 		"test": "jest",
+		"e2e:bare": "argent flow run .argent/flows/bare",
+		"e2e:expo": "argent flow run .argent/flows/expo",
 		"docs:errors": "WRITE_ERRORS_DOC=1 jest packages/react-native-use-dom/src/docs",
 		"changeset": "changeset",
 		"release": "pnpm build && changeset publish"
@@ -24,6 +26,7 @@
 		"@changesets/config": "4.0.1",
 		"@commitlint/cli": "21.2.3",
 		"@commitlint/config-conventional": "21.2.3",
+		"@swmansion/argent": "0.26.0",
 		"@types/babel__core": "^7.20.5",
 		"@types/jest": "30.0.0",
 		"@types/node": "^26.6.3",

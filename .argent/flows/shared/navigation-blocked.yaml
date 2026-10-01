@@ -1,0 +1,13 @@
+# A link that leaves the page is not followed in it: the app is told, and opens it itself. On
+# Android the browser then covers the app, so the flow goes back to it before reading its status.
+executionPrerequisite: The example app has just launched.
+steps:
+  - echo: Leaving the page is blocked and reported to the app
+  - run: ready
+  - tap: { id: note }
+  - when: { platform: android }
+    steps:
+      - wait: 2000
+      - tool: button
+        args: { button: back }
+  - await: { visible: { text: Opened https://reactnative.dev/ outside the DOM component } }
