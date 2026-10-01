@@ -96,13 +96,20 @@ function useDomLifecycle(
 	props: Record<string, Serializable>,
 	actionNames: readonly string[],
 ): void {
+	// First, so that the bridge is open again before the props effect below sends, when React re-runs
+	// both without unmounting: during Fast Refresh, and once after mounting in Strict Mode.
+	useEffect(() => {
+		bridge.open();
+		return () => {
+			bridge.dispose();
+		};
+	}, [bridge]);
+
 	useEffect(() => {
 		bridge.sendProps(props, actionNames);
 		// Compared by value, because a render produces a new props object every time.
 		// oxlint-disable-next-line react-hooks/exhaustive-deps
 	}, [bridge, JSON.stringify(props), actionNames]);
-
-	useEffect(() => () => bridge.dispose(), [bridge]);
 }
 
 /**

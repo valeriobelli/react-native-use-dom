@@ -224,4 +224,17 @@ describe('NativeDomBridge', () => {
 		bridge.sendProps({ title: 'Late' }, []);
 		expect(dispatched).toHaveLength(0);
 	});
+
+	it('works again once reopened, as when React re-runs its effects without unmounting', async () => {
+		const save = jest.fn(() => 'saved');
+		bridge.setActions({ save: save as never });
+		bridge.dispose();
+		bridge.open();
+
+		fromDom({ type: 'action-call', instanceId: 'i1', callId: 'c1', action: 'save', args: [] });
+		await flush();
+
+		expect(save).toHaveBeenCalledTimes(1);
+		expect(lastOfType('result')).toMatchObject({ callId: 'c1', ok: true, value: 'saved' });
+	});
 });

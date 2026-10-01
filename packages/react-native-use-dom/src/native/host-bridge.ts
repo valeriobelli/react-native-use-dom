@@ -106,6 +106,14 @@ export class NativeDomBridge {
 		}
 	}
 
+	/**
+	 * Accepts messages again after {@link dispose}. React runs an effect's cleanup and setup again
+	 * without unmounting the component during Fast Refresh and, in Strict Mode, once after mounting.
+	 */
+	open(): void {
+		this.#closed = false;
+	}
+
 	/** Rejects everything still in flight. Called when the component unmounts. */
 	dispose(): void {
 		this.#closed = true;
