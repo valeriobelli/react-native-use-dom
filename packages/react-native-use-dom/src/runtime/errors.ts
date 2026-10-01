@@ -2,8 +2,9 @@
  * Every error this library throws carries a stable `code`. Codes are part of the public contract:
  * they are documented, greppable, and safe to branch on. Messages are not — they may be reworded.
  *
- * Adding a code here is the only supported way to introduce a new failure mode; `docs/errors.md`
- * is generated from this table and a test asserts the two never drift.
+ * Adding a code here is the only supported way to introduce a new failure mode. Each code is
+ * documented in `../docs/errors.ts`, which `docs/errors.md` is generated from, and a test asserts
+ * the two never drift.
  */
 export const DomErrorCode = {
 	/** The project's Metro config was never wrapped with `withDom()`. */

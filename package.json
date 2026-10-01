@@ -9,6 +9,7 @@
 		"format": "oxfmt .",
 		"format:check": "oxfmt --check .",
 		"test": "jest",
+		"docs:errors": "WRITE_ERRORS_DOC=1 jest packages/react-native-use-dom/src/docs",
 		"changeset": "changeset",
 		"release": "pnpm build && changeset publish"
 	},

@@ -5,6 +5,6 @@ module.exports = {
 	displayName: 'node',
 	rootDir: __dirname,
 	testEnvironment: 'node',
-	testMatch: ['<rootDir>/src/*.test.ts', '<rootDir>/src/{runtime,babel,metro,native}/**/*.test.ts'],
+	testMatch: ['<rootDir>/src/*.test.ts', '<rootDir>/src/{runtime,babel,metro,native,docs}/**/*.test.ts'],
 	transform: { '^.+\\.[jt]sx?$': ['babel-jest', { rootMode: 'upward' }] },
 };

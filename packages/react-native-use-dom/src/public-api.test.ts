@@ -92,8 +92,9 @@ describe.each([...entryPoints()])('%s', (_entry, file) => {
 });
 
 it('declares stylesheet modules for TypeScript, with TSDoc', () => {
-	const [declaration] = parse(path.join(PACKAGE_ROOT, 'css.d.ts')).program.body;
+	const declarations = parse(path.join(PACKAGE_ROOT, 'css.d.ts')).program.body;
 
-	expect(declaration?.type).toBe('TSModuleDeclaration');
-	expect(declaration && hasTsdoc(declaration)).toBe(true);
+	expect(declarations.map((declaration) => [declaration.type, hasTsdoc(declaration)])).toStrictEqual([
+		['TSModuleDeclaration', true],
+	]);
 });

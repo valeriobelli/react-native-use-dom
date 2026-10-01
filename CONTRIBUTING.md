@@ -35,3 +35,7 @@ zizmor .github
 `pnpm typecheck` checks the tests as well as the library. That includes the type tests in
 `packages/react-native-use-dom/src/__tests__/types`, which are never run. Each `@ts-expect-error` in them
 marks code that must not compile, so an expectation that stops failing is itself an error.
+
+[`docs/errors.md`](./docs/errors.md) is generated. To add or change an error code, document it in
+`packages/react-native-use-dom/src/docs/errors.ts` and run `pnpm docs:errors`. `pnpm test` fails when
+the two differ.
