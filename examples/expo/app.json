@@ -1,22 +1,32 @@
 {
 	"expo": {
-		"name": "ExpoExample",
-		"slug": "expo-example",
+		"name": "ReactNativeUseDomExpoExample",
+		"slug": "react-native-use-dom-example",
 		"version": "1.0.0",
 		"orientation": "portrait",
 		"icon": "./assets/icon.png",
 		"ios": {
-			"bundleIdentifier": "com.expoexample",
+			"bundleIdentifier": "com.reactnativeusedomexample",
 			"supportsTablet": true
 		},
 		"android": {
-			"package": "com.expoexample",
+			"package": "com.reactnativeusedomexample",
 			"adaptiveIcon": {
 				"backgroundColor": "#E6F4FE",
 				"foregroundImage": "./assets/android-icon-foreground.png",
 				"backgroundImage": "./assets/android-icon-background.png",
 				"monochromeImage": "./assets/android-icon-monochrome.png"
 			}
-		}
+		},
+		"plugins": [
+			[
+				"expo-build-properties",
+				{
+					"ios": {
+						"enableSceneSupport": true
+					}
+				}
+			]
+		]
 	}
 }
