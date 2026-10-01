@@ -24,7 +24,7 @@ export async function buildPages(
 	components: readonly string[],
 	outputDirectory: string,
 ): Promise<void> {
-	const server = new metro.Server(withoutStartupBanner(createWebConfig(config)), { watch: false });
+	const server = new metro.Server(withoutStartupBanner(createWebConfig(config, metro)), { watch: false });
 	try {
 		await server.ready();
 		await rm(outputDirectory, { recursive: true, force: true });

@@ -30,7 +30,10 @@ const WORKSPACE_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 const RN_BABEL_PRESET = require.resolve('@react-native/babel-preset', {
 	paths: [require.resolve('@react-native/metro-config')],
 });
-const COMPONENT = "'use dom';\nexport default function Hello(props) { return <p>released {props.name}</p>; }\n";
+// The library's plugin, as an app's babel.config.js adds it.
+const USE_DOM_BABEL_PLUGIN = require.resolve('../babel');
+const COMPONENT =
+	"'use dom';\nimport './Hello.css';\nexport default function Hello(props) { return <p>released {props.name}</p>; }\n";
 
 describe('a release build', () => {
 	let projectRoot: string;
@@ -41,13 +44,20 @@ describe('a release build', () => {
 		writeFileSync(path.join(projectRoot, 'package.json'), '{ "name": "release-fixture" }\n');
 		writeFileSync(
 			path.join(projectRoot, 'babel.config.js'),
-			`module.exports = { presets: [${JSON.stringify(RN_BABEL_PRESET)}] };\n`,
+			`module.exports = { presets: [${JSON.stringify(RN_BABEL_PRESET)}], plugins: [${JSON.stringify(USE_DOM_BABEL_PLUGIN)}] };\n`,
 		);
 		writeFileSync(path.join(projectRoot, 'Hello.js'), COMPONENT);
+		writeFileSync(path.join(projectRoot, 'Hello.css'), 'p { color: rebeccapurple; }\n');
 		writeFileSync(path.join(projectRoot, 'Unused.js'), COMPONENT);
 		writeFileSync(path.join(projectRoot, 'index.js'), "global.hello = require('./Hello');\n");
 		mkdirSync(path.join(projectRoot, 'node_modules'));
 		symlinkSync(path.dirname(require.resolve('react/package.json')), path.join(projectRoot, 'node_modules', 'react'));
+		// What the plugin's proxies import, without the React Native the real one renders with.
+		mkdirSync(path.join(projectRoot, 'node_modules', 'react-native-use-dom'));
+		writeFileSync(
+			path.join(projectRoot, 'node_modules', 'react-native-use-dom', 'index.js'),
+			'exports.createDomComponentProxy = () => () => null;\n',
+		);
 		argv = process.argv;
 	});
 
@@ -91,6 +101,7 @@ describe('a release build', () => {
 
 		const code = readFileSync(path.join(pages, script), 'utf8');
 		expect(code).toContain('released');
+		expect(code).toContain('rebeccapurple');
 		expect(code).not.toContain('sourceMappingURL');
 		expect(code).not.toContain('/_dom/');
 		expect(existsSync(path.join(pages, domBundleFileName(path.join(projectRoot, 'Unused.js'))))).toBe(false);

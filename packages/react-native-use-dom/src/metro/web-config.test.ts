@@ -7,6 +7,7 @@ import { mergeConfig } from 'metro-config';
 import type { CustomResolutionContext, CustomResolver, Resolution } from 'metro-resolver';
 
 import { DomErrorCode } from '../runtime/errors';
+import { hostMetro } from './host-metro';
 import { createWebConfig, createWebResolver, readWebTransformerSettings, WEB_TRANSFORMER_ENV } from './web-config';
 
 const FIXTURE_ROOT = path.join(__dirname, '__fixtures__', 'web-project');
@@ -67,7 +68,7 @@ afterEach(() => {
 
 describe('createWebConfig', () => {
 	it('removes the native runtime assumptions of React Native defaults', () => {
-		const web = createWebConfig(projectConfig());
+		const web = createWebConfig(projectConfig(), hostMetro());
 
 		expect(web.resolver.platforms).toEqual(['android', 'ios', 'web']);
 		expect(web.resolver.resolverMainFields).toEqual(['browser', 'module', 'main']);
@@ -76,11 +77,19 @@ describe('createWebConfig', () => {
 		expect(web.serializer.getPolyfills({ platform: 'web' })).toEqual([]);
 		expect(web.serializer.getModulesRunBeforeMainModule('/entry.js')).toEqual([]);
 		expect(web.transformer.babelTransformerPath).toBe(require.resolve('./transformer'));
+		expect(web.transformerPath).toBe(require.resolve('./transform-worker'));
+	});
+
+	it('resolves stylesheets, which React Native does not', () => {
+		const project = projectConfig();
+
+		expect(project.resolver.sourceExts).not.toContain('css');
+		expect(createWebConfig(project, hostMetro()).resolver.sourceExts).toContain('css');
 	});
 
 	it('preserves resolver customisations and watches the package', () => {
 		const project = projectConfig();
-		const web = createWebConfig(project);
+		const web = createWebConfig(project, hostMetro());
 
 		expect(web.resolver.blockList).toBe(project.resolver.blockList);
 		expect(web.resolver.extraNodeModules).toBe(project.resolver.extraNodeModules);
@@ -89,24 +98,27 @@ describe('createWebConfig', () => {
 		expect(web.cacheVersion).not.toBe(project.cacheVersion);
 	});
 
-	it('publishes the project transformer for the web transformer to wrap', () => {
+	it('publishes the project transformer and worker for the web ones to wrap', () => {
 		const project = projectConfig();
-		createWebConfig(project);
+		createWebConfig(project, hostMetro());
 
 		expect(readWebTransformerSettings()).toEqual({
 			upstreamTransformerPath: project.transformer.babelTransformerPath,
+			upstreamWorkerPath: require.resolve('metro-transform-worker', {
+				paths: [path.dirname(require.resolve('metro/package.json'))],
+			}),
 			allowedRoots: [FIXTURE_ROOT, EXTRA_WATCH_FOLDER],
 		});
 	});
 
 	it('resolves browser fields and never native platform files', async () => {
-		const paths = await resolvedPaths(createWebConfig(projectConfig()), 'index.js');
+		const paths = await resolvedPaths(createWebConfig(projectConfig(), hostMetro()), 'index.js');
 
 		expect(paths).toEqual(['index.js', 'platform.js', path.join('vendor', 'dual-pkg', 'browser.js')]);
 	});
 
 	it('fails the build when a DOM bundle imports react-native, naming the importer', async () => {
-		const build = resolvedPaths(createWebConfig(projectConfig()), 'imports-react-native.js');
+		const build = resolvedPaths(createWebConfig(projectConfig(), hostMetro()), 'imports-react-native.js');
 
 		await expect(build).rejects.toMatchObject({
 			code: DomErrorCode.ReactNativeImportInDom,

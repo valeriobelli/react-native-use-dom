@@ -4,6 +4,7 @@ import type { ConfigT } from 'metro-config';
 import type { CustomResolutionContext, CustomResolver, Resolution } from 'metro-resolver';
 
 import { DomError, DomErrorCode } from '../runtime/errors';
+import type { Metro } from './host-metro';
 
 /** The platform DOM bundles are built for. */
 export const WEB_PLATFORM = 'web';
@@ -22,6 +23,8 @@ export const WEB_TRANSFORMER_ENV = 'RN_USE_DOM_WEB_TRANSFORMER';
 export interface WebTransformerSettings {
 	/** Absolute path of the Babel transformer the project uses for its native bundle. */
 	upstreamTransformerPath: string;
+	/** Absolute path of the transform worker the project uses for its native bundle. */
+	upstreamWorkerPath: string;
 	/** Directories a DOM component may be built from: the project root and its watch folders. */
 	allowedRoots: readonly string[];
 }
@@ -31,6 +34,12 @@ const PACKAGE_ROOT = path.resolve(__dirname, '..', '..');
 
 /** The Babel transformer that runs in front of the project's own for DOM bundles. */
 const WEB_TRANSFORMER_PATH = require.resolve('./transformer');
+
+/** The transform worker that runs in front of the project's own for DOM bundles. */
+const WEB_WORKER_PATH = require.resolve('./transform-worker');
+
+/** The stylesheets a DOM component can import. */
+const CSS_EXTENSION = 'css';
 
 /** Suffix that keeps web transforms out of the native bundle's cache entries. */
 const CACHE_VERSION_SUFFIX = 'react-native-use-dom:web';
@@ -45,14 +54,18 @@ const REACT_NATIVE_PACKAGE_PATH = /[/\\]node_modules[/\\]react-native[/\\]/u;
  * `blockList`, `watchFolders`, extensions) carries over. What changes is what React Native's
  * defaults assume about a native runtime: the `react-native` export condition and main field,
  * the JS polyfills and the setup module run before the entry, and the preference for `.native.*`
- * files. A DOM bundle runs in a browser engine and gets none of them.
+ * files. A DOM bundle runs in a browser engine and gets none of them. What a browser has and
+ * React Native does not is added: `.css` imports.
  *
  * Calling this publishes the settings the web Babel transformer reads, so it must run in the
  * process that starts the web bundler, before it starts.
+ *
+ * @param metro - The Metro that builds the bundles, which resolves the project's transform worker.
  */
-export function createWebConfig(config: ConfigT): ConfigT {
+export function createWebConfig(config: ConfigT, metro: Metro): ConfigT {
 	const settings: WebTransformerSettings = {
 		upstreamTransformerPath: resolveUpstreamTransformer(config),
+		upstreamWorkerPath: metro.resolve(config.transformerPath),
 		allowedRoots: unique([config.projectRoot, ...config.watchFolders]),
 	};
 	process.env[WEB_TRANSFORMER_ENV] = JSON.stringify(settings);
@@ -64,6 +77,7 @@ export function createWebConfig(config: ConfigT): ConfigT {
 		resolver: {
 			...config.resolver,
 			platforms: unique([...config.resolver.platforms, WEB_PLATFORM]),
+			sourceExts: unique([...config.resolver.sourceExts, CSS_EXTENSION]),
 			resolverMainFields: ['browser', 'module', 'main'],
 			// `browser` comes from `unstable_conditionsByPlatform.web`; a global list would also
 			// apply it to the native bundle's resolution if the two configs were ever shared.
@@ -85,6 +99,7 @@ export function createWebConfig(config: ConfigT): ConfigT {
 			// bundles are loaded by the page this library generates.
 			customSerializer: null,
 		},
+		transformerPath: WEB_WORKER_PATH,
 		transformer: {
 			...config.transformer,
 			babelTransformerPath: WEB_TRANSFORMER_PATH,

@@ -146,7 +146,7 @@ async function forwardBundleRequest(
 }
 
 async function startWebBundler(metro: Metro, config: ConfigT): Promise<WebBundler> {
-	const webConfig = withoutStartupBanner(createWebConfig(config));
+	const webConfig = withoutStartupBanner(createWebConfig(config, metro));
 	const server = new metro.Server(webConfig, { watch: true });
 	await server.ready();
 	const bundleEntry = entryBundlePath(webConfig);

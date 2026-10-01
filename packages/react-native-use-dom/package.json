@@ -31,6 +31,7 @@
 		"android/fix-prefab.gradle",
 		"android/CMakeLists.txt",
 		"android/src",
+		"css.d.ts",
 		"README.md"
 	],
 	"type": "commonjs",
@@ -54,6 +55,9 @@
 		"./internal": {
 			"types": "./dist/runtime/index.d.ts",
 			"default": "./dist/runtime/index.js"
+		},
+		"./css": {
+			"types": "./css.d.ts"
 		},
 		"./package.json": "./package.json"
 	},

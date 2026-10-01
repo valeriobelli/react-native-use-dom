@@ -1,0 +1,10 @@
+.note {
+	margin: 0;
+	padding: 16px;
+	font: 14px/1.5 system-ui;
+	color: #3c3c43;
+}
+
+.note a {
+	color: #af52de;
+}

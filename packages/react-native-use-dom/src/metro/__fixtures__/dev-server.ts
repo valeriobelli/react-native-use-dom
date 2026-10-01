@@ -29,6 +29,14 @@ export function withInput(greeting: string): string {
 	return `export default function Hello(props) {\n\treturn <label>${greeting} {props.name}<input id="typed" /></label>;\n}\n`;
 }
 
+/** The stylesheet the fixture's component can import, as `./styles.css`. */
+export const STYLESHEET = 'styles.css';
+
+/** {@link withInput}, styled by {@link STYLESHEET}. */
+export function withStylesheet(greeting: string): string {
+	return `import './${STYLESHEET}';\n${withInput(greeting)}`;
+}
+
 export interface ReporterEvent {
 	type: string;
 }
@@ -47,6 +55,7 @@ export interface DevFixture {
 	/** What Metro reported, in order. */
 	reported: ReporterEvent[];
 	writeComponent(source: string): void;
+	writeStylesheet(css: string): void;
 	pageUrl(): string;
 	fetchBundle(): Promise<Response>;
 	/** Loads the page the way the native view does: the native side injects props before any script runs. */
@@ -131,14 +140,11 @@ async function loadPage(url: string): Promise<Page> {
 	return { dom, reloaded: () => reloaded };
 }
 
-export async function startDevFixture(): Promise<DevFixture> {
-	const projectRoot = createProject();
-	const component = path.join(projectRoot, 'Hello.js');
-	const reported: ReporterEvent[] = [];
-	const dev = createDomDevServer(projectConfig(projectRoot, reported), hostMetro());
-	const httpServer = http.createServer((req, res) => {
-		dev.middleware(req, res, nextMiddleware(res));
-	});
+/** An HTTP server on a free local port, with the connections it has open. */
+async function listen(
+	handler: http.RequestListener,
+): Promise<{ httpServer: http.Server; connections: Set<http.IncomingMessage['socket']> }> {
+	const httpServer = http.createServer(handler);
 	const connections = new Set<http.IncomingMessage['socket']>();
 	httpServer.on('connection', (socket) => {
 		connections.add(socket);
@@ -146,6 +152,17 @@ export async function startDevFixture(): Promise<DevFixture> {
 	});
 	await new Promise<void>((resolve) => {
 		httpServer.listen(0, '127.0.0.1', resolve);
+	});
+	return { httpServer, connections };
+}
+
+export async function startDevFixture(): Promise<DevFixture> {
+	const projectRoot = createProject();
+	const component = path.join(projectRoot, 'Hello.js');
+	const reported: ReporterEvent[] = [];
+	const dev = createDomDevServer(projectConfig(projectRoot, reported), hostMetro());
+	const { httpServer, connections } = await listen((req, res) => {
+		dev.middleware(req, res, nextMiddleware(res));
 	});
 	const origin = `http://127.0.0.1:${(httpServer.address() as { port: number }).port}`;
 
@@ -160,6 +177,9 @@ export async function startDevFixture(): Promise<DevFixture> {
 		reported,
 		writeComponent: (source) => {
 			writeFileSync(component, source);
+		},
+		writeStylesheet: (css) => {
+			writeFileSync(path.join(projectRoot, STYLESHEET), css);
 		},
 		pageUrl,
 		fetchBundle: () => {

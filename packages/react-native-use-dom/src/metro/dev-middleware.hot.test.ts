@@ -1,5 +1,6 @@
 import type { DevFixture, Page } from './__fixtures__/dev-server';
-import { BROKEN, HELLO, startDevFixture, waitFor, withInput } from './__fixtures__/dev-server';
+import { BROKEN, HELLO, startDevFixture, waitFor, withInput, withStylesheet } from './__fixtures__/dev-server';
+import { STYLESHEET_ATTRIBUTE } from './transform-worker';
 
 jest.setTimeout(120_000);
 
@@ -21,8 +22,8 @@ afterEach(() => {
  * Opens the page on a component greeting with `greeting`, once its bundle has it: Metro sees edits a
  * moment after they are written. Each test greets differently, so none opens on a previous one's.
  */
-async function openWith(greeting: string): Promise<Page> {
-	fixture.writeComponent(withInput(greeting));
+async function openWith(greeting: string, source = withInput(greeting)): Promise<Page> {
+	fixture.writeComponent(source);
 	await waitFor('the watcher to see the edit', async () =>
 		(await (await fixture.fetchBundle()).text()).includes(greeting),
 	);
@@ -50,6 +51,27 @@ it('updates the component in place, keeping what was typed into it', async () =>
 
 		expect(page.dom.window.document.querySelector<HTMLInputElement>('#typed')).toBe(input);
 		expect(input.value).toBe('typed before the edit');
+		expect(page.reloaded()).toBe(false);
+	} finally {
+		page.dom.window.close();
+	}
+});
+
+it('applies an edited stylesheet in place', async () => {
+	fixture.writeStylesheet('label { color: red; }\n');
+	const page = await openWith('hei', withStylesheet('hei'));
+	const { document } = page.dom.window;
+	const styles = (): string =>
+		[...document.querySelectorAll(`style[${STYLESHEET_ATTRIBUTE}]`)].map((style) => style.textContent).join('');
+
+	try {
+		expect(styles()).toContain('color: red');
+
+		fixture.writeStylesheet('label { color: blue; }\n');
+		await waitFor('the update', () => styles().includes('color: blue'));
+
+		expect(styles()).not.toContain('color: red');
+		expect(document.querySelectorAll(`style[${STYLESHEET_ATTRIBUTE}]`)).toHaveLength(1);
 		expect(page.reloaded()).toBe(false);
 	} finally {
 		page.dom.window.close();

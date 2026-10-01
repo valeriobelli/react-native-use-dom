@@ -19,6 +19,8 @@ export interface Metro {
 	bundleToString: typeof bundleToString;
 	getDefaultConfig: typeof getDefaultConfig;
 	mergeConfig: typeof mergeConfig;
+	/** Resolves a module the way this Metro's own code does, which is how it loads `transformerPath`. */
+	resolve: (request: string) => string;
 }
 
 /** The module cache, as `require.cache` holds it. */
@@ -55,6 +57,7 @@ export function hostMetro(server?: object): Metro {
 		bundleToString: defaultExport(load('metro/private/lib/bundleToString')),
 		getDefaultConfig: defaults,
 		mergeConfig: merge,
+		resolve: (request) => load.resolve(request),
 	};
 }
 

@@ -2,7 +2,7 @@
 
 import type { DomProps } from 'react-native-use-dom';
 
-const noteStyle = { margin: 0, padding: 16, font: '14px/1.5 system-ui', color: '#3c3c43' };
+import './Note.css';
 
 /**
  * Laid out by the page: the app sizes it to its text with `matchContents`. The link leaves the
@@ -10,7 +10,7 @@ const noteStyle = { margin: 0, padding: 16, font: '14px/1.5 system-ui', color: '
  */
 export default function Note({ text }: { text: string; dom?: DomProps }) {
 	return (
-		<p style={noteStyle}>
+		<p className="note">
 			{text} <a href="https://reactnative.dev">Open reactnative.dev</a>
 		</p>
 	);
