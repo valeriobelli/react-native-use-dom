@@ -39,3 +39,40 @@ marks code that must not compile, so an expectation that stops failing is itself
 [`docs/errors.md`](./docs/errors.md) is generated. To add or change an error code, document it in
 `packages/react-native-use-dom/src/docs/errors.ts` and run `pnpm docs:errors`. `pnpm test` fails when
 the two differ.
+
+## Releasing
+
+Releases are made with [Changesets](https://changesets.dev) and published from GitHub Actions with
+[npm trusted publishing](https://docs.npmjs.com/trusted-publishers): no npm token is stored, and
+every version carries a provenance attestation.
+
+1. A pull request that changes the library adds a changeset: run `pnpm changeset`, pick the bump,
+   and describe the change for the changelog. CI fails a pull request without one; add an empty
+   one (`pnpm changeset --empty`) for changes that need no release.
+2. On every push to `main`, the [Release workflow](./.github/workflows/release.yml) opens or
+   updates the **Version Packages** pull request, which bumps the version and writes the
+   changelog from the pending changesets.
+3. Merging that pull request publishes nothing. To publish, run the Release workflow by hand
+   (Actions → Release → Run workflow) on `main`. It checks, builds and packs the package, then
+   publishes it, tags the commit and creates the GitHub release.
+
+The Version Packages pull request is opened with the workflow's own token, so GitHub doesn't run
+CI on it: close and reopen it to get the checks.
+
+One-time setup:
+
+- In the repository settings, under Actions → General, allow GitHub Actions to create and approve
+  pull requests.
+- Trusted publishers are configured in a package's settings on npmjs.com, so the first version is
+  published by hand. Then, in the package's settings, add a trusted publisher for GitHub Actions
+  with the repository `valeriobelli/react-native-use-dom`, the workflow `release.yml` and the
+  environment `npm`, and disallow publishing with tokens.
+
+To see what a release would publish without publishing it, build and pack locally:
+
+```sh
+pnpm build
+pnpm changeset publish-plan
+pnpm changeset pack --out-dir /tmp/use-dom-pack
+npm publish --dry-run /tmp/use-dom-pack/packages/react-native-use-dom-*.tgz
+```

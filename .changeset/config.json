@@ -1,6 +1,6 @@
 {
 	"$schema": "../node_modules/@changesets/config/schema.json",
-	"changelog": ["@changesets/changelog-github", { "repo": "valeriobelli/react-native-dom" }],
+	"changelog": ["@changesets/changelog-github", { "repo": "valeriobelli/react-native-use-dom" }],
 	"commit": false,
 	"fixed": [],
 	"linked": [],

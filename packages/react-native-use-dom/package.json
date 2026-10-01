@@ -33,7 +33,13 @@
 		"android/src",
 		"css.d.ts",
 		"README.md",
-		"AGENTS.md"
+		"AGENTS.md",
+		"!dist/.tsbuildinfo",
+		"!src/**/__tests__",
+		"!src/**/__fixtures__",
+		"!src/**/*.test.ts",
+		"!src/**/*.test.tsx",
+		"!src/docs"
 	],
 	"type": "commonjs",
 	"exports": {
