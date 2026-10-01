@@ -42,16 +42,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         with:
-          node-version: 24
-          package-manager-cache: false
-      - run: pnpm install --frozen-lockfile
+          cache: false
+          require-lockfile: true
       - uses: changesets/action/version@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
-          # The changelog is formatted like the rest of the repository, so that CI passes on it.
-          script: pnpm changeset version && pnpm format
+          script: pnpm changeset version
 
   pack:
     name: Build and pack

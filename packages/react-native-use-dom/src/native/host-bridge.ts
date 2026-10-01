@@ -1,21 +1,21 @@
-import { DomError, DomErrorCode } from '../runtime/errors';
-import { PendingCalls } from '../runtime/pending-calls';
-import type { ConsoleMessage, DomToNativeMessage, NativeToDomMessage, ResultMessage } from '../runtime/protocol';
-import { decodeMessage, encodeMessage, nativeEventName } from '../runtime/protocol';
-import { assertSerializable } from '../runtime/serializable';
-import type { Serializable } from '../runtime/serializable';
-import type { NativeAction } from '../runtime/split-props';
-import { deserializeError, serializeError } from '../runtime/wire-error';
+import { DomError, DomErrorCode } from '../runtime/errors'
+import { PendingCalls } from '../runtime/pending-calls'
+import type { ConsoleMessage, DomToNativeMessage, NativeToDomMessage, ResultMessage } from '../runtime/protocol'
+import { decodeMessage, encodeMessage, nativeEventName } from '../runtime/protocol'
+import { assertSerializable } from '../runtime/serializable'
+import type { Serializable } from '../runtime/serializable'
+import type { NativeAction } from '../runtime/split-props'
+import { deserializeError, serializeError } from '../runtime/wire-error'
 
 export interface HostBridgeCallbacks {
 	/** The DOM content reported a new size. Only used when `matchContents` is on. */
-	onResize?: (width: number, height: number) => void;
+	onResize?: (width: number, height: number) => void
 	/** The DOM component logged something. */
-	onConsole?: (level: ConsoleMessage['level'], args: readonly Serializable[]) => void;
+	onConsole?: (level: ConsoleMessage['level'], args: readonly Serializable[]) => void
 	/** An error escaped the DOM component. */
-	onUncaughtError?: (error: Error) => void;
+	onUncaughtError?: (error: Error) => void
 	/** The DOM runtime finished mounting and is ready to receive props. */
-	onReady?: () => void;
+	onReady?: () => void
 }
 
 /**
@@ -26,33 +26,33 @@ export interface HostBridgeCallbacks {
  * device.
  */
 export class NativeDomBridge {
-	readonly instanceId: string;
+	readonly instanceId: string
 
-	readonly #eventName: string;
-	readonly #send: (eventName: string, payload: string) => void;
-	readonly #calls = new PendingCalls();
-	#actions: Record<string, NativeAction> = {};
-	#callbacks: HostBridgeCallbacks = {};
-	#closed = false;
+	readonly #eventName: string
+	readonly #send: (eventName: string, payload: string) => void
+	readonly #calls = new PendingCalls()
+	#actions: Record<string, NativeAction> = {}
+	#callbacks: HostBridgeCallbacks = {}
+	#closed = false
 
 	constructor(instanceId: string, send: (eventName: string, payload: string) => void) {
-		this.instanceId = instanceId;
-		this.#eventName = nativeEventName(instanceId);
-		this.#send = send;
+		this.instanceId = instanceId
+		this.#eventName = nativeEventName(instanceId)
+		this.#send = send
 	}
 
 	/** Replaces the function props the DOM side may call. */
 	setActions(actions: Record<string, NativeAction>): void {
-		this.#actions = actions;
+		this.#actions = actions
 	}
 
 	setCallbacks(callbacks: HostBridgeCallbacks): void {
-		this.#callbacks = callbacks;
+		this.#callbacks = callbacks
 	}
 
 	/** Sends the current props. Sent on every render and again whenever the DOM side reports ready. */
 	sendProps(props: Record<string, Serializable>, actionNames: readonly string[]): void {
-		this.#post({ type: 'props', instanceId: this.instanceId, props, actions: actionNames });
+		this.#post({ type: 'props', instanceId: this.instanceId, props, actions: actionNames })
 	}
 
 	/**
@@ -61,48 +61,48 @@ export class NativeDomBridge {
 	 */
 	callHandle(method: string, args: readonly unknown[]): Promise<Serializable> {
 		args.forEach((arg, index) => {
-			assertSerializable(arg, `argument ${index + 1} of \`${method}\``, DomErrorCode.NonSerializableArgument);
-		});
+			assertSerializable(arg, `argument ${index + 1} of \`${method}\``, DomErrorCode.NonSerializableArgument)
+		})
 
-		const { callId, result } = this.#calls.create();
+		const { callId, result } = this.#calls.create()
 		this.#post({
 			type: 'handle-call',
 			instanceId: this.instanceId,
 			callId,
 			method,
 			args: args as Serializable[],
-		});
-		return result;
+		})
+		return result
 	}
 
 	/** Handles one `window.ReactNativeWebView.postMessage` string from the page. */
 	receive(raw: string): void {
-		if (this.#closed) return;
+		if (this.#closed) return
 
-		const message = decodeMessage<DomToNativeMessage>(raw);
-		if (message.instanceId !== this.instanceId) return;
+		const message = decodeMessage<DomToNativeMessage>(raw)
+		if (message.instanceId !== this.instanceId) return
 
 		switch (message.type) {
 			case 'ready':
-				this.#callbacks.onReady?.();
-				break;
+				this.#callbacks.onReady?.()
+				break
 			case 'action-call':
-				this.#runAction(message.callId, message.action, message.args);
-				break;
+				this.#runAction(message.callId, message.action, message.args)
+				break
 			case 'result':
-				this.#calls.settle(message as ResultMessage);
-				break;
+				this.#calls.settle(message as ResultMessage)
+				break
 			case 'resize':
-				this.#callbacks.onResize?.(message.width, message.height);
-				break;
+				this.#callbacks.onResize?.(message.width, message.height)
+				break
 			case 'console':
-				this.#callbacks.onConsole?.(message.level, message.args);
-				break;
+				this.#callbacks.onConsole?.(message.level, message.args)
+				break
 			case 'uncaught-error':
-				this.#callbacks.onUncaughtError?.(deserializeError(message.error));
-				break;
+				this.#callbacks.onUncaughtError?.(deserializeError(message.error))
+				break
 			default:
-				break;
+				break
 		}
 	}
 
@@ -111,18 +111,18 @@ export class NativeDomBridge {
 	 * without unmounting the component during Fast Refresh and, in Strict Mode, once after mounting.
 	 */
 	open(): void {
-		this.#closed = false;
+		this.#closed = false
 	}
 
 	/** Rejects everything still in flight. Called when the component unmounts. */
 	dispose(): void {
-		this.#closed = true;
-		this.#calls.abortAll('the DOM component was unmounted');
+		this.#closed = true
+		this.#calls.abortAll('the DOM component was unmounted')
 	}
 
 	#post(message: NativeToDomMessage): void {
-		if (this.#closed) return;
-		this.#send(this.#eventName, encodeMessage(message));
+		if (this.#closed) return
+		this.#send(this.#eventName, encodeMessage(message))
 	}
 
 	#runAction(callId: string, name: string, args: readonly Serializable[]): void {
@@ -131,13 +131,13 @@ export class NativeDomBridge {
 				outcome.ok
 					? { type: 'result', instanceId: this.instanceId, callId, ok: true, value: outcome.value }
 					: { type: 'result', instanceId: this.instanceId, callId, ok: false, error: outcome.error },
-			);
-			return outcome;
-		});
+			)
+			return outcome
+		})
 	}
 }
 
-type ActionOutcome = { ok: true; value: Serializable } | { ok: false; error: ReturnType<typeof serializeError> };
+type ActionOutcome = { ok: true; value: Serializable } | { ok: false; error: ReturnType<typeof serializeError> }
 
 /**
  * Runs a native action on behalf of the DOM side. A prop that has since been removed is reported as
@@ -157,15 +157,15 @@ async function invokeAction(
 					fix: 'Native actions are the function props the component was rendered with. Check the name, and that the prop is still being passed.',
 				}),
 			),
-		};
+		}
 	}
 
 	try {
-		const returned = (await action(...(args as never[]))) as unknown;
-		const value = returned === undefined ? null : returned;
-		assertSerializable(value, `the value returned by \`${name}\``, DomErrorCode.NonSerializableResult);
-		return { ok: true, value };
+		const returned = (await action(...(args as never[]))) as unknown
+		const value = returned === undefined ? null : returned
+		assertSerializable(value, `the value returned by \`${name}\``, DomErrorCode.NonSerializableResult)
+		return { ok: true, value }
 	} catch (error) {
-		return { ok: false, error: serializeError(error) };
+		return { ok: false, error: serializeError(error) }
 	}
 }

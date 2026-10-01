@@ -1,25 +1,25 @@
-import type { ConfigT } from 'metro-config';
+import type { ConfigT } from 'metro-config'
 
-import { buildPages } from './build-pages';
-import type { BundleCommand } from './bundle-command';
-import { resolveOutputDirectory } from './bundle-command';
-import type { Metro } from './host-metro';
-import { hostMetro } from './host-metro';
+import { buildPages } from './build-pages'
+import type { BundleCommand } from './bundle-command'
+import { resolveOutputDirectory } from './bundle-command'
+import type { Metro } from './host-metro'
+import { hostMetro } from './host-metro'
 
-type CustomSerializer = NonNullable<ConfigT['serializer']['customSerializer']>;
-type SerializerArgs = Parameters<CustomSerializer>;
-type Graph = SerializerArgs[2];
+type CustomSerializer = NonNullable<ConfigT['serializer']['customSerializer']>
+type SerializerArgs = Parameters<CustomSerializer>
+type Graph = SerializerArgs[2]
 
 /** A `'use dom'` directive at the top of a module, after any comments. */
-const USE_DOM_PROLOGUE = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*(['"])use dom\1/u;
+const USE_DOM_PROLOGUE = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*(['"])use dom\1/u
 
 /** The DOM components a native bundle renders, in the order the graph holds them. */
 export function findDomComponents(graph: Graph): string[] {
-	const components: string[] = [];
+	const components: string[] = []
 	for (const [filePath, module] of graph.dependencies) {
-		if (USE_DOM_PROLOGUE.test(module.getSource().toString('utf8'))) components.push(filePath);
+		if (USE_DOM_PROLOGUE.test(module.getSource().toString('utf8'))) components.push(filePath)
 	}
-	return components;
+	return components
 }
 
 /**
@@ -39,15 +39,15 @@ export function withReleaseBuild(
 	command: BundleCommand,
 ): CustomSerializer {
 	return async (...args) => {
-		const [entryPoint, preModules, graph, options] = args;
+		const [entryPoint, preModules, graph, options] = args
 		// Serializing, the bundler has loaded its Metro; the web build is made with the same one.
-		const metro = hostMetro();
-		const components = findDomComponents(graph);
+		const metro = hostMetro()
+		const components = findDomComponents(graph)
 		if (components.length > 0) {
-			const outputDirectory = resolveOutputDirectory(command, graph.transformOptions.platform ?? '');
-			await buildPages(metro, await resolveConfig(metro, options.projectRoot), components, outputDirectory);
+			const outputDirectory = resolveOutputDirectory(command, graph.transformOptions.platform ?? '')
+			await buildPages(metro, await resolveConfig(metro, options.projectRoot), components, outputDirectory)
 		}
-		if (upstream) return upstream(...args);
-		return metro.bundleToString(metro.baseJSBundle(entryPoint, preModules, graph, options)).code;
-	};
+		if (upstream) return upstream(...args)
+		return metro.bundleToString(metro.baseJSBundle(entryPoint, preModules, graph, options)).code
+	}
 }

@@ -9,24 +9,24 @@ web view and is asynchronous.
 Declare the handle as an interface, and the `ref` prop as `DomRef` of it:
 
 ```tsx
-'use dom';
+'use dom'
 
-import { useState } from 'react';
-import type { DomProps, DomRef } from 'react-native-use-dom';
-import { useDOMImperativeHandle } from 'react-native-use-dom/dom';
+import { useState } from 'react'
+import type { DomProps, DomRef } from 'react-native-use-dom'
+import { useDOMImperativeHandle } from 'react-native-use-dom/dom'
 
 export interface EditorHandle {
-	getText(): string;
-	clear(): void;
+	getText(): string
+	clear(): void
 }
 
 interface EditorProps {
-	ref?: DomRef<EditorHandle>;
-	dom?: DomProps;
+	ref?: DomRef<EditorHandle>
+	dom?: DomProps
 }
 
 export default function Editor(_: EditorProps) {
-	const [text, setText] = useState('');
+	const [text, setText] = useState('')
 
 	useDOMImperativeHandle<EditorHandle>(
 		() => ({
@@ -34,9 +34,9 @@ export default function Editor(_: EditorProps) {
 			clear: () => setText(''),
 		}),
 		[text],
-	);
+	)
 
-	return <textarea value={text} onChange={(event) => setText(event.target.value)} />;
+	return <textarea value={text} onChange={(event) => setText(event.target.value)} />
 }
 ```
 
@@ -48,28 +48,28 @@ List what it reads, as with `useImperativeHandle`.
 Hold the ref as `DomRefHandle` of the same interface. Every method returns a Promise:
 
 ```tsx
-import { useRef } from 'react';
-import { Button } from 'react-native';
-import type { DomRefHandle } from 'react-native-use-dom';
+import { useRef } from 'react'
+import { Button } from 'react-native'
+import type { DomRefHandle } from 'react-native-use-dom'
 
-import type { EditorHandle } from './Editor';
-import Editor from './Editor';
+import type { EditorHandle } from './Editor'
+import Editor from './Editor'
 
 export function Screen() {
-	const editor = useRef<DomRefHandle<EditorHandle>>(null);
+	const editor = useRef<DomRefHandle<EditorHandle>>(null)
 
 	const save = async () => {
-		const text = await editor.current?.getText();
-		await editor.current?.clear();
-		console.log(text);
-	};
+		const text = await editor.current?.getText()
+		await editor.current?.clear()
+		console.log(text)
+	}
 
 	return (
 		<>
 			<Editor ref={editor} />
 			<Button title="Save" onPress={save} />
 		</>
-	);
+	)
 }
 ```
 

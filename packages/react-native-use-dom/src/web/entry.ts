@@ -6,4 +6,4 @@
  */
 throw new Error(
 	"react-native-use-dom: the DOM component entry was loaded without being generated. DOM bundles must be built by the bundler `withDom()` starts; check that metro.config.js wraps its config with `withDom` from 'react-native-use-dom/metro'.",
-);
+)

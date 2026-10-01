@@ -1,1 +1,1 @@
-module.exports = 'ios';
+module.exports = 'ios'

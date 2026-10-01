@@ -1,5 +1,5 @@
-import { findSerializableViolation } from './serializable';
-import type { Serializable } from './serializable';
+import { findSerializableViolation } from './serializable'
+import type { Serializable } from './serializable'
 
 /**
  * How a thrown value is represented on the wire.
@@ -8,37 +8,37 @@ import type { Serializable } from './serializable';
  * own enumerable properties, so that a rejection on one side is recognisable on the other.
  */
 export interface WireError {
-	name: string;
-	message: string;
-	stack?: string;
+	name: string
+	message: string
+	stack?: string
 	/** Own enumerable properties of the original error that were themselves serializable. */
-	properties?: Record<string, Serializable>;
+	properties?: Record<string, Serializable>
 }
 
-const SKIPPED_PROPERTIES = new Set(['name', 'message', 'stack']);
+const SKIPPED_PROPERTIES = new Set(['name', 'message', 'stack'])
 
 /** Converts anything that was thrown into a payload that survives the boundary. */
 export function serializeError(thrown: unknown): WireError {
 	if (!(thrown instanceof Error)) {
-		return { name: 'Error', message: safeStringify(thrown) };
+		return { name: 'Error', message: safeStringify(thrown) }
 	}
 
-	const wire: WireError = { name: thrown.name, message: thrown.message };
-	if (typeof thrown.stack === 'string') wire.stack = thrown.stack;
+	const wire: WireError = { name: thrown.name, message: thrown.message }
+	if (typeof thrown.stack === 'string') wire.stack = thrown.stack
 
-	const properties: Record<string, Serializable> = {};
-	let hasProperties = false;
+	const properties: Record<string, Serializable> = {}
+	let hasProperties = false
 	for (const [key, value] of Object.entries(thrown)) {
-		if (SKIPPED_PROPERTIES.has(key)) continue;
+		if (SKIPPED_PROPERTIES.has(key)) continue
 		// A property that cannot be transferred is dropped rather than turning error reporting itself
 		// into an error: the developer is already looking at a failure.
-		if (findSerializableViolation(value) !== null) continue;
-		properties[key] = value as Serializable;
-		hasProperties = true;
+		if (findSerializableViolation(value) !== null) continue
+		properties[key] = value as Serializable
+		hasProperties = true
 	}
-	if (hasProperties) wire.properties = properties;
+	if (hasProperties) wire.properties = properties
 
-	return wire;
+	return wire
 }
 
 /**
@@ -49,23 +49,23 @@ export function serializeError(thrown: unknown): WireError {
  * such as `error.status` still read as they did where the error was thrown.
  */
 export function deserializeError(wire: WireError): Error {
-	const error = new Error(wire.message);
+	const error = new Error(wire.message)
 	Object.defineProperty(error, 'name', {
 		value: wire.name,
 		writable: true,
 		configurable: true,
 		enumerable: false,
-	});
-	if (wire.stack !== undefined) error.stack = wire.stack;
-	if (wire.properties) Object.assign(error, wire.properties);
-	return error;
+	})
+	if (wire.stack !== undefined) error.stack = wire.stack
+	if (wire.properties) Object.assign(error, wire.properties)
+	return error
 }
 
 function safeStringify(value: unknown): string {
-	if (typeof value === 'string') return value;
+	if (typeof value === 'string') return value
 	try {
-		return JSON.stringify(value) ?? String(value);
+		return JSON.stringify(value) ?? String(value)
 	} catch {
-		return String(value);
+		return String(value)
 	}
 }

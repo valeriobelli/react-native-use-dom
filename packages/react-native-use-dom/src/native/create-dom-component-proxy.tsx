@@ -1,34 +1,34 @@
-import { useCallback, useEffect, useId, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import type { ComponentType, RefObject, Ref } from 'react';
-import { View } from 'react-native';
+import { useCallback, useEffect, useId, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import type { ComponentType, RefObject, Ref } from 'react'
+import { View } from 'react-native'
 
-import type { ConsoleMessage } from '../runtime/protocol';
-import type { Serializable } from '../runtime/serializable';
-import { splitProps } from '../runtime/split-props';
-import { NativeDomBridge } from './host-bridge';
-import { resolveDomSource } from './source';
-import type { DomComponentHandle, DomProps } from './types';
-import { loadNativeView } from './web-view';
-import type { RNUseDomWebViewMethods } from './web-view';
-import { useZeroHeightCheck } from './zero-height';
+import type { ConsoleMessage } from '../runtime/protocol'
+import type { Serializable } from '../runtime/serializable'
+import { splitProps } from '../runtime/split-props'
+import { NativeDomBridge } from './host-bridge'
+import { resolveDomSource } from './source'
+import type { DomComponentHandle, DomProps } from './types'
+import { loadNativeView } from './web-view'
+import type { RNUseDomWebViewMethods } from './web-view'
+import { useZeroHeightCheck } from './zero-height'
 
 /** What identifies the `'use dom'` module a proxy renders, as the Babel plugin writes it. */
 export interface DomComponentProxyOptions {
 	/** Absolute path of the `'use dom'` module this proxy stands in for. */
-	filePath: string;
+	filePath: string
 	/** Name of the pre-built page inside the app bundle. Written by the Babel plugin on release. */
-	bundleFile?: string;
+	bundleFile?: string
 }
 
-const FILL_PARENT = { flex: 1 } as const;
+const FILL_PARENT = { flex: 1 } as const
 
 /** Stable default, so a component rendered without a `dom` prop does not see a new object each render. */
-const NO_DOM_PROPS: DomProps = {};
+const NO_DOM_PROPS: DomProps = {}
 
 interface ProxyProps {
-	dom?: DomProps;
-	ref?: Ref<DomComponentHandle>;
-	[key: string]: unknown;
+	dom?: DomProps
+	ref?: Ref<DomComponentHandle>
+	[key: string]: unknown
 }
 
 /**
@@ -39,35 +39,35 @@ interface ProxyProps {
  * original component.
  */
 export function createDomComponentProxy(options: DomComponentProxyOptions): ComponentType<ProxyProps> {
-	const componentName = describeComponent(options.filePath);
+	const componentName = describeComponent(options.filePath)
 
 	function DomComponent({ dom = NO_DOM_PROPS, ref, ...rest }: ProxyProps) {
-		const instanceId = useId();
-		const view = useRef<RNUseDomWebViewMethods | null>(null);
+		const instanceId = useId()
+		const view = useRef<RNUseDomWebViewMethods | null>(null)
 		const bridge = useConstant(
 			() =>
 				new NativeDomBridge(instanceId, (eventName, payload) => {
-					view.current?.dispatchMessage(eventName, payload);
+					view.current?.dispatchMessage(eventName, payload)
 				}),
-		);
+		)
 
-		const { data: props, actions } = splitProps(rest, componentName);
+		const { data: props, actions } = splitProps(rest, componentName)
 		// Hermes has no `toSorted`, and `Object.keys` returns a fresh array, so sorting it in place is safe.
-		const actionNames = useMemo(() => Object.keys(actions).sort(), [actions]);
-		bridge.setActions(actions);
+		const actionNames = useMemo(() => Object.keys(actions).sort(), [actions])
+		bridge.setActions(actions)
 
-		const [contentHeight, setContentHeight] = useState<number | null>(null);
-		useBridgeCallbacks(bridge, dom, props, actionNames, setContentHeight);
+		const [contentHeight, setContentHeight] = useState<number | null>(null)
+		useBridgeCallbacks(bridge, dom, props, actionNames, setContentHeight)
 
 		// The payload the page reads before its first script runs, so the first paint already has
 		// real data. Frozen at mount: later changes travel as messages, which is what keeps a prop
 		// change from reloading the WebView.
-		const injectedObjectJson = useConstant(() => JSON.stringify({ instanceId, props, actions: actionNames }));
+		const injectedObjectJson = useConstant(() => JSON.stringify({ instanceId, props, actions: actionNames }))
 
-		useDomLifecycle(bridge, props, actionNames);
-		useImperativeHandle(ref, () => createHandleProxy(bridge), [bridge]);
+		useDomLifecycle(bridge, props, actionNames)
+		useImperativeHandle(ref, () => createHandleProxy(bridge), [bridge])
 
-		const source = useMemo(() => resolveDomSource(options), []);
+		const source = useMemo(() => resolveDomSource(options), [])
 
 		return (
 			<DomWebView
@@ -79,11 +79,11 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 				source={source}
 				viewRef={view}
 			/>
-		);
+		)
 	}
 
-	DomComponent.displayName = componentName;
-	return DomComponent;
+	DomComponent.displayName = componentName
+	return DomComponent
 }
 
 /**
@@ -100,17 +100,17 @@ function useDomLifecycle(
 	// First, so that the bridge is open again before the props effect below sends, when React re-runs
 	// both without unmounting: during Fast Refresh, and once after mounting in Strict Mode.
 	useEffect(() => {
-		bridge.open();
+		bridge.open()
 		return () => {
-			bridge.dispose();
-		};
-	}, [bridge]);
+			bridge.dispose()
+		}
+	}, [bridge])
 
 	useEffect(() => {
-		bridge.sendProps(props, actionNames);
+		bridge.sendProps(props, actionNames)
 		// Compared by value, because a render produces a new props object every time.
 		// oxlint-disable-next-line react-hooks/exhaustive-deps
-	}, [bridge, JSON.stringify(props), actionNames]);
+	}, [bridge, JSON.stringify(props), actionNames])
 }
 
 /**
@@ -120,8 +120,8 @@ function useDomLifecycle(
  * the injected payload must both survive every re-render unchanged.
  */
 function useConstant<T>(create: () => T): T {
-	const [value] = useState(create);
-	return value;
+	const [value] = useState(create)
+	return value
 }
 
 /**
@@ -136,32 +136,32 @@ function useBridgeCallbacks(
 	setContentHeight: (height: number) => void,
 ): void {
 	const onConsole = useCallback((level: ConsoleMessage['level'], args: readonly Serializable[]) => {
-		console[level](...args);
-	}, []);
+		console[level](...args)
+	}, [])
 
 	// The page is as wide as the view, whatever it shows: only its height is the content's own.
 	const onResize = (_width: number, height: number) => {
-		setContentHeight(height);
-	};
+		setContentHeight(height)
+	}
 
 	bridge.setCallbacks({
 		// The page can load before the first props message is sent, so it asks for them itself.
 		onReady: () => {
-			bridge.sendProps(props, actionNames);
+			bridge.sendProps(props, actionNames)
 		},
 		...(dom.matchContents ? { onResize } : {}),
 		onConsole,
 		onUncaughtError: (error) => {
 			if (dom.onError) {
-				dom.onError(error);
-				return;
+				dom.onError(error)
+				return
 			}
 			// Without an `onError` handler, an error that escaped the DOM component would otherwise
 			// leave nothing but a blank view.
 			// oxlint-disable-next-line no-console
-			console.error(error);
+			console.error(error)
 		},
-	});
+	})
 }
 
 /**
@@ -173,26 +173,26 @@ function createHandleProxy(bridge: NativeDomBridge): DomComponentHandle {
 		get(target, property) {
 			// A symbol read is something the runtime is doing to the object itself — `Symbol.toString`,
 			// promise unwrapping — never a method call from application code.
-			if (typeof property !== 'string') return Reflect.get(target, property);
-			return (...args: readonly unknown[]) => bridge.callHandle(property, args);
+			if (typeof property !== 'string') return Reflect.get(target, property)
+			return (...args: readonly unknown[]) => bridge.callHandle(property, args)
 		},
-	});
+	})
 }
 
 /** A readable name for error messages: the module's file name without its extension. */
 function describeComponent(filePath: string): string {
-	const fileName = filePath.split('/').pop() ?? filePath;
-	return fileName.replace(/\.[^.]+$/u, '');
+	const fileName = filePath.split('/').pop() ?? filePath
+	return fileName.replace(/\.[^.]+$/u, '')
 }
 
 interface DomWebViewProps {
-	bridge: NativeDomBridge;
-	componentName: string;
-	dom: DomProps;
-	contentHeight: number | null;
-	injectedObjectJson: string;
-	source: string;
-	viewRef: RefObject<RNUseDomWebViewMethods | null>;
+	bridge: NativeDomBridge
+	componentName: string
+	dom: DomProps
+	contentHeight: number | null
+	injectedObjectJson: string
+	source: string
+	viewRef: RefObject<RNUseDomWebViewMethods | null>
 }
 
 /**
@@ -212,8 +212,8 @@ function DomWebView({
 	source,
 	viewRef,
 }: DomWebViewProps) {
-	const { RNUseDomWebView, callback } = loadNativeView();
-	const { style, webViewStyle, onLayout } = useViewStyles(componentName, dom, contentHeight);
+	const { RNUseDomWebView, callback } = loadNativeView()
+	const { style, webViewStyle, onLayout } = useViewStyles(componentName, dom, contentHeight)
 
 	return (
 		<View
@@ -228,23 +228,23 @@ function DomWebView({
 				inspectable={__DEV__}
 				style={webViewStyle}
 				hybridRef={callback((instance: RNUseDomWebViewMethods) => {
-					holdNativeView(viewRef, instance);
+					holdNativeView(viewRef, instance)
 				})}
 				onMessage={callback((message: string) => {
-					bridge.receive(message);
+					bridge.receive(message)
 				})}
 				onLoadEnd={callback(() => {
-					dom.onLoad?.();
+					dom.onLoad?.()
 				})}
 				onLoadError={callback((reason: string) => {
-					dom.onError?.(new Error(reason));
+					dom.onError?.(new Error(reason))
 				})}
 				onNavigationBlocked={callback((url: string) => {
-					dom.onNavigationBlocked?.(url);
+					dom.onNavigationBlocked?.(url)
 				})}
 			/>
 		</View>
-	);
+	)
 }
 
 /**
@@ -252,7 +252,7 @@ function DomWebView({
  * outlines a view with no height.
  */
 function useViewStyles(componentName: string, dom: DomProps, contentHeight: number | null) {
-	const { debugStyle, onLayout } = useZeroHeightCheck(componentName, dom.matchContents ?? false);
+	const { debugStyle, onLayout } = useZeroHeightCheck(componentName, dom.matchContents ?? false)
 	const style = useMemo(
 		() => [
 			{ backgroundColor: dom.backgroundColor ?? 'white' },
@@ -261,13 +261,13 @@ function useViewStyles(componentName: string, dom: DomProps, contentHeight: numb
 			debugStyle,
 		],
 		[dom.backgroundColor, dom.matchContents, dom.style, debugStyle],
-	);
+	)
 	// Sized inside the view's own style, so that its borders and padding add to the content's size.
 	const webViewStyle = useMemo(
 		() => (dom.matchContents ? { height: contentHeight ?? 0 } : FILL_PARENT),
 		[dom.matchContents, contentHeight],
-	);
-	return { style, webViewStyle, onLayout };
+	)
+	return { style, webViewStyle, onLayout }
 }
 
 /**
@@ -278,5 +278,5 @@ function useViewStyles(componentName: string, dom: DomProps, contentHeight: numb
  * pushed into the page between renders.
  */
 function holdNativeView(ref: RefObject<RNUseDomWebViewMethods | null>, instance: RNUseDomWebViewMethods): void {
-	ref.current = instance;
+	ref.current = instance
 }

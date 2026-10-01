@@ -1,15 +1,15 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
-import path from 'node:path';
+import { mkdir, rm, writeFile } from 'node:fs/promises'
+import path from 'node:path'
 
-import type { ConfigT } from 'metro-config';
-import type Server from 'metro/private/Server';
+import type { ConfigT } from 'metro-config'
+import type Server from 'metro/private/Server'
 
-import { domBundleFileName } from './bundle-file';
-import type { Metro } from './host-metro';
-import { renderPage } from './page';
-import { copyPublicDirectory, publicDirectory } from './public-directory';
-import { DOM_TRANSFORM_OPTION, WEB_ENTRY_PATH } from './transformer';
-import { createWebConfig, WEB_PLATFORM } from './web-config';
+import { domBundleFileName } from './bundle-file'
+import type { Metro } from './host-metro'
+import { renderPage } from './page'
+import { copyPublicDirectory, publicDirectory } from './public-directory'
+import { DOM_TRANSFORM_OPTION, WEB_ENTRY_PATH } from './transformer'
+import { createWebConfig, WEB_PLATFORM } from './web-config'
 
 /**
  * Builds each component's page into `outputDirectory`, replacing whatever an earlier build left.
@@ -24,17 +24,17 @@ export async function buildPages(
 	components: readonly string[],
 	outputDirectory: string,
 ): Promise<void> {
-	const server = new metro.Server(createWebConfig(config, metro), { watch: false });
+	const server = new metro.Server(createWebConfig(config, metro), { watch: false })
 	try {
-		await server.ready();
-		await rm(outputDirectory, { recursive: true, force: true });
-		await mkdir(outputDirectory, { recursive: true });
+		await server.ready()
+		await rm(outputDirectory, { recursive: true, force: true })
+		await mkdir(outputDirectory, { recursive: true })
 		// Before the pages, which take precedence over a public file of the same name.
-		await copyPublicDirectory(publicDirectory(config.projectRoot), outputDirectory);
-		const options = { ...metro.Server.DEFAULT_BUNDLE_OPTIONS };
-		await Promise.all(components.map((component) => buildPage(server, options, component, outputDirectory)));
+		await copyPublicDirectory(publicDirectory(config.projectRoot), outputDirectory)
+		const options = { ...metro.Server.DEFAULT_BUNDLE_OPTIONS }
+		await Promise.all(components.map((component) => buildPage(server, options, component, outputDirectory)))
 	} finally {
-		await server.end();
+		await server.end()
 	}
 }
 
@@ -44,8 +44,8 @@ async function buildPage(
 	component: string,
 	outputDirectory: string,
 ): Promise<void> {
-	const page = domBundleFileName(component);
-	const script = page.replace(/\.html$/u, '.js');
+	const page = domBundleFileName(component)
+	const script = page.replace(/\.html$/u, '.js')
 	const { code } = await server.build({
 		...defaults,
 		entryFile: WEB_ENTRY_PATH,
@@ -53,9 +53,9 @@ async function buildPage(
 		dev: false,
 		minify: true,
 		platform: WEB_PLATFORM,
-	});
+	})
 	await Promise.all([
 		writeFile(path.join(outputDirectory, script), code),
 		writeFile(path.join(outputDirectory, page), renderPage(`<script src="${script}"></script>`)),
-	]);
+	])
 }

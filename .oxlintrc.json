@@ -32,6 +32,7 @@
 		],
 		"no-redeclare": "off",
 		"react/react-in-jsx-scope": "off",
+		"unicorn/empty-brace-spaces": "error",
 		"unicorn/no-array-sort": "off",
 		"unicorn/no-array-reverse": "off",
 		"import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }]

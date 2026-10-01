@@ -4,35 +4,35 @@ A top-level function prop is a native action: the DOM component calls it, the fu
 runtime, and the call resolves with what it returned.
 
 ```tsx
-'use dom';
+'use dom'
 
-import type { DomProps } from 'react-native-use-dom';
+import type { DomProps } from 'react-native-use-dom'
 
 interface ShareButtonProps {
-	title: string;
-	onShare(title: string): Promise<boolean>;
-	dom?: DomProps;
+	title: string
+	onShare(title: string): Promise<boolean>
+	dom?: DomProps
 }
 
 export default function ShareButton({ title, onShare }: ShareButtonProps) {
 	const share = async () => {
-		const shared = await onShare(title);
-		console.log(shared ? 'Shared.' : 'Cancelled.');
-	};
-	return <button onClick={share}>Share</button>;
+		const shared = await onShare(title)
+		console.log(shared ? 'Shared.' : 'Cancelled.')
+	}
+	return <button onClick={share}>Share</button>
 }
 ```
 
 ```tsx
-import { Share } from 'react-native';
+import { Share } from 'react-native'
 
-<ShareButton
+;<ShareButton
 	title="Hello"
 	onShare={async (title) => {
-		const result = await Share.share({ message: title });
-		return result.action === Share.sharedAction;
+		const result = await Share.share({ message: title })
+		return result.action === Share.sharedAction
 	}}
-/>;
+/>
 ```
 
 ## The contract

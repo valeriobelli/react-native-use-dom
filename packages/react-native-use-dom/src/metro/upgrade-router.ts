@@ -1,9 +1,9 @@
-import type { IncomingMessage } from 'node:http';
-import type { Server } from 'node:net';
-import type { Duplex } from 'node:stream';
+import type { IncomingMessage } from 'node:http'
+import type { Server } from 'node:net'
+import type { Duplex } from 'node:stream'
 
 /** A listener for the `upgrade` event of an HTTP server. */
-export type UpgradeListener = (req: IncomingMessage, socket: Duplex, head: Buffer) => void;
+export type UpgradeListener = (req: IncomingMessage, socket: Duplex, head: Buffer) => void
 
 /**
  * Sends the websocket upgrades for `pathname` to `handle`, and every other upgrade to the listeners
@@ -14,13 +14,27 @@ export type UpgradeListener = (req: IncomingMessage, socket: Duplex, head: Buffe
  * so the listeners are wrapped rather than added to. Listeners added afterwards are left as they are.
  */
 export function routeUpgrade(server: Server, pathname: string, handle: UpgradeListener): void {
-	const original = server.listeners('upgrade') as UpgradeListener[];
-	server.removeAllListeners('upgrade');
+	const original = server.listeners('upgrade') as UpgradeListener[]
+	server.removeAllListeners('upgrade')
 	server.on('upgrade', (req: IncomingMessage, socket: Duplex, head: Buffer) => {
 		if (new URL(req.url ?? '/', 'http://localhost').pathname === pathname) {
-			handle(req, socket, head);
-			return;
+			handle(req, socket, head)
+			return
 		}
-		for (const listener of original) listener.call(server, req, socket, head);
-	});
+		for (const listener of original) listener.call(server, req, socket, head)
+	})
+}
+
+/**
+ * Runs `end` when the server closes itself, before `close` waits for its connections to end.
+ *
+ * There is no close listener to add, so the method is wrapped rather than listened to, the way
+ * {@link routeUpgrade} wraps the upgrade listeners.
+ */
+export function routeClose(server: Server, end: () => void): void {
+	const close = server.close.bind(server)
+	server.close = (callback) => {
+		end()
+		return close(callback)
+	}
 }

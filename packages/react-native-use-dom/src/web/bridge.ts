@@ -1,62 +1,62 @@
-import { DomError, DomErrorCode } from '../runtime/errors';
-import { PendingCalls } from '../runtime/pending-calls';
+import { DomError, DomErrorCode } from '../runtime/errors'
+import { PendingCalls } from '../runtime/pending-calls'
 import {
 	decodeMessage,
 	encodeMessage,
 	nativeEventName,
 	POST_MESSAGE_GLOBAL,
 	PROTOCOL_VERSION,
-} from '../runtime/protocol';
-import type { DomToNativeMessage, NativeToDomMessage, PropsMessage, ResultMessage } from '../runtime/protocol';
-import { assertSerializable } from '../runtime/serializable';
-import type { Serializable } from '../runtime/serializable';
-import { serializeError } from '../runtime/wire-error';
+} from '../runtime/protocol'
+import type { DomToNativeMessage, NativeToDomMessage, PropsMessage, ResultMessage } from '../runtime/protocol'
+import { assertSerializable } from '../runtime/serializable'
+import type { Serializable } from '../runtime/serializable'
+import { serializeError } from '../runtime/wire-error'
 
 /** What the native side injects into the page before the bundle runs. */
 export interface InjectedPayload {
-	instanceId: string;
-	props: Record<string, Serializable>;
-	actions: readonly string[];
+	instanceId: string
+	props: Record<string, Serializable>
+	actions: readonly string[]
 }
 
 interface ReactNativeWebViewGlobal {
-	postMessage(message: string): void;
-	injectedObjectJson?: () => string | undefined;
+	postMessage(message: string): void
+	injectedObjectJson?: () => string | undefined
 }
 
 /** A method exposed to the native side through `useDOMImperativeHandle`. */
-export type HandleMethod = (...args: never[]) => unknown;
+export type HandleMethod = (...args: never[]) => unknown
 
 export interface DomBridge {
-	readonly instanceId: string;
+	readonly instanceId: string
 	/** Current props, updated in place before subscribers are notified. */
-	getProps(): Record<string, Serializable>;
+	getProps(): Record<string, Serializable>
 	/** Names of the props that are native actions. */
-	getActionNames(): readonly string[];
+	getActionNames(): readonly string[]
 	/** Subscribes to prop updates. Returns an unsubscribe function. */
-	subscribe(listener: () => void): () => void;
+	subscribe(listener: () => void): () => void
 	/** Calls a native action and resolves with whatever it returned. */
-	callAction(name: string, args: readonly unknown[]): Promise<Serializable>;
+	callAction(name: string, args: readonly unknown[]): Promise<Serializable>
 	/** Replaces the methods the native side may call through the component's ref. */
-	setHandle(methods: Record<string, HandleMethod> | null): void;
+	setHandle(methods: Record<string, HandleMethod> | null): void
 	/** Reports the content's measured size, for `matchContents`. */
-	reportSize(width: number, height: number): void;
+	reportSize(width: number, height: number): void
 	/** Forwards a console call so it lands in the app's terminal. */
-	reportConsole(level: 'log' | 'info' | 'warn' | 'error' | 'debug', args: readonly unknown[]): void;
+	reportConsole(level: 'log' | 'info' | 'warn' | 'error' | 'debug', args: readonly unknown[]): void
 	/** Reports an error that escaped the DOM component. */
-	reportUncaughtError(error: unknown): void;
+	reportUncaughtError(error: unknown): void
 	/** Stops listening. Used when the page is torn down. */
-	dispose(): void;
+	dispose(): void
 }
 
 function readWebViewGlobal(): ReactNativeWebViewGlobal {
-	const value = (globalThis as Record<string, unknown>)[POST_MESSAGE_GLOBAL];
+	const value = (globalThis as Record<string, unknown>)[POST_MESSAGE_GLOBAL]
 	if (typeof value === 'object' && value !== null && 'postMessage' in value) {
-		return value as ReactNativeWebViewGlobal;
+		return value as ReactNativeWebViewGlobal
 	}
 	throw new DomError(DomErrorCode.BridgeClosed, 'This DOM component is not running inside a React Native WebView.', {
 		fix: `A '"use dom"' module can only be mounted by this library. Opening the bundle directly in a browser leaves \`window.${POST_MESSAGE_GLOBAL}\` undefined.`,
-	});
+	})
 }
 
 /**
@@ -67,13 +67,13 @@ function readWebViewGlobal(): ReactNativeWebViewGlobal {
  * page loaded before the props were set.
  */
 export function readInjectedPayload(): InjectedPayload {
-	const raw = readWebViewGlobal().injectedObjectJson?.();
+	const raw = readWebViewGlobal().injectedObjectJson?.()
 	if (raw === undefined || raw === '') {
 		throw new DomError(DomErrorCode.MalformedMessage, 'The DOM component was mounted without its initial props.', {
 			fix: 'This is an internal inconsistency; please report it with the app and library versions.',
-		});
+		})
 	}
-	return JSON.parse(raw) as InjectedPayload;
+	return JSON.parse(raw) as InjectedPayload
 }
 
 /**
@@ -83,135 +83,135 @@ export function readInjectedPayload(): InjectedPayload {
  * each other's traffic.
  */
 export function createDomBridge(payload: InjectedPayload): DomBridge {
-	return new WebDomBridge(payload);
+	return new WebDomBridge(payload)
 }
 
 class WebDomBridge implements DomBridge {
-	readonly instanceId: string;
+	readonly instanceId: string
 
-	readonly #webView = readWebViewGlobal();
-	readonly #calls = new PendingCalls();
-	readonly #listeners = new Set<() => void>();
-	readonly #eventName: string;
-	readonly #onNativeEvent: (event: Event) => void;
+	readonly #webView = readWebViewGlobal()
+	readonly #calls = new PendingCalls()
+	readonly #listeners = new Set<() => void>()
+	readonly #eventName: string
+	readonly #onNativeEvent: (event: Event) => void
 
-	#props: Record<string, Serializable>;
-	#actionNames: readonly string[];
-	#handle: Record<string, HandleMethod> | null = null;
+	#props: Record<string, Serializable>
+	#actionNames: readonly string[]
+	#handle: Record<string, HandleMethod> | null = null
 
 	constructor(payload: InjectedPayload) {
-		this.instanceId = payload.instanceId;
-		this.#props = payload.props;
-		this.#actionNames = payload.actions;
+		this.instanceId = payload.instanceId
+		this.#props = payload.props
+		this.#actionNames = payload.actions
 
-		this.#eventName = nativeEventName(payload.instanceId);
+		this.#eventName = nativeEventName(payload.instanceId)
 		this.#onNativeEvent = (event) => {
-			this.#receive((event as CustomEvent<string>).detail);
-		};
-		globalThis.addEventListener(this.#eventName, this.#onNativeEvent);
+			this.#receive((event as CustomEvent<string>).detail)
+		}
+		globalThis.addEventListener(this.#eventName, this.#onNativeEvent)
 
 		this.#post({
 			type: 'ready',
 			instanceId: this.instanceId,
 			protocolVersion: PROTOCOL_VERSION,
-		});
+		})
 	}
 
 	// Bound, because these three are read as standalone functions: `useSyncExternalStore` takes
 	// `subscribe` and `getProps` detached from the object.
-	readonly getProps = (): Record<string, Serializable> => this.#props;
+	readonly getProps = (): Record<string, Serializable> => this.#props
 
-	readonly getActionNames = (): readonly string[] => this.#actionNames;
+	readonly getActionNames = (): readonly string[] => this.#actionNames
 
 	readonly subscribe = (listener: () => void): (() => void) => {
-		this.#listeners.add(listener);
+		this.#listeners.add(listener)
 		return () => {
-			this.#listeners.delete(listener);
-		};
-	};
+			this.#listeners.delete(listener)
+		}
+	}
 
 	async callAction(name: string, args: readonly unknown[]): Promise<Serializable> {
 		if (!this.#actionNames.includes(name)) {
 			throw new DomError(DomErrorCode.UnknownAction, `\`${name}\` is not a native action on this DOM component.`, {
 				fix: 'Native actions are the function props the component was rendered with. Check the name, and that the prop is still being passed.',
-			});
+			})
 		}
 
 		args.forEach((arg, index) => {
-			assertSerializable(arg, `argument ${index + 1} of \`${name}\``, DomErrorCode.NonSerializableArgument);
-		});
+			assertSerializable(arg, `argument ${index + 1} of \`${name}\``, DomErrorCode.NonSerializableArgument)
+		})
 
-		const { callId, result } = this.#calls.create();
+		const { callId, result } = this.#calls.create()
 		this.#post({
 			type: 'action-call',
 			instanceId: this.instanceId,
 			callId,
 			action: name,
 			args: args as Serializable[],
-		});
-		return await result;
+		})
+		return await result
 	}
 
 	setHandle(methods: Record<string, HandleMethod> | null): void {
-		this.#handle = methods;
+		this.#handle = methods
 	}
 
 	reportSize(width: number, height: number): void {
-		this.#post({ type: 'resize', instanceId: this.instanceId, width, height });
+		this.#post({ type: 'resize', instanceId: this.instanceId, width, height })
 	}
 
 	reportConsole(level: 'log' | 'info' | 'warn' | 'error' | 'debug', args: readonly unknown[]): void {
 		// Forwarding a log must never itself throw, so an unprintable argument is described instead.
-		const safe = args.map((arg) => (isJsonSafe(arg) ? arg : describeForLog(arg)));
+		const safe = args.map((arg) => (isJsonSafe(arg) ? arg : describeForLog(arg)))
 		this.#post({
 			type: 'console',
 			instanceId: this.instanceId,
 			level,
 			args: safe as Serializable[],
-		});
+		})
 	}
 
 	reportUncaughtError(error: unknown): void {
-		this.#post({ type: 'uncaught-error', instanceId: this.instanceId, error: serializeError(error) });
+		this.#post({ type: 'uncaught-error', instanceId: this.instanceId, error: serializeError(error) })
 	}
 
 	dispose(): void {
-		globalThis.removeEventListener(this.#eventName, this.#onNativeEvent);
-		this.#listeners.clear();
-		this.#calls.abortAll('the DOM component was torn down');
+		globalThis.removeEventListener(this.#eventName, this.#onNativeEvent)
+		this.#listeners.clear()
+		this.#calls.abortAll('the DOM component was torn down')
 	}
 
 	#post(message: DomToNativeMessage): void {
 		// This is the WebView's own message channel, not `window.postMessage`: it takes a single
 		// string and has no target origin.
 		// oxlint-disable-next-line unicorn/require-post-message-target-origin
-		this.#webView.postMessage(encodeMessage(message));
+		this.#webView.postMessage(encodeMessage(message))
 	}
 
 	#receive(raw: string): void {
-		const message = decodeMessage<NativeToDomMessage>(raw);
-		if (message.instanceId !== this.instanceId) return;
+		const message = decodeMessage<NativeToDomMessage>(raw)
+		if (message.instanceId !== this.instanceId) return
 
 		switch (message.type) {
 			case 'props':
-				this.#applyProps(message);
-				break;
+				this.#applyProps(message)
+				break
 			case 'result':
-				this.#calls.settle(message as ResultMessage);
-				break;
+				this.#calls.settle(message as ResultMessage)
+				break
 			case 'handle-call':
-				this.#runHandleMethod(message.callId, message.method, message.args);
-				break;
+				this.#runHandleMethod(message.callId, message.method, message.args)
+				break
 			default:
-				break;
+				break
 		}
 	}
 
 	#applyProps(message: PropsMessage): void {
-		this.#props = message.props;
-		this.#actionNames = message.actions;
+		this.#props = message.props
+		this.#actionNames = message.actions
 		// Snapshot, so a listener that unsubscribes while being notified cannot skip the next one.
-		for (const listener of Array.from(this.#listeners)) listener();
+		for (const listener of Array.from(this.#listeners)) listener()
 	}
 
 	#runHandleMethod(callId: string, method: string, args: readonly Serializable[]): void {
@@ -220,13 +220,13 @@ class WebDomBridge implements DomBridge {
 				outcome.ok
 					? { type: 'result', instanceId: this.instanceId, callId, ok: true, value: outcome.value }
 					: { type: 'result', instanceId: this.instanceId, callId, ok: false, error: outcome.error },
-			);
-			return outcome;
-		});
+			)
+			return outcome
+		})
 	}
 }
 
-type HandleOutcome = { ok: true; value: Serializable } | { ok: false; error: ReturnType<typeof serializeError> };
+type HandleOutcome = { ok: true; value: Serializable } | { ok: false; error: ReturnType<typeof serializeError> }
 
 /**
  * Runs a method exposed through `useDOMImperativeHandle` and turns its outcome into a result
@@ -250,32 +250,32 @@ async function invokeHandleMethod(
 					},
 				),
 			),
-		};
+		}
 	}
 
 	try {
-		const returned = (await implementation(...(args as never[]))) as unknown;
-		const value = returned === undefined ? null : returned;
-		assertSerializable(value, `the value returned by \`${method}\``, DomErrorCode.NonSerializableResult);
-		return { ok: true, value };
+		const returned = (await implementation(...(args as never[]))) as unknown
+		const value = returned === undefined ? null : returned
+		assertSerializable(value, `the value returned by \`${method}\``, DomErrorCode.NonSerializableResult)
+		return { ok: true, value }
 	} catch (error) {
-		return { ok: false, error: serializeError(error) };
+		return { ok: false, error: serializeError(error) }
 	}
 }
 
 function isJsonSafe(value: unknown): value is Serializable {
 	try {
-		JSON.stringify(value);
-		return true;
+		JSON.stringify(value)
+		return true
 	} catch {
-		return false;
+		return false
 	}
 }
 
 function describeForLog(value: unknown): string {
 	try {
-		return String(value);
+		return String(value)
 	} catch {
-		return '[unprintable value]';
+		return '[unprintable value]'
 	}
 }

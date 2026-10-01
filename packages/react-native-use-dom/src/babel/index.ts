@@ -1,16 +1,16 @@
-import type { NodePath, PluginObj, PluginPass, types as BabelTypes } from '@babel/core';
+import type { NodePath, PluginObj, PluginPass, types as BabelTypes } from '@babel/core'
 
-import { domBundleFileName } from '../metro/bundle-file';
-import { DomError, DomErrorCode } from '../runtime/errors';
+import { domBundleFileName } from '../metro/bundle-file'
+import { DomError, DomErrorCode } from '../runtime/errors'
 
 /** The directive that marks a module as a DOM component. */
-export const USE_DOM_DIRECTIVE = 'use dom';
+export const USE_DOM_DIRECTIVE = 'use dom'
 
 /** The module the generated proxy imports from. */
-const RUNTIME_MODULE = 'react-native-use-dom';
+const RUNTIME_MODULE = 'react-native-use-dom'
 
 /** The factory the generated proxy calls. */
-const FACTORY = 'createDomComponentProxy';
+const FACTORY = 'createDomComponentProxy'
 
 /** The options the Babel plugin accepts, after its name in a Babel config. */
 export interface UseDomPluginOptions {
@@ -18,19 +18,19 @@ export interface UseDomPluginOptions {
 	 * Set to `'web'` to make the plugin inert, leaving the module to render as ordinary React.
 	 * When omitted the plugin reads the platform from the Babel caller, which Metro supplies.
 	 */
-	platform?: string;
+	platform?: string
 }
 
 /** What the plugin records on `file.metadata` for the Metro layer to collect. */
 export interface UseDomMetadata {
 	/** Absolute path of the module carrying the directive. */
-	filePath: string;
+	filePath: string
 	/** Whether the module body was replaced with a proxy (native) or left alone (web). */
-	erased: boolean;
+	erased: boolean
 }
 
 interface State extends PluginPass {
-	domMetadata?: UseDomMetadata;
+	domMetadata?: UseDomMetadata
 }
 
 /**
@@ -50,46 +50,46 @@ export default function useDomPlugin(
 	babel: { types: typeof BabelTypes },
 	options: UseDomPluginOptions = {},
 ): PluginObj<State> {
-	const t = babel.types;
+	const t = babel.types
 
 	return {
 		name: 'react-native-use-dom',
 		visitor: {
 			Program(path, state) {
-				if (!hasUseDomDirective(path)) return;
+				if (!hasUseDomDirective(path)) return
 
-				const filePath = state.file.opts.filename ?? '<unknown>';
-				const platform = options.platform ?? readCallerPlatform(state);
+				const filePath = state.file.opts.filename ?? '<unknown>'
+				const platform = options.platform ?? readCallerPlatform(state)
 
 				if (platform === 'web') {
 					state.file.metadata = Object.assign(state.file.metadata as object, {
 						useDom: { filePath, erased: false } satisfies UseDomMetadata,
-					});
-					return;
+					})
+					return
 				}
 
-				assertOnlyDefaultExport(path, filePath);
+				assertOnlyDefaultExport(path, filePath)
 
-				path.node.directives = [];
+				path.node.directives = []
 				// Not skipped: the other plugins still visit the proxy, and leave it as the rest of the bundle.
-				path.node.body = buildProxyModule(t, filePath);
+				path.node.body = buildProxyModule(t, filePath)
 
 				state.file.metadata = Object.assign(state.file.metadata as object, {
 					useDom: { filePath, erased: true } satisfies UseDomMetadata,
-				});
+				})
 			},
 		},
-	};
+	}
 }
 
 function hasUseDomDirective(path: NodePath<BabelTypes.Program>): boolean {
-	const [first] = path.node.directives;
-	return first?.value.value === USE_DOM_DIRECTIVE;
+	const [first] = path.node.directives
+	return first?.value.value === USE_DOM_DIRECTIVE
 }
 
 function readCallerPlatform(state: State): string | undefined {
-	const caller = (state.file.opts as { caller?: { platform?: unknown } }).caller;
-	return typeof caller?.platform === 'string' ? caller.platform : undefined;
+	const caller = (state.file.opts as { caller?: { platform?: unknown } }).caller
+	return typeof caller?.platform === 'string' ? caller.platform : undefined
 }
 
 /**
@@ -98,20 +98,20 @@ function readCallerPlatform(state: State): string | undefined {
  * because they never exist at runtime.
  */
 function assertOnlyDefaultExport(path: NodePath<BabelTypes.Program>, filePath: string): void {
-	let hasDefault = false;
+	let hasDefault = false
 
 	for (const statement of path.node.body) {
 		if (statement.type === 'ExportDefaultDeclaration') {
-			hasDefault = true;
-			continue;
+			hasDefault = true
+			continue
 		}
 
 		if (statement.type === 'ExportAllDeclaration') {
-			throw invalidExports(filePath, '`export *`');
+			throw invalidExports(filePath, '`export *`')
 		}
 
 		if (statement.type === 'ExportNamedDeclaration' && !isTypeOnlyExport(statement)) {
-			throw invalidExports(filePath, describeNamedExport(statement));
+			throw invalidExports(filePath, describeNamedExport(statement))
 		}
 	}
 
@@ -120,35 +120,35 @@ function assertOnlyDefaultExport(path: NodePath<BabelTypes.Program>, filePath: s
 			DomErrorCode.InvalidModuleExports,
 			`${filePath} is marked '${USE_DOM_DIRECTIVE}' but has no default export.`,
 			{ fix: 'A DOM component module must default-export the React component to render.' },
-		);
+		)
 	}
 }
 
 function isTypeOnlyExport(node: BabelTypes.ExportNamedDeclaration): boolean {
-	if (node.exportKind === 'type') return true;
-	const declaration = node.declaration;
+	if (node.exportKind === 'type') return true
+	const declaration = node.declaration
 	return (
 		declaration?.type === 'TSTypeAliasDeclaration' ||
 		declaration?.type === 'TSInterfaceDeclaration' ||
 		declaration?.type === 'TSModuleDeclaration'
-	);
+	)
 }
 
 function describeNamedExport(node: BabelTypes.ExportNamedDeclaration): string {
-	const declaration = node.declaration;
+	const declaration = node.declaration
 	if (declaration?.type === 'FunctionDeclaration' && declaration.id) {
-		return `\`${declaration.id.name}\``;
+		return `\`${declaration.id.name}\``
 	}
 	if (declaration?.type === 'ClassDeclaration' && declaration.id) {
-		return `\`${declaration.id.name}\``;
+		return `\`${declaration.id.name}\``
 	}
 	if (declaration?.type === 'VariableDeclaration') {
-		const [first] = declaration.declarations;
-		if (first?.id.type === 'Identifier') return `\`${first.id.name}\``;
+		const [first] = declaration.declarations
+		if (first?.id.type === 'Identifier') return `\`${first.id.name}\``
 	}
-	const [specifier] = node.specifiers;
-	if (specifier?.exported.type === 'Identifier') return `\`${specifier.exported.name}\``;
-	return 'a named export';
+	const [specifier] = node.specifiers
+	if (specifier?.exported.type === 'Identifier') return `\`${specifier.exported.name}\``
+	return 'a named export'
 }
 
 function invalidExports(filePath: string, what: string): DomError {
@@ -158,7 +158,7 @@ function invalidExports(filePath: string, what: string): DomError {
 		{
 			fix: 'Values other than the component cannot reach the native side. Move them into a separate module that both sides import.',
 		},
-	);
+	)
 }
 
 /**
@@ -172,7 +172,7 @@ function invalidExports(filePath: string, what: string): DomError {
  * build, because the same native bundle can load from the dev server or from the app.
  */
 function buildProxyModule(t: typeof BabelTypes, filePath: string): BabelTypes.Statement[] {
-	const factory = t.identifier(FACTORY);
+	const factory = t.identifier(FACTORY)
 
 	return [
 		t.importDeclaration([t.importSpecifier(factory, t.identifier(FACTORY))], t.stringLiteral(RUNTIME_MODULE)),
@@ -184,5 +184,5 @@ function buildProxyModule(t: typeof BabelTypes, filePath: string): BabelTypes.St
 				]),
 			]),
 		),
-	];
+	]
 }

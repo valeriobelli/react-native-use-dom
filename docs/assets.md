@@ -6,12 +6,12 @@ A DOM component, and any module it imports, can import a `.css` file. The styles
 `<link rel="stylesheet">` would:
 
 ```tsx
-'use dom';
+'use dom'
 
-import './Card.css';
+import './Card.css'
 
 export default function Card({ title }: { title: string }) {
-	return <h2 className="card-title">{title}</h2>;
+	return <h2 className="card-title">{title}</h2>
 }
 ```
 

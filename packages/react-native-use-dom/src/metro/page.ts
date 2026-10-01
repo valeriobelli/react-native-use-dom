@@ -14,10 +14,10 @@ export function renderPage(script: string): string {
 ${script}
 </body>
 </html>
-`;
+`
 }
 
 /** JSON is valid JavaScript, but `</script>` inside it would end the script element early. */
 export function inlineJson(value: string): string {
-	return JSON.stringify(value).replaceAll('<', '\\u003c');
+	return JSON.stringify(value).replaceAll('<', '\\u003c')
 }

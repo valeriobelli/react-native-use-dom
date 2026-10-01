@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash } from 'node:crypto'
 
 /**
  * The name of the page a release build embeds for the DOM component in `filePath`.
@@ -8,5 +8,5 @@ import { createHash } from 'node:crypto';
  * app bundle carries no trace of the machine it was built on.
  */
 export function domBundleFileName(filePath: string): string {
-	return `${createHash('md5').update(filePath).digest('hex')}.html`;
+	return `${createHash('md5').update(filePath).digest('hex')}.html`
 }

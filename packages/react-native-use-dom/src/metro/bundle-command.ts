@@ -1,12 +1,12 @@
-import path from 'node:path';
+import path from 'node:path'
 
-import { DomError, DomErrorCode } from '../runtime/errors';
-import { OFFLINE_BUNDLE_DIR } from '../runtime/paths';
+import { DomError, DomErrorCode } from '../runtime/errors'
+import { OFFLINE_BUNDLE_DIR } from '../runtime/paths'
 
 /** The arguments of a `react-native bundle` run that decide where its output goes. */
 export interface BundleCommand {
-	bundleOutput: string;
-	assetsDest: string | undefined;
+	bundleOutput: string
+	assetsDest: string | undefined
 }
 
 /**
@@ -15,17 +15,17 @@ export interface BundleCommand {
  * build that ends up in the app from one that is served: both run the same serializer.
  */
 export function readBundleCommand(argv: readonly string[]): BundleCommand | null {
-	const bundleOutput = readArgument(argv, '--bundle-output');
-	if (bundleOutput === undefined) return null;
-	return { bundleOutput, assetsDest: readArgument(argv, '--assets-dest') };
+	const bundleOutput = readArgument(argv, '--bundle-output')
+	if (bundleOutput === undefined) return null
+	return { bundleOutput, assetsDest: readArgument(argv, '--assets-dest') }
 }
 
 function readArgument(argv: readonly string[], name: string): string | undefined {
 	for (const [index, argument] of argv.entries()) {
-		if (argument === name) return argv[index + 1];
-		if (argument.startsWith(`${name}=`)) return argument.slice(name.length + 1);
+		if (argument === name) return argv[index + 1]
+		if (argument.startsWith(`${name}=`)) return argument.slice(name.length + 1)
 	}
-	return undefined;
+	return undefined
 }
 
 /**
@@ -37,7 +37,7 @@ function readArgument(argv: readonly string[], name: string): string | undefined
  */
 export function resolveOutputDirectory(command: BundleCommand, platform: string): string {
 	if (platform === 'android') {
-		return path.join(path.dirname(path.resolve(command.bundleOutput)), OFFLINE_BUNDLE_DIR);
+		return path.join(path.dirname(path.resolve(command.bundleOutput)), OFFLINE_BUNDLE_DIR)
 	}
 	if (command.assetsDest === undefined) {
 		throw new DomError(
@@ -46,7 +46,7 @@ export function resolveOutputDirectory(command: BundleCommand, platform: string)
 			{
 				fix: "Pass --assets-dest with the folder the app's resources are copied from. Xcode's “Bundle React Native code and images” build phase passes it already.",
 			},
-		);
+		)
 	}
-	return path.join(path.resolve(command.assetsDest), OFFLINE_BUNDLE_DIR);
+	return path.join(path.resolve(command.assetsDest), OFFLINE_BUNDLE_DIR)
 }

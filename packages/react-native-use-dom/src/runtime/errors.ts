@@ -37,16 +37,16 @@ export const DomErrorCode = {
 	MalformedMessage: 'ERR_USE_DOM_MALFORMED_MESSAGE',
 	/** The WebView went away while a call was in flight. */
 	BridgeClosed: 'ERR_USE_DOM_BRIDGE_CLOSED',
-} as const;
+} as const
 
-export type DomErrorCode = (typeof DomErrorCode)[keyof typeof DomErrorCode];
+export type DomErrorCode = (typeof DomErrorCode)[keyof typeof DomErrorCode]
 
 /** What a {@link DomError} carries beyond its code and message. */
 export interface DomErrorOptions {
 	/** The underlying error, preserved for the stack trace. */
-	cause?: unknown;
+	cause?: unknown
 	/** The concrete next action the developer should take. Rendered after the message. */
-	fix?: string;
+	fix?: string
 }
 
 /**
@@ -64,20 +64,20 @@ export interface DomErrorOptions {
  * ```
  */
 export class DomError extends Error {
-	override readonly name = 'DomError';
-	readonly code: DomErrorCode;
-	readonly fix: string | undefined;
+	override readonly name = 'DomError'
+	readonly code: DomErrorCode
+	readonly fix: string | undefined
 
 	constructor(code: DomErrorCode, message: string, options: DomErrorOptions = {}) {
-		super(options.fix ? `${message}\n\n${options.fix}` : message, { cause: options.cause });
-		this.code = code;
-		this.fix = options.fix;
+		super(options.fix ? `${message}\n\n${options.fix}` : message, { cause: options.cause })
+		this.code = code
+		this.fix = options.fix
 	}
 }
 
 /** Narrows an unknown value to a {@link DomError}, including across a realm boundary. */
 export function isDomError(value: unknown): value is DomError {
-	if (!(value instanceof Error)) return false;
-	const code: unknown = (value as Error & { code?: unknown }).code;
-	return typeof code === 'string' && code.startsWith('ERR_USE_DOM_');
+	if (!(value instanceof Error)) return false
+	const code: unknown = (value as Error & { code?: unknown }).code
+	return typeof code === 'string' && code.startsWith('ERR_USE_DOM_')
 }

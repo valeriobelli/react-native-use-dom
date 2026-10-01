@@ -1,13 +1,13 @@
-import path from 'node:path';
+import path from 'node:path'
 
-import type { ConfigT } from 'metro-config';
-import type { CustomResolutionContext, CustomResolver, Resolution } from 'metro-resolver';
+import type { ConfigT } from 'metro-config'
+import type { CustomResolutionContext, CustomResolver, Resolution } from 'metro-resolver'
 
-import { DomError, DomErrorCode } from '../runtime/errors';
-import type { Metro } from './host-metro';
+import { DomError, DomErrorCode } from '../runtime/errors'
+import type { Metro } from './host-metro'
 
 /** The platform DOM bundles are built for. */
-export const WEB_PLATFORM = 'web';
+export const WEB_PLATFORM = 'web'
 
 /**
  * The environment variable the web Babel transformer reads its settings from.
@@ -17,35 +17,35 @@ export const WEB_PLATFORM = 'web';
  * of `process.env` taken when the bundler starts, which makes the environment the one channel
  * that reaches every worker as well as in-band transforms.
  */
-export const WEB_TRANSFORMER_ENV = 'RN_USE_DOM_WEB_TRANSFORMER';
+export const WEB_TRANSFORMER_ENV = 'RN_USE_DOM_WEB_TRANSFORMER'
 
 /** What the web Babel transformer needs to know about the project. */
 export interface WebTransformerSettings {
 	/** Absolute path of the Babel transformer the project uses for its native bundle. */
-	upstreamTransformerPath: string;
+	upstreamTransformerPath: string
 	/** Absolute path of the transform worker the project uses for its native bundle. */
-	upstreamWorkerPath: string;
+	upstreamWorkerPath: string
 	/** Directories a DOM component may be built from: the project root and its watch folders. */
-	allowedRoots: readonly string[];
+	allowedRoots: readonly string[]
 }
 
 /** The package root, which Metro must watch because the generated entry lives in it. */
-const PACKAGE_ROOT = path.resolve(__dirname, '..', '..');
+const PACKAGE_ROOT = path.resolve(__dirname, '..', '..')
 
 /** The Babel transformer that runs in front of the project's own for DOM bundles. */
-const WEB_TRANSFORMER_PATH = require.resolve('./transformer');
+const WEB_TRANSFORMER_PATH = require.resolve('./transformer')
 
 /** The transform worker that runs in front of the project's own for DOM bundles. */
-const WEB_WORKER_PATH = require.resolve('./transform-worker');
+const WEB_WORKER_PATH = require.resolve('./transform-worker')
 
 /** The stylesheets a DOM component can import. */
-const CSS_EXTENSION = 'css';
+const CSS_EXTENSION = 'css'
 
 /** Suffix that keeps web transforms out of the native bundle's cache entries. */
-const CACHE_VERSION_SUFFIX = 'react-native-use-dom:web';
+const CACHE_VERSION_SUFFIX = 'react-native-use-dom:web'
 
-const REACT_NATIVE_SPECIFIER = /^react-native(?:\/|$)/u;
-const REACT_NATIVE_PACKAGE_PATH = /[/\\]node_modules[/\\]react-native[/\\]/u;
+const REACT_NATIVE_SPECIFIER = /^react-native(?:\/|$)/u
+const REACT_NATIVE_PACKAGE_PATH = /[/\\]node_modules[/\\]react-native[/\\]/u
 
 /**
  * Derives the configuration of the Metro instance that builds DOM bundles from the project's own.
@@ -63,7 +63,7 @@ const REACT_NATIVE_PACKAGE_PATH = /[/\\]node_modules[/\\]react-native[/\\]/u;
  * @param metro - The Metro that builds the bundles, which resolves the project's transform worker.
  */
 export function createWebConfig(config: ConfigT, metro: Metro): ConfigT {
-	process.env[WEB_TRANSFORMER_ENV] = JSON.stringify(webTransformerSettings(config, metro));
+	process.env[WEB_TRANSFORMER_ENV] = JSON.stringify(webTransformerSettings(config, metro))
 
 	return {
 		...config,
@@ -106,18 +106,18 @@ export function createWebConfig(config: ConfigT, metro: Metro): ConfigT {
 			enhanceMiddleware: (middleware) => middleware,
 			rewriteRequestUrl: (url) => url,
 		},
-	};
+	}
 }
 
 /** Reads the settings {@link createWebConfig} published for the web Babel transformer. */
 export function readWebTransformerSettings(): WebTransformerSettings {
-	const raw = process.env[WEB_TRANSFORMER_ENV];
+	const raw = process.env[WEB_TRANSFORMER_ENV]
 	if (raw === undefined) {
 		throw new DomError(DomErrorCode.MissingMetroConfig, 'The DOM component transformer ran without its settings.', {
 			fix: "DOM bundles are built by the bundler `withDom()` starts. Wrap your Metro config with `withDom` from 'react-native-use-dom/metro' instead of pointing Metro at the transformer directly.",
-		});
+		})
 	}
-	return JSON.parse(raw) as WebTransformerSettings;
+	return JSON.parse(raw) as WebTransformerSettings
 }
 
 /**
@@ -127,24 +127,24 @@ export function readWebTransformerSettings(): WebTransformerSettings {
 export function createWebResolver(upstream: CustomResolver | null | undefined): CustomResolver {
 	return (context, moduleName, platform) => {
 		if (REACT_NATIVE_SPECIFIER.test(moduleName)) {
-			throw reactNativeImport(context.originModulePath, moduleName);
+			throw reactNativeImport(context.originModulePath, moduleName)
 		}
 
 		// Metro always resolves with `preferNativePlatform: true`, which would pick `.native.*`
 		// files ahead of plain ones. Nothing native exists in a DOM bundle.
-		const webContext: CustomResolutionContext = { ...context, preferNativePlatform: false };
-		const resolution = (upstream ?? context.resolveRequest)(webContext, moduleName, platform);
+		const webContext: CustomResolutionContext = { ...context, preferNativePlatform: false }
+		const resolution = (upstream ?? context.resolveRequest)(webContext, moduleName, platform)
 
 		// An alias (`extraNodeModules`, a custom resolver) can reach React Native under another name.
 		if (resolvesIntoReactNative(resolution)) {
-			throw reactNativeImport(context.originModulePath, moduleName);
+			throw reactNativeImport(context.originModulePath, moduleName)
 		}
-		return resolution;
-	};
+		return resolution
+	}
 }
 
 function resolvesIntoReactNative(resolution: Resolution): boolean {
-	return resolution.type === 'sourceFile' && REACT_NATIVE_PACKAGE_PATH.test(resolution.filePath);
+	return resolution.type === 'sourceFile' && REACT_NATIVE_PACKAGE_PATH.test(resolution.filePath)
 }
 
 function reactNativeImport(originModulePath: string, moduleName: string): DomError {
@@ -154,15 +154,15 @@ function reactNativeImport(originModulePath: string, moduleName: string): DomErr
 		{
 			fix: "Use DOM elements and web libraries inside 'use dom' modules. To use a native capability, pass a function prop from the native side and call it from the DOM component.",
 		},
-	);
+	)
 }
 
 function resolveUpstreamTransformer(config: ConfigT): string {
-	return require.resolve(config.transformer.babelTransformerPath, { paths: [config.projectRoot] });
+	return require.resolve(config.transformer.babelTransformerPath, { paths: [config.projectRoot] })
 }
 
 function unique<T>(values: readonly T[]): T[] {
-	return [...new Set(values)];
+	return [...new Set(values)]
 }
 
 function webTransformerSettings(config: ConfigT, metro: Metro): WebTransformerSettings {
@@ -170,7 +170,7 @@ function webTransformerSettings(config: ConfigT, metro: Metro): WebTransformerSe
 		upstreamTransformerPath: resolveUpstreamTransformer(config),
 		upstreamWorkerPath: metro.resolve(config.transformerPath),
 		allowedRoots: unique([config.projectRoot, ...config.watchFolders]),
-	};
+	}
 }
 
 /**
@@ -180,7 +180,7 @@ function webTransformerSettings(config: ConfigT, metro: Metro): WebTransformerSe
 function withoutStartupBanner(reporter: ConfigT['reporter']): ConfigT['reporter'] {
 	return {
 		update: (event) => {
-			if (event.type !== 'dep_graph_loading') reporter.update(event);
+			if (event.type !== 'dep_graph_loading') reporter.update(event)
 		},
-	};
+	}
 }

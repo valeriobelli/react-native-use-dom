@@ -1,13 +1,13 @@
-import { DomErrorCode } from '../runtime/errors';
+import { DomErrorCode } from '../runtime/errors'
 
 /** What `docs/errors.md` says about one error code. */
 export interface ErrorDoc {
 	/** What the developer sees go wrong. */
-	what: string;
+	what: string
 	/** Why the library refuses or fails. */
-	why: string;
+	why: string
 	/** What to change. */
-	fix: string;
+	fix: string
 }
 
 /** The documentation of every error code. The type makes leaving a code out a compile error. */
@@ -87,18 +87,18 @@ export const ERROR_DOCS: { readonly [Code in DomErrorCode]: ErrorDoc } = {
 		why: "A call can't complete once the DOM component unmounts or its WebView closes. The hooks only work while the native side renders the component in its WebView.",
 		fix: "Expect calls to reject when a screen is dismissed, and ignore this code there. Use the hooks only in `'use dom'` modules, and open DOM components through their native proxy, not in a browser.",
 	},
-};
+}
 
 /** `docs/errors.md`, as {@link ERROR_DOCS} documents the codes. */
 export function renderErrorsDoc(): string {
 	const sections = Object.values(DomErrorCode).map((code) => {
-		const { what, why, fix } = ERROR_DOCS[code];
-		return `## \`${code}\`\n\n**What happens.** ${what}\n\n**Why.** ${why}\n\n**Fix.** ${fix}\n`;
-	});
+		const { what, why, fix } = ERROR_DOCS[code]
+		return `## \`${code}\`\n\n**What happens.** ${what}\n\n**Why.** ${why}\n\n**Fix.** ${fix}\n`
+	})
 	return [
 		'# Errors\n',
 		'Every error `react-native-use-dom` throws is a `DomError` with a stable `code`, which is safe to branch on. Messages may be reworded between versions; codes are not.\n',
 		'<!-- Generated from packages/react-native-use-dom/src/docs/errors.ts by `pnpm docs:errors`. Edit that file instead. -->\n',
 		...sections,
-	].join('\n');
+	].join('\n')
 }

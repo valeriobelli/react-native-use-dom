@@ -6,4 +6,4 @@ module.exports = {
 	testEnvironment: 'jsdom',
 	testMatch: ['<rootDir>/src/web/**/*.test.{ts,tsx}'],
 	transform: { '^.+\\.[jt]sx?$': ['babel-jest', { rootMode: 'upward' }] },
-};
+}

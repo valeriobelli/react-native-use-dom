@@ -1,10 +1,10 @@
-import { createReadStream } from 'node:fs';
-import { cp, stat } from 'node:fs/promises';
-import type { ServerResponse } from 'node:http';
-import path from 'node:path';
+import { createReadStream } from 'node:fs'
+import { cp, stat } from 'node:fs/promises'
+import type { ServerResponse } from 'node:http'
+import path from 'node:path'
 
 /** The folder of the project, next to its Metro config, whose files DOM component pages can load. */
-export const PUBLIC_DIRECTORY = 'public';
+export const PUBLIC_DIRECTORY = 'public'
 
 /** Content types by extension, for the files a page loads; anything else is served as bytes. */
 const CONTENT_TYPES: Readonly<Record<string, string>> = {
@@ -33,11 +33,11 @@ const CONTENT_TYPES: Readonly<Record<string, string>> = {
 	'.woff': 'font/woff',
 	'.woff2': 'font/woff2',
 	'.xml': 'application/xml; charset=UTF-8',
-};
+}
 
 /** The public folder of the project `projectRoot` is the root of. */
 export function publicDirectory(projectRoot: string): string {
-	return path.join(projectRoot, PUBLIC_DIRECTORY);
+	return path.join(projectRoot, PUBLIC_DIRECTORY)
 }
 
 /**
@@ -46,40 +46,40 @@ export function publicDirectory(projectRoot: string): string {
  * the folder.
  */
 export async function sendPublicFile(directory: string, relativeUrl: string, res: ServerResponse): Promise<boolean> {
-	const file = resolveInside(directory, relativeUrl);
-	if (file === undefined || !(await isFile(file))) return false;
+	const file = resolveInside(directory, relativeUrl)
+	if (file === undefined || !(await isFile(file))) return false
 	res.writeHead(200, {
 		'Content-Type': CONTENT_TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream',
 		'Cache-Control': 'no-cache',
-	});
+	})
 	await new Promise<void>((resolve, reject) => {
-		createReadStream(file).on('error', reject).on('end', resolve).pipe(res);
-	});
-	return true;
+		createReadStream(file).on('error', reject).on('end', resolve).pipe(res)
+	})
+	return true
 }
 
 /** Copies `directory`, when the project has one, into `outputDirectory`. */
 export async function copyPublicDirectory(directory: string, outputDirectory: string): Promise<void> {
-	if (!(await isDirectory(directory))) return;
-	await cp(directory, outputDirectory, { recursive: true });
+	if (!(await isDirectory(directory))) return
+	await cp(directory, outputDirectory, { recursive: true })
 }
 
 function resolveInside(directory: string, relativeUrl: string): string | undefined {
-	let decoded: string;
+	let decoded: string
 	try {
-		decoded = decodeURIComponent(relativeUrl);
+		decoded = decodeURIComponent(relativeUrl)
 	} catch {
-		return undefined;
+		return undefined
 	}
-	if (decoded.includes('\0')) return undefined;
-	const file = path.resolve(directory, `.${path.posix.sep}${decoded}`);
-	return file.startsWith(`${directory}${path.sep}`) ? file : undefined;
+	if (decoded.includes('\0')) return undefined
+	const file = path.resolve(directory, `.${path.posix.sep}${decoded}`)
+	return file.startsWith(`${directory}${path.sep}`) ? file : undefined
 }
 
 async function isFile(file: string): Promise<boolean> {
-	return (await stat(file).catch(() => null))?.isFile() ?? false;
+	return (await stat(file).catch(() => null))?.isFile() ?? false
 }
 
 async function isDirectory(directory: string): Promise<boolean> {
-	return (await stat(directory).catch(() => null))?.isDirectory() ?? false;
+	return (await stat(directory).catch(() => null))?.isDirectory() ?? false
 }

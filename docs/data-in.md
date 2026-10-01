@@ -31,7 +31,7 @@ inside the DOM component.
 `Serializable`, from `react-native-use-dom`, is the type of a value that crosses unchanged:
 
 ```ts
-import type { Serializable } from 'react-native-use-dom';
+import type { Serializable } from 'react-native-use-dom'
 ```
 
 ## Cost

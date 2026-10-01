@@ -5,11 +5,11 @@
  * the package root.
  */
 
-export { useDOMImperativeHandle } from './use-dom-imperative-handle';
-export type { DomHandle, DomHandleMethod } from './use-dom-imperative-handle';
+export { useDOMImperativeHandle } from './use-dom-imperative-handle'
+export type { DomHandle, DomHandleMethod } from './use-dom-imperative-handle'
 
-export { mountDomComponent } from './mount';
-export type { DomComponent, MountOptions } from './mount';
+export { mountDomComponent } from './mount'
+export type { DomComponent, MountOptions } from './mount'
 
-export { DomError, DomErrorCode, isDomError } from '../runtime/errors';
-export type { Serializable } from '../runtime/serializable';
+export { DomError, DomErrorCode, isDomError } from '../runtime/errors'
+export type { Serializable } from '../runtime/serializable'

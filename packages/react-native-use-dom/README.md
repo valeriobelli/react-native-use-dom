@@ -4,21 +4,21 @@ Render React DOM components inside React Native with the `'use dom'` directive. 
 
 ```tsx
 // Hello.tsx
-'use dom';
+'use dom'
 
-import type { DomProps } from 'react-native-use-dom';
+import type { DomProps } from 'react-native-use-dom'
 
 export default function Hello({ name }: { name: string; dom?: DomProps }) {
-	return <h1>Hello, {name}, from the DOM</h1>;
+	return <h1>Hello, {name}, from the DOM</h1>
 }
 ```
 
 ```tsx
 // App.tsx
-import Hello from './Hello';
+import Hello from './Hello'
 
 export default function App() {
-	return <Hello name="React Native" dom={{ matchContents: true }} />;
+	return <Hello name="React Native" dom={{ matchContents: true }} />
 }
 ```
 
@@ -41,15 +41,15 @@ npm install react-native-use-dom react-native-nitro-modules react-dom
 module.exports = {
 	presets: ['module:@react-native/babel-preset'],
 	plugins: ['react-native-use-dom/babel'],
-};
+}
 ```
 
 ```js
 // metro.config.js
-const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-const { withDom } = require('react-native-use-dom/metro');
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config')
+const { withDom } = require('react-native-use-dom/metro')
 
-module.exports = withDom(mergeConfig(getDefaultConfig(__dirname), {}));
+module.exports = withDom(mergeConfig(getDefaultConfig(__dirname), {}))
 ```
 
 Then install the pods and rebuild the app. For Expo, see

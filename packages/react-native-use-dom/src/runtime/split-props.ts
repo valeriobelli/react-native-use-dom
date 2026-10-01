@@ -1,20 +1,20 @@
-import { DomError, DomErrorCode } from './errors';
-import { findSerializableViolation } from './serializable';
-import type { Serializable } from './serializable';
+import { DomError, DomErrorCode } from './errors'
+import { findSerializableViolation } from './serializable'
+import type { Serializable } from './serializable'
 
 /** A function prop, which the DOM side calls as an async native action. */
-export type NativeAction = (...args: never[]) => unknown;
+export type NativeAction = (...args: never[]) => unknown
 
 /** A DOM component's props, as {@link splitProps} separates them. */
 export interface SplitProps {
 	/** Props sent to the DOM runtime as data. */
-	data: Record<string, Serializable>;
+	data: Record<string, Serializable>
 	/** Function props, callable from the DOM side by name. */
-	actions: Record<string, NativeAction>;
+	actions: Record<string, NativeAction>
 }
 
 /** Props the host component consumes itself and never forwards. */
-const RESERVED = new Set(['dom', 'children', 'ref', 'key']);
+const RESERVED = new Set(['dom', 'children', 'ref', 'key'])
 
 /**
  * Separates a DOM component's props into the data that is sent across and the functions that stay
@@ -35,27 +35,27 @@ export function splitProps(props: Record<string, unknown>, componentName: string
 			{
 				fix: 'React elements cannot cross into the DOM runtime. Pass the content as a serializable prop, or move the markup inside the DOM component.',
 			},
-		);
+		)
 	}
 
-	const data: Record<string, Serializable> = {};
-	const actions: Record<string, NativeAction> = {};
+	const data: Record<string, Serializable> = {}
+	const actions: Record<string, NativeAction> = {}
 
 	for (const [name, value] of Object.entries(props)) {
-		if (RESERVED.has(name)) continue;
+		if (RESERVED.has(name)) continue
 
 		if (typeof value === 'function') {
-			actions[name] = value as NativeAction;
-			continue;
+			actions[name] = value as NativeAction
+			continue
 		}
 
-		const violation = findSerializableViolation(value);
+		const violation = findSerializableViolation(value)
 		if (violation === null) {
-			data[name] = value as Serializable;
-			continue;
+			data[name] = value as Serializable
+			continue
 		}
 
-		const where = violation.path === '' ? `prop \`${name}\`` : `prop \`${name}.${violation.path}\``;
+		const where = violation.path === '' ? `prop \`${name}\`` : `prop \`${name}.${violation.path}\``
 		if (violation.kind === 'function') {
 			throw new DomError(
 				DomErrorCode.NestedFunctionProp,
@@ -63,7 +63,7 @@ export function splitProps(props: Record<string, unknown>, componentName: string
 				{
 					fix: 'Only top-level function props become native actions. Pass it as its own prop instead of nesting it.',
 				},
-			);
+			)
 		}
 
 		throw new DomError(
@@ -72,8 +72,8 @@ export function splitProps(props: Record<string, unknown>, componentName: string
 			{
 				fix: 'DOM components exchange JSON-compatible values only: strings, finite numbers, booleans, null, arrays and plain objects.',
 			},
-		);
+		)
 	}
 
-	return { data, actions };
+	return { data, actions }
 }

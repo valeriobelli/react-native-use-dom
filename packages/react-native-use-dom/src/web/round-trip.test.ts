@@ -1,7 +1,7 @@
-import { NativeDomBridge } from '../native/host-bridge';
-import { POST_MESSAGE_GLOBAL } from '../runtime/protocol';
-import type { DomBridge } from './bridge';
-import { createDomBridge } from './bridge';
+import { NativeDomBridge } from '../native/host-bridge'
+import { POST_MESSAGE_GLOBAL } from '../runtime/protocol'
+import type { DomBridge } from './bridge'
+import { createDomBridge } from './bridge'
 
 /**
  * Wires the two halves of the bridge directly to each other, standing in for the WebView: whatever
@@ -12,99 +12,99 @@ import { createDomBridge } from './bridge';
  */
 function connect(instanceId: string): { dom: DomBridge; native: NativeDomBridge } {
 	const native = new NativeDomBridge(instanceId, (eventName, payload) => {
-		globalThis.dispatchEvent(new CustomEvent(eventName, { detail: payload }));
-	});
+		globalThis.dispatchEvent(new CustomEvent(eventName, { detail: payload }))
+	})
 
-	(globalThis as Record<string, unknown>)[POST_MESSAGE_GLOBAL] = {
+	;(globalThis as Record<string, unknown>)[POST_MESSAGE_GLOBAL] = {
 		postMessage: (raw: string) => {
-			native.receive(raw);
+			native.receive(raw)
 		},
 		injectedObjectJson: () => JSON.stringify({ instanceId, props: {}, actions: [] }),
-	};
+	}
 
-	const dom = createDomBridge({ instanceId, props: {}, actions: ['onSave'] });
-	return { dom, native };
+	const dom = createDomBridge({ instanceId, props: {}, actions: ['onSave'] })
+	return { dom, native }
 }
 
-let dom: DomBridge;
-let native: NativeDomBridge;
+let dom: DomBridge
+let native: NativeDomBridge
 
 beforeEach(() => {
-	({ dom, native } = connect('i1'));
-});
+	;({ dom, native } = connect('i1'))
+})
 
 afterEach(() => {
-	dom.dispose();
-	native.dispose();
-});
+	dom.dispose()
+	native.dispose()
+})
 
 describe('the two halves of the bridge, connected', () => {
 	it('re-sends props when the page reports ready, closing the startup race', () => {
-		const { native: fresh } = connect('i2');
+		const { native: fresh } = connect('i2')
 		const onReady = jest.fn(() => {
-			fresh.sendProps({ title: 'Hello' }, []);
-		});
-		fresh.setCallbacks({ onReady });
+			fresh.sendProps({ title: 'Hello' }, [])
+		})
+		fresh.setCallbacks({ onReady })
 
-		const late = createDomBridge({ instanceId: 'i2', props: {}, actions: [] });
-		expect(onReady).toHaveBeenCalledTimes(1);
-		expect(late.getProps()).toEqual({ title: 'Hello' });
-		late.dispose();
-		fresh.dispose();
-	});
+		const late = createDomBridge({ instanceId: 'i2', props: {}, actions: [] })
+		expect(onReady).toHaveBeenCalledTimes(1)
+		expect(late.getProps()).toEqual({ title: 'Hello' })
+		late.dispose()
+		fresh.dispose()
+	})
 
 	it('delivers a prop change to the page', () => {
-		native.sendProps({ title: 'Updated' }, ['onSave']);
-		expect(dom.getProps()).toEqual({ title: 'Updated' });
-		expect(dom.getActionNames()).toEqual(['onSave']);
-	});
+		native.sendProps({ title: 'Updated' }, ['onSave'])
+		expect(dom.getProps()).toEqual({ title: 'Updated' })
+		expect(dom.getActionNames()).toEqual(['onSave'])
+	})
 
 	it('runs a native action for the page and returns its value', async () => {
-		native.setActions({ onSave: (async (draft: string) => ({ id: draft.length })) as never });
-		await expect(dom.callAction('onSave', ['draft'])).resolves.toEqual({ id: 5 });
-	});
+		native.setActions({ onSave: (async (draft: string) => ({ id: draft.length })) as never })
+		await expect(dom.callAction('onSave', ['draft'])).resolves.toEqual({ id: 5 })
+	})
 
 	it('rejects the page with the native error', async () => {
 		native.setActions({
 			onSave: (() => {
-				throw Object.assign(new RangeError('disk full'), { free: 0 });
+				throw Object.assign(new RangeError('disk full'), { free: 0 })
 			}) as never,
-		});
+		})
 
 		await expect(dom.callAction('onSave', [])).rejects.toMatchObject({
 			name: 'RangeError',
 			message: 'disk full',
 			free: 0,
-		});
-	});
+		})
+	})
 
 	it('runs a DOM method for the native side and returns its value', async () => {
-		dom.setHandle({ getText: () => 'typed' });
-		await expect(native.callHandle('getText', [])).resolves.toBe('typed');
-	});
+		dom.setHandle({ getText: () => 'typed' })
+		await expect(native.callHandle('getText', [])).resolves.toBe('typed')
+	})
 
 	it('rejects the native side with the DOM-side error', async () => {
 		dom.setHandle({
 			explode: () => {
-				throw new TypeError('nope');
+				throw new TypeError('nope')
 			},
-		});
+		})
 		await expect(native.callHandle('explode', [])).rejects.toMatchObject({
 			name: 'TypeError',
 			message: 'nope',
-		});
-	});
+		})
+	})
 
 	it('keeps two instances on one page from seeing each other', async () => {
-		const second = connect('i2');
-		const seen: string[] = [];
-		native.setActions({ onSave: (() => seen.push('first')) as never });
-		second.native.setActions({ onSave: (() => seen.push('second')) as never });
+		const second = connect('i2')
+		const seen: string[] = []
+		native.setActions({ onSave: (() => seen.push('first')) as never })
+		second.native.setActions({ onSave: (() => seen.push('second')) as never })
 
-		await second.dom.callAction('onSave', []);
+		await second.dom.callAction('onSave', [])
 
-		expect(seen).toEqual(['second']);
-		second.dom.dispose();
-		second.native.dispose();
-	});
-});
+		expect(seen).toEqual(['second'])
+		second.dom.dispose()
+		second.native.dispose()
+	})
+})

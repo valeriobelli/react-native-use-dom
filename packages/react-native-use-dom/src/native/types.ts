@@ -1,7 +1,7 @@
-import type { ComponentType, Ref } from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
+import type { ComponentType, Ref } from 'react'
+import type { StyleProp, ViewStyle } from 'react-native'
 
-import type { Serializable } from '../runtime/serializable';
+import type { Serializable } from '../runtime/serializable'
 
 /**
  * Configuration for the native view a DOM component renders into, passed as the reserved `dom`
@@ -22,10 +22,10 @@ export interface DomProps {
 	 *
 	 * @default false
 	 */
-	matchContents?: boolean;
+	matchContents?: boolean
 
 	/** Style applied to the native view. Sizing here wins over the DOM content's own size. */
-	style?: StyleProp<ViewStyle>;
+	style?: StyleProp<ViewStyle>
 
 	/**
 	 * Background colour of the native view, in any format React Native accepts. It shows before the
@@ -33,7 +33,7 @@ export interface DomProps {
 	 *
 	 * @default 'white'
 	 */
-	backgroundColor?: string;
+	backgroundColor?: string
 
 	/**
 	 * Allows the content to be scrolled by the user. Turn it off for a component that lays itself
@@ -41,26 +41,26 @@ export interface DomProps {
 	 *
 	 * @default true
 	 */
-	scrollEnabled?: boolean;
+	scrollEnabled?: boolean
 
 	/**
 	 * Called when the DOM component tries to navigate away from its own page — a link with an
 	 * external `href`, a `window.location` assignment. The navigation is always blocked; this is
 	 * where an app opens the URL itself, in a browser or an in-app tab.
 	 */
-	onNavigationBlocked?: (url: string) => void;
+	onNavigationBlocked?: (url: string) => void
 
 	/** Called once the DOM component has mounted and painted for the first time. */
-	onLoad?: () => void;
+	onLoad?: () => void
 
 	/**
 	 * Called when the DOM component fails to load or throws an error that escapes it. Without this,
 	 * such an error surfaces as a development overlay and is logged in release.
 	 */
-	onError?: (error: Error) => void;
+	onError?: (error: Error) => void
 
 	/** `testID` for the native view, for use from an end-to-end test. */
-	testID?: string;
+	testID?: string
 }
 
 /**
@@ -70,7 +70,7 @@ export interface DomProps {
  * arguments and return values must be JSON-serializable. Every other prop must be serializable
  * outright: `children` is not supported, because the DOM component's tree lives in the WebView.
  */
-export type DomComponentProps<TProps> = TProps & { dom?: DomProps };
+export type DomComponentProps<TProps> = TProps & { dom?: DomProps }
 
 /**
  * The type of a `'use dom'` module's default export as seen from native code: the component's own
@@ -79,13 +79,13 @@ export type DomComponentProps<TProps> = TProps & { dom?: DomProps };
  */
 export type DomComponent<TProps, THandle extends DomComponentHandle = Record<string, never>> = ComponentType<
 	DomComponentProps<TProps> & { ref?: React.Ref<THandle> }
->;
+>
 
 /**
  * Methods reachable through a DOM component's `ref`. Every call crosses into the WebView, so each
  * one is asynchronous even when its DOM-side implementation is not.
  */
-export type DomComponentHandle = Record<string, (...args: never[]) => Promise<Serializable>>;
+export type DomComponentHandle = Record<string, (...args: never[]) => Promise<Serializable>>
 
 /**
  * A method of a handle as the native side calls it: it crosses into the WebView, so it resolves
@@ -93,7 +93,7 @@ export type DomComponentHandle = Record<string, (...args: never[]) => Promise<Se
  */
 export type DomHandleCall<TMethod> = TMethod extends (...args: infer TArgs) => infer TResult
 	? (...args: TArgs) => Promise<Exclude<Awaited<TResult>, void> | (undefined extends Awaited<TResult> ? null : never)>
-	: never;
+	: never
 
 /**
  * The type of a DOM component's `ref` prop, for the handle `THandle` it exposes through
@@ -118,7 +118,7 @@ export type DomHandleCall<TMethod> = TMethod extends (...args: infer TArgs) => i
  * const text: string | undefined = await editor.current?.getText();
  * ```
  */
-export type DomRef<THandle extends object> = Ref<DomRefHandle<THandle>>;
+export type DomRef<THandle extends object> = Ref<DomRefHandle<THandle>>
 
 /** What a DOM component's native `ref` holds: every method of `THandle`, called asynchronously. */
-export type DomRefHandle<THandle extends object> = { [K in keyof THandle]: DomHandleCall<THandle[K]> };
+export type DomRefHandle<THandle extends object> = { [K in keyof THandle]: DomHandleCall<THandle[K]> }

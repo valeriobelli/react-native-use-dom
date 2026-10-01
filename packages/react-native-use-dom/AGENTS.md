@@ -26,28 +26,28 @@ app and restart the dev server with its cache cleared.
 
 ```tsx
 // src/Counter.tsx
-'use dom';
+'use dom'
 
-import { useState } from 'react';
-import type { DomProps, DomRef } from 'react-native-use-dom';
-import { useDOMImperativeHandle } from 'react-native-use-dom/dom';
+import { useState } from 'react'
+import type { DomProps, DomRef } from 'react-native-use-dom'
+import { useDOMImperativeHandle } from 'react-native-use-dom/dom'
 
-import './Counter.css';
+import './Counter.css'
 
 export interface CounterHandle {
-	reset(): void;
-	getCount(): number;
+	reset(): void
+	getCount(): number
 }
 
 interface CounterProps {
-	label: string;
-	onChange(count: number): Promise<void>;
-	ref?: DomRef<CounterHandle>;
-	dom?: DomProps;
+	label: string
+	onChange(count: number): Promise<void>
+	ref?: DomRef<CounterHandle>
+	dom?: DomProps
 }
 
 export default function Counter({ label, onChange }: CounterProps) {
-	const [count, setCount] = useState(0);
+	const [count, setCount] = useState(0)
 
 	useDOMImperativeHandle<CounterHandle>(
 		() => ({
@@ -55,34 +55,34 @@ export default function Counter({ label, onChange }: CounterProps) {
 			getCount: () => count,
 		}),
 		[count],
-	);
+	)
 
 	const increment = async () => {
-		const next = count + 1;
-		setCount(next);
-		await onChange(next);
-	};
+		const next = count + 1
+		setCount(next)
+		await onChange(next)
+	}
 
 	return (
 		<button className="counter" type="button" onClick={increment}>
 			{label}: {count}
 		</button>
-	);
+	)
 }
 ```
 
 ## Render it from native code
 
 ```tsx
-import { useRef } from 'react';
-import { Button, View } from 'react-native';
-import type { DomRefHandle } from 'react-native-use-dom';
+import { useRef } from 'react'
+import { Button, View } from 'react-native'
+import type { DomRefHandle } from 'react-native-use-dom'
 
-import type { CounterHandle } from './src/Counter';
-import Counter from './src/Counter';
+import type { CounterHandle } from './src/Counter'
+import Counter from './src/Counter'
 
 export function Screen() {
-	const counter = useRef<DomRefHandle<CounterHandle>>(null);
+	const counter = useRef<DomRefHandle<CounterHandle>>(null)
 
 	return (
 		<View style={{ flex: 1 }}>
@@ -94,7 +94,7 @@ export function Screen() {
 			/>
 			<Button title="Reset" onPress={() => void counter.current?.reset()} />
 		</View>
-	);
+	)
 }
 ```
 

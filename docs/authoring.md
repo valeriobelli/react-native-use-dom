@@ -4,28 +4,28 @@ A DOM component is a module whose first statement is the `'use dom'` directive a
 React component, as its default export:
 
 ```tsx
-'use dom';
+'use dom'
 
-import type { DomProps } from 'react-native-use-dom';
+import type { DomProps } from 'react-native-use-dom'
 
 export default function Hello({ name }: { name: string; dom?: DomProps }) {
-	return <h1>Hello, {name}</h1>;
+	return <h1>Hello, {name}</h1>
 }
 ```
 
 Native code imports and renders it like any other component:
 
 ```tsx
-import { View } from 'react-native';
+import { View } from 'react-native'
 
-import Hello from './Hello';
+import Hello from './Hello'
 
 export function Screen() {
 	return (
 		<View style={{ flex: 1 }}>
 			<Hello name="world" />
 		</View>
-	);
+	)
 }
 ```
 
@@ -60,15 +60,15 @@ Declare the props the native side passes, plus two optional props the library re
 - `ref?: DomRef<Handle>`, when the component exposes methods (see [Refs](./refs.md)).
 
 ```tsx
-'use dom';
+'use dom'
 
-import type { DomProps, DomRef } from 'react-native-use-dom';
+import type { DomProps, DomRef } from 'react-native-use-dom'
 
 interface ChartProps {
-	points: { x: number; y: number }[];
-	onSelect(index: number): Promise<void>;
-	ref?: DomRef<ChartHandle>;
-	dom?: DomProps;
+	points: { x: number; y: number }[]
+	onSelect(index: number): Promise<void>
+	ref?: DomRef<ChartHandle>
+	dom?: DomProps
 }
 ```
 

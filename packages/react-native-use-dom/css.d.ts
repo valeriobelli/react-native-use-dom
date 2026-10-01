@@ -7,4 +7,4 @@
  * /// <reference types="react-native-use-dom/css" />
  * ```
  */
-declare module '*.css';
+declare module '*.css'

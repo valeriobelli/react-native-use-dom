@@ -1,17 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect } from 'react'
 
-import type { Serializable } from '../runtime/serializable';
-import type { DomBridge } from './bridge';
-import { useDomBridge } from './context';
+import type { Serializable } from '../runtime/serializable'
+import type { DomBridge } from './bridge'
+import { useDomBridge } from './context'
 
 /**
  * A method a DOM component exposes to the native side. Arguments and the resolved value must be
  * JSON-serializable; a method that returns nothing resolves with `null`.
  */
-export type DomHandleMethod = (...args: never[]) => Serializable | void | Promise<Serializable | void>;
+export type DomHandleMethod = (...args: never[]) => Serializable | void | Promise<Serializable | void>
 
 /** The object a DOM component exposes through its native `ref`. */
-export type DomHandle = Record<string, DomHandleMethod>;
+export type DomHandle = Record<string, DomHandleMethod>
 
 /**
  * Exposes methods on this DOM component's native `ref`, the DOM-side counterpart of React's
@@ -51,15 +51,15 @@ export function useDOMImperativeHandle<THandle extends { [K in keyof THandle]: D
 	create: () => THandle,
 	deps: readonly unknown[],
 ): void {
-	const bridge: DomBridge = useDomBridge('useDOMImperativeHandle');
+	const bridge: DomBridge = useDomBridge('useDOMImperativeHandle')
 
 	useEffect(() => {
 		// Every key holds a method, which is all an index signature would add.
-		bridge.setHandle(create() as DomHandle);
+		bridge.setHandle(create() as DomHandle)
 		return () => {
-			bridge.setHandle(null);
-		};
+			bridge.setHandle(null)
+		}
 		// The caller owns the dependency list, exactly as with `useImperativeHandle`.
 		// oxlint-disable-next-line react-hooks/exhaustive-deps
-	}, [bridge, ...deps]);
+	}, [bridge, ...deps])
 }

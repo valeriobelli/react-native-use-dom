@@ -10,7 +10,7 @@
 		"**/nitrogen/generated/**"
 	],
 	"printWidth": 120,
-	"semi": true,
+	"semi": false,
 	"singleQuote": true,
 	"sortImports": true,
 	"trailingComma": "all",

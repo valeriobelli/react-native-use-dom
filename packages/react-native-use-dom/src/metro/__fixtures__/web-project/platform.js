@@ -1,1 +1,1 @@
-module.exports = 'plain';
+module.exports = 'plain'

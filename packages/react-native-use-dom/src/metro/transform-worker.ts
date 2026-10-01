@@ -1,12 +1,12 @@
-import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 
-import type { TransformResult } from 'metro/private/DeltaBundler/types';
-import type { TransformerConfig, TransformOptions } from 'metro/private/DeltaBundler/Worker';
+import type { TransformResult } from 'metro/private/DeltaBundler/types'
+import type { TransformerConfig, TransformOptions } from 'metro/private/DeltaBundler/Worker'
 
-import { readWebTransformerSettings } from './web-config';
+import { readWebTransformerSettings } from './web-config'
 
-type WorkerConfig = TransformerConfig['transformerConfig'];
+type WorkerConfig = TransformerConfig['transformerConfig']
 
 /** What Metro loads from `transformerPath`. */
 interface TransformWorker {
@@ -16,14 +16,14 @@ interface TransformWorker {
 		filename: string,
 		data: Buffer,
 		options: TransformOptions,
-	): Promise<TransformResult>;
-	getCacheKey?(config: WorkerConfig, opts?: { projectRoot: string }): string;
+	): Promise<TransformResult>
+	getCacheKey?(config: WorkerConfig, opts?: { projectRoot: string }): string
 }
 
 /** The attribute that ties a `<style>` element to the stylesheet it holds. */
-export const STYLESHEET_ATTRIBUTE = 'data-use-dom-css';
+export const STYLESHEET_ATTRIBUTE = 'data-use-dom-css'
 
-const STYLESHEET = /\.css$/u;
+const STYLESHEET = /\.css$/u
 
 /**
  * Transforms a file of a DOM component bundle.
@@ -40,23 +40,23 @@ export function transform(
 	data: Buffer,
 	options: TransformOptions,
 ): Promise<TransformResult> {
-	const upstream = loadWorker(readWebTransformerSettings().upstreamWorkerPath);
+	const upstream = loadWorker(readWebTransformerSettings().upstreamWorkerPath)
 	if (options.type === 'asset' || !STYLESHEET.test(filename)) {
-		return upstream.transform(config, projectRoot, filename, data, options);
+		return upstream.transform(config, projectRoot, filename, data, options)
 	}
 	// Named as a script, so that the upstream worker compiles it as one rather than as a stylesheet.
-	const source = stylesheetModule(filename, data.toString('utf8'));
-	return upstream.transform(config, projectRoot, `${filename}.js`, Buffer.from(source), options);
+	const source = stylesheetModule(filename, data.toString('utf8'))
+	return upstream.transform(config, projectRoot, `${filename}.js`, Buffer.from(source), options)
 }
 
 /** Combines the project worker's key with this file's, so editing either invalidates the cache. */
 export function getCacheKey(config: WorkerConfig, opts?: { projectRoot: string }): string {
-	const { upstreamWorkerPath } = readWebTransformerSettings();
+	const { upstreamWorkerPath } = readWebTransformerSettings()
 	return createHash('md5')
 		.update(readFileSync(__filename))
 		.update(readFileSync(upstreamWorkerPath))
 		.update(loadWorker(upstreamWorkerPath).getCacheKey?.(config, opts) ?? '')
-		.digest('hex');
+		.digest('hex')
 }
 
 /**
@@ -74,9 +74,9 @@ if (!style) {
 	document.head.appendChild(style);
 }
 style.textContent = ${JSON.stringify(css)};
-`;
+`
 }
 
 function loadWorker(modulePath: string): TransformWorker {
-	return require(modulePath) as TransformWorker;
+	return require(modulePath) as TransformWorker
 }

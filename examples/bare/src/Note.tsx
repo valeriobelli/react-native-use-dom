@@ -1,8 +1,8 @@
-'use dom';
+'use dom'
 
-import type { DomProps } from 'react-native-use-dom';
+import type { DomProps } from 'react-native-use-dom'
 
-import './Note.css';
+import './Note.css'
 
 /**
  * Laid out by the page: the app sizes it to its text with `matchContents`. The note is a link that
@@ -15,5 +15,5 @@ export default function Note({ text }: { text: string; dom?: DomProps }) {
 			<img src="atom.svg" alt="" />
 			{text} <span className="link">Open reactnative.dev</span>
 		</a>
-	);
+	)
 }

@@ -24,16 +24,16 @@ Add the Babel plugin to `babel.config.js`:
 module.exports = {
 	presets: ['module:@react-native/babel-preset'],
 	plugins: ['react-native-use-dom/babel'],
-};
+}
 ```
 
 Wrap the config `metro.config.js` exports with `withDom`:
 
 ```js
-const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-const { withDom } = require('react-native-use-dom/metro');
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config')
+const { withDom } = require('react-native-use-dom/metro')
 
-module.exports = withDom(mergeConfig(getDefaultConfig(__dirname), {}));
+module.exports = withDom(mergeConfig(getDefaultConfig(__dirname), {}))
 ```
 
 `withDom` accepts the config as an object, a Promise of one, or a function Metro calls with its defaults, and
@@ -65,16 +65,16 @@ module, in place of Expo's own DOM components:
 module.exports = {
 	presets: ['babel-preset-expo'],
 	plugins: ['react-native-use-dom/babel'],
-};
+}
 ```
 
 Wrap Expo's Metro config with `withDom`:
 
 ```js
-const { getDefaultConfig } = require('expo/metro-config');
-const { withDom } = require('react-native-use-dom/metro');
+const { getDefaultConfig } = require('expo/metro-config')
+const { withDom } = require('react-native-use-dom/metro')
 
-module.exports = withDom(getDefaultConfig(__dirname));
+module.exports = withDom(getDefaultConfig(__dirname))
 ```
 
 Then rebuild the native app, and start the dev server with the cache cleared:
