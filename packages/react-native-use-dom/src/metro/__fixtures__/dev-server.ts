@@ -5,11 +5,10 @@ import path from 'node:path';
 
 import { getDefaultConfig } from '@react-native/metro-config';
 import { JSDOM, VirtualConsole } from 'jsdom';
-import type { ConfigT } from 'metro-config';
-import { mergeConfig } from 'metro-config';
 
 import { DEV_ENTRY_PATH, DEV_PAGE_PATH } from '../../runtime/paths';
 import { createDomDevServer } from '../dev-middleware';
+import { hostMetro } from '../host-metro';
 import { WEB_TRANSFORMER_ENV } from '../web-config';
 
 // React Native's preset, as an app's babel.config.js gets it.
@@ -97,8 +96,8 @@ function createProject(): string {
 }
 
 /** The fixture's config as Metro loads it, which puts the project root first among the watch folders. */
-function projectConfig(projectRoot: string, reported: ReporterEvent[]): ConfigT {
-	return mergeConfig(getDefaultConfig(projectRoot), {
+function projectConfig(projectRoot: string, reported: ReporterEvent[]): Parameters<typeof createDomDevServer>[0] {
+	return hostMetro().mergeConfig(getDefaultConfig(projectRoot), {
 		cacheStores: [],
 		maxWorkers: 1,
 		reporter: { update: (event: ReporterEvent) => reported.push(event) },
@@ -136,7 +135,7 @@ export async function startDevFixture(): Promise<DevFixture> {
 	const projectRoot = createProject();
 	const component = path.join(projectRoot, 'Hello.js');
 	const reported: ReporterEvent[] = [];
-	const dev = createDomDevServer(projectConfig(projectRoot, reported));
+	const dev = createDomDevServer(projectConfig(projectRoot, reported), hostMetro());
 	const httpServer = http.createServer((req, res) => {
 		dev.middleware(req, res, nextMiddleware(res));
 	});

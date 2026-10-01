@@ -1,12 +1,10 @@
 import type { IncomingMessage } from 'node:http';
 
 import type { ConfigT } from 'metro-config';
-import HmrServer from 'metro/private/HmrServer';
-import createWebsocketServer from 'metro/private/lib/createWebsocketServer';
-import formatBundlingError from 'metro/private/lib/formatBundlingError';
 import type Server from 'metro/private/Server';
 
 import { DEV_ENTRY_PATH } from '../runtime/paths';
+import type { Metro } from './host-metro';
 import type { UpgradeListener } from './upgrade-router';
 
 type HmrMessage = string | Buffer | ArrayBuffer | Buffer[];
@@ -24,6 +22,7 @@ export interface HotSocketServer {
  * into the ones the bundle was built from.
  */
 export function createHotSocketServer(
+	{ HmrServer, createWebsocketServer, formatBundlingError }: Metro,
 	server: Server,
 	webConfig: ConfigT,
 	toBundleUrl: (url: URL) => string,

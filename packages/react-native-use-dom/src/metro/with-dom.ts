@@ -1,9 +1,10 @@
 import type { ConfigT, InputConfigT } from 'metro-config';
-import { getDefaultConfig, mergeConfig } from 'metro-config';
 
 import { readBundleCommand } from './bundle-command';
 import type { Middleware } from './dev-middleware';
 import { createDomDevServer } from './dev-middleware';
+import type { Metro } from './host-metro';
+import { hostMetro } from './host-metro';
 import { withReleaseBuild } from './release-build';
 
 /** A Metro config as `metro.config.js` can export it. */
@@ -61,8 +62,8 @@ export function withDom(
 function addDom(config: MetroConfigInput): MetroConfigInput {
 	const enhanceMiddleware = config.server?.enhanceMiddleware;
 	// The config as Metro resolves it: what the project exported, over Metro's own defaults.
-	const resolveConfig = async (projectRoot: string): Promise<ConfigT> =>
-		mergeConfig(await getDefaultConfig(projectRoot), config as InputConfigT);
+	const resolveConfig = async (metro: Metro, projectRoot: string): Promise<ConfigT> =>
+		metro.mergeConfig(await metro.getDefaultConfig(projectRoot), config as InputConfigT);
 
 	// The dev server serializes bundles the same way, and leaves the pages to its own routes.
 	const command = readBundleCommand(process.argv);
@@ -98,7 +99,7 @@ function addDom(config: MetroConfigInput): MetroConfigInput {
 function withDomRoutes(rest: Middleware, metroServer: MetroServer): Middleware {
 	// Metro exposes the config a server runs with only through this field.
 	// oxlint-disable-next-line no-underscore-dangle
-	const dom = createDomDevServer(metroServer._config);
+	const dom = createDomDevServer(metroServer._config, hostMetro(metroServer));
 	const end = metroServer.end.bind(metroServer);
 	metroServer.end = async () => {
 		await Promise.all([end(), dom.close()]);

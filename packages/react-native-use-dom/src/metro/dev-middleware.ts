@@ -2,7 +2,6 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
 
 import type { ConfigT } from 'metro-config';
-import Server from 'metro/private/Server';
 
 import {
 	DEV_BUNDLE_URL_ATTRIBUTE,
@@ -11,6 +10,7 @@ import {
 	DEV_MOUNT_PATH,
 	DEV_PAGE_PATH,
 } from '../runtime/paths';
+import type { Metro } from './host-metro';
 import type { HotSocketServer } from './hot-socket';
 import { createHotSocketServer } from './hot-socket';
 import { inlineJson, renderPage } from './page';
@@ -21,6 +21,9 @@ import { createWebConfig, WEB_PLATFORM } from './web-config';
 
 /** A connect-style middleware, the shape `server.enhanceMiddleware` receives and returns. */
 export type Middleware = (req: IncomingMessage, res: ServerResponse, next: (error?: unknown) => void) => void;
+
+/** A Metro server, as the dev server's Metro builds it. */
+type Server = InstanceType<Metro['Server']>;
 
 /** The development routes of DOM components, and the web bundler behind them. */
 export interface DomDevServer {
@@ -58,13 +61,15 @@ const RETRY_INTERVAL_MS = 1000;
  *
  * Pages receive hot updates for their bundle on the `/_dom/hot` websocket of the same server, which
  * speaks Metro's HMR protocol. The dev server's other websockets keep working as before.
+ *
+ * `metro` is the Metro the dev server runs, which the web bundler is built with.
  */
-export function createDomDevServer(config: ConfigT): DomDevServer {
+export function createDomDevServer(config: ConfigT, metro: Metro): DomDevServer {
 	let bundler: Promise<WebBundler> | null = null;
 	let routedUpgrades = false;
 
 	const getBundler = (): Promise<WebBundler> => {
-		bundler ??= startWebBundler(config);
+		bundler ??= startWebBundler(metro, config);
 		return bundler;
 	};
 
@@ -140,15 +145,15 @@ async function forwardBundleRequest(
 	started.server.processRequest(req, res, next);
 }
 
-async function startWebBundler(config: ConfigT): Promise<WebBundler> {
+async function startWebBundler(metro: Metro, config: ConfigT): Promise<WebBundler> {
 	const webConfig = withoutStartupBanner(createWebConfig(config));
-	const server = new Server(webConfig, { watch: true });
+	const server = new metro.Server(webConfig, { watch: true });
 	await server.ready();
 	const bundleEntry = entryBundlePath(webConfig);
 	// Metro's HMR server resolves entries from the server root, and knows no watch folder prefix.
 	const serverRoot = webConfig.server.unstable_serverRoot ?? webConfig.projectRoot;
 	const hotBundleEntry = toPosix(path.relative(serverRoot, ENTRY_BUNDLE_PATH));
-	const hot = createHotSocketServer(server, webConfig, (url) => toWebBundleUrl(url, hotBundleEntry));
+	const hot = createHotSocketServer(metro, server, webConfig, (url) => toWebBundleUrl(url, hotBundleEntry));
 	return { server, bundleEntry, hot };
 }
 

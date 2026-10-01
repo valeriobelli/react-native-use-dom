@@ -1,10 +1,10 @@
 import type { ConfigT } from 'metro-config';
-import baseJSBundle from 'metro/private/DeltaBundler/Serializers/baseJSBundle';
-import bundleToString from 'metro/private/lib/bundleToString';
 
 import { buildPages } from './build-pages';
 import type { BundleCommand } from './bundle-command';
 import { resolveOutputDirectory } from './bundle-command';
+import type { Metro } from './host-metro';
+import { hostMetro } from './host-metro';
 
 type CustomSerializer = NonNullable<ConfigT['serializer']['customSerializer']>;
 type SerializerArgs = Parameters<CustomSerializer>;
@@ -30,22 +30,24 @@ export function findDomComponents(graph: Graph): string[] {
  * of components exact: a component the app no longer imports is not built.
  *
  * @param upstream - The serializer the config already had, which still produces the native bundle.
- * @param resolveConfig - The project's config, as Metro resolves it for `projectRoot`, for the web build.
+ * @param resolveConfig - The project's config, as `metro` resolves it for `projectRoot`, for the web build.
  * @param command - The output arguments of the `bundle` run.
  */
 export function withReleaseBuild(
 	upstream: CustomSerializer | null | undefined,
-	resolveConfig: (projectRoot: string) => Promise<ConfigT>,
+	resolveConfig: (metro: Metro, projectRoot: string) => Promise<ConfigT>,
 	command: BundleCommand,
 ): CustomSerializer {
 	return async (...args) => {
 		const [entryPoint, preModules, graph, options] = args;
+		// Serializing, the bundler has loaded its Metro; the web build is made with the same one.
+		const metro = hostMetro();
 		const components = findDomComponents(graph);
 		if (components.length > 0) {
 			const outputDirectory = resolveOutputDirectory(command, graph.transformOptions.platform ?? '');
-			await buildPages(await resolveConfig(options.projectRoot), components, outputDirectory);
+			await buildPages(metro, await resolveConfig(metro, options.projectRoot), components, outputDirectory);
 		}
 		if (upstream) return upstream(...args);
-		return bundleToString(baseJSBundle(entryPoint, preModules, graph, options)).code;
+		return metro.bundleToString(metro.baseJSBundle(entryPoint, preModules, graph, options)).code;
 	};
 }
