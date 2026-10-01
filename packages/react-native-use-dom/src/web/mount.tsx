@@ -18,6 +18,7 @@ const ROOT_ELEMENT_ID = 'root';
  */
 export type DomComponent = ComponentType<Record<string, unknown>>;
 
+/** How {@link mountDomComponent} renders a DOM component. */
 export interface MountOptions {
 	/** Overrides the element to render into. Defaults to `#root`. */
 	container?: HTMLElement;

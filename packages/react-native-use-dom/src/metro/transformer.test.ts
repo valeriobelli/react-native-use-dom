@@ -18,7 +18,12 @@ const RN_TRANSFORMER = require.resolve('@react-native/metro-babel-transformer', 
 });
 
 function publishSettings(upstreamTransformerPath = ECHO_TRANSFORMER): void {
-	const settings: WebTransformerSettings = { upstreamTransformerPath, allowedRoots: [PROJECT_ROOT] };
+	const settings: WebTransformerSettings = {
+		upstreamTransformerPath,
+		// The Babel transformer never reads it: the worker in front of it does.
+		upstreamWorkerPath: require.resolve('metro-transform-worker'),
+		allowedRoots: [PROJECT_ROOT],
+	};
 	process.env[WEB_TRANSFORMER_ENV] = JSON.stringify(settings);
 }
 

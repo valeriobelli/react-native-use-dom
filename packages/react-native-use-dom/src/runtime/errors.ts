@@ -38,6 +38,7 @@ export const DomErrorCode = {
 
 export type DomErrorCode = (typeof DomErrorCode)[keyof typeof DomErrorCode];
 
+/** What a {@link DomError} carries beyond its code and message. */
 export interface DomErrorOptions {
 	/** The underlying error, preserved for the stack trace. */
 	cause?: unknown;

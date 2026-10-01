@@ -12,6 +12,7 @@ const RUNTIME_MODULE = 'react-native-use-dom';
 /** The factory the generated proxy calls. */
 const FACTORY = 'createDomComponentProxy';
 
+/** The options the Babel plugin accepts, after its name in a Babel config. */
 export interface UseDomPluginOptions {
 	/**
 	 * Set to `'web'` to make the plugin inert, leaving the module to render as ordinary React.

@@ -31,3 +31,7 @@ pnpm typecheck
 pnpm test
 zizmor .github
 ```
+
+`pnpm typecheck` checks the tests as well as the library. That includes the type tests in
+`packages/react-native-use-dom/src/__tests__/types`, which are never run. Each `@ts-expect-error` in them
+marks code that must not compile, so an expectation that stops failing is itself an error.

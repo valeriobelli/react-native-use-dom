@@ -12,6 +12,7 @@ import type { DomComponentHandle, DomProps } from './types';
 import { RNUseDomWebView } from './web-view';
 import type { RNUseDomWebViewMethods } from './web-view';
 
+/** What identifies the `'use dom'` module a proxy renders, as the Babel plugin writes it. */
 export interface DomComponentProxyOptions {
 	/** Absolute path of the `'use dom'` module this proxy stands in for. */
 	filePath: string;

@@ -4,7 +4,7 @@
 	"private": true,
 	"scripts": {
 		"build": "pnpm --filter react-native-use-dom build",
-		"typecheck": "tsc --build --verbose",
+		"typecheck": "tsc --build --verbose && tsc -p packages/react-native-use-dom/tsconfig.json",
 		"lint": "oxlint",
 		"format": "oxfmt .",
 		"format:check": "oxfmt --check .",

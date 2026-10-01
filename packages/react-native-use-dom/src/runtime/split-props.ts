@@ -5,6 +5,7 @@ import type { Serializable } from './serializable';
 /** A function prop, which the DOM side calls as an async native action. */
 export type NativeAction = (...args: never[]) => unknown;
 
+/** A DOM component's props, as {@link splitProps} separates them. */
 export interface SplitProps {
 	/** Props sent to the DOM runtime as data. */
 	data: Record<string, Serializable>;
