@@ -42,6 +42,7 @@ describe('a release build', () => {
 	beforeAll(() => {
 		projectRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'use-dom-release-')))
 		writeFileSync(path.join(projectRoot, 'package.json'), '{ "name": "release-fixture" }\n')
+
 		writeFileSync(
 			path.join(projectRoot, 'babel.config.js'),
 			`module.exports = { presets: [${JSON.stringify(RN_BABEL_PRESET)}], plugins: [${JSON.stringify(USE_DOM_BABEL_PLUGIN)}] };\n`,
@@ -57,6 +58,7 @@ describe('a release build', () => {
 		symlinkSync(path.dirname(require.resolve('react/package.json')), path.join(projectRoot, 'node_modules', 'react'))
 		// What the plugin's proxies import, without the React Native the real one renders with.
 		mkdirSync(path.join(projectRoot, 'node_modules', 'react-native-use-dom'))
+
 		writeFileSync(
 			path.join(projectRoot, 'node_modules', 'react-native-use-dom', 'index.js'),
 			'exports.createDomComponentProxy = () => () => null;\n',
@@ -66,13 +68,14 @@ describe('a release build', () => {
 
 	afterAll(() => {
 		process.argv = argv
-		rmSync(projectRoot, { recursive: true, force: true })
+		rmSync(projectRoot, { force: true, recursive: true })
 		delete process.env[WEB_TRANSFORMER_ENV]
 	})
 
 	/** Bundles the fixture the way `react-native bundle` does, with the arguments Gradle passes. */
 	async function bundleForAndroid(): Promise<string> {
 		const bundleOutput = path.join(projectRoot, 'build', 'assets', 'index.android.bundle')
+
 		process.argv = ['node', 'cli.js', 'bundle', '--bundle-output', bundleOutput, '--assets-dest', 'build/res']
 		const config = (await withDom(
 			mergeConfig(getDefaultConfig(projectRoot), {
@@ -83,14 +86,17 @@ describe('a release build', () => {
 				watchFolders: [projectRoot, WORKSPACE_ROOT],
 			}),
 		)) as ConfigT
+
 		mkdirSync(path.dirname(bundleOutput), { recursive: true })
+
 		await runBuild(config, {
-			entry: './index.js',
-			platform: 'android',
-			dev: false,
-			minify: false,
 			bundleOut: bundleOutput,
+			dev: false,
+			entry: './index.js',
+			minify: false,
+			platform: 'android',
 		})
+
 		return path.join(path.dirname(bundleOutput), OFFLINE_BUNDLE_DIR)
 	}
 
@@ -104,6 +110,7 @@ describe('a release build', () => {
 		expect(readFileSync(path.join(pages, page), 'utf8')).toContain(`<script src="${script}"></script>`)
 
 		const code = readFileSync(path.join(pages, script), 'utf8')
+
 		expect(code).toContain('released')
 		expect(code).toContain('rebeccapurple')
 		expect(code).not.toContain('sourceMappingURL')
@@ -113,6 +120,7 @@ describe('a release build', () => {
 
 	it('replaces the pages an earlier build left', async () => {
 		const pages = await bundleForAndroid()
+
 		writeFileSync(path.join(pages, 'stale.html'), '')
 
 		await bundleForAndroid()

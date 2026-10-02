@@ -16,9 +16,13 @@ const USE_DOM_PROLOGUE = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*(['"])use dom\1/
 /** The DOM components a native bundle renders, in the order the graph holds them. */
 export function findDomComponents(graph: Graph): string[] {
 	const components: string[] = []
+
 	for (const [filePath, module] of graph.dependencies) {
-		if (USE_DOM_PROLOGUE.test(module.getSource().toString('utf8'))) components.push(filePath)
+		if (USE_DOM_PROLOGUE.test(module.getSource().toString('utf8'))) {
+			components.push(filePath)
+		}
 	}
+
 	return components
 }
 
@@ -43,11 +47,17 @@ export function withReleaseBuild(
 		// Serializing, the bundler has loaded its Metro; the web build is made with the same one.
 		const metro = hostMetro()
 		const components = findDomComponents(graph)
+
 		if (components.length > 0) {
 			const outputDirectory = resolveOutputDirectory(command, graph.transformOptions.platform ?? '')
+
 			await buildPages(metro, await resolveConfig(metro, options.projectRoot), components, outputDirectory)
 		}
-		if (upstream) return upstream(...args)
+
+		if (upstream) {
+			return upstream(...args)
+		}
+
 		return metro.bundleToString(metro.baseJSBundle(entryPoint, preModules, graph, options)).code
 	}
 }

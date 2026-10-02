@@ -4,20 +4,21 @@ import type { ResultMessage } from './protocol'
 import { serializeError } from './wire-error'
 
 const ok = (callId: string, value: unknown): ResultMessage =>
-	({ type: 'result', instanceId: 'i1', callId, ok: true, value }) as ResultMessage
+	({ callId, instanceId: 'i1', ok: true, type: 'result', value }) as ResultMessage
 
 const failed = (callId: string, error: Error): ResultMessage => ({
-	type: 'result',
-	instanceId: 'i1',
 	callId,
-	ok: false,
 	error: serializeError(error),
+	instanceId: 'i1',
+	ok: false,
+	type: 'result',
 })
 
 describe('PendingCalls', () => {
 	it('resolves a call with its own value', async () => {
 		const calls = new PendingCalls()
 		const { callId, result } = calls.create()
+
 		calls.settle(ok(callId, 42))
 		await expect(result).resolves.toBe(42)
 	})
@@ -25,6 +26,7 @@ describe('PendingCalls', () => {
 	it('gives every call a distinct id', () => {
 		const calls = new PendingCalls()
 		const ids = new Set([calls.create().callId, calls.create().callId, calls.create().callId])
+
 		expect(ids.size).toBe(3)
 	})
 
@@ -48,11 +50,12 @@ describe('PendingCalls', () => {
 	it('rejects with an error that kept its name and properties', async () => {
 		const calls = new PendingCalls()
 		const { callId, result } = calls.create()
+
 		calls.settle(failed(callId, Object.assign(new TypeError('nope'), { status: 418 })))
 
 		await expect(result).rejects.toMatchObject({
-			name: 'TypeError',
 			message: 'nope',
+			name: 'TypeError',
 			status: 418,
 		})
 	})
@@ -60,6 +63,7 @@ describe('PendingCalls', () => {
 	it('reports whether a result matched a call', () => {
 		const calls = new PendingCalls()
 		const { callId } = calls.create()
+
 		expect(calls.settle(ok(callId, 1))).toBe(true)
 		expect(calls.settle(ok(callId, 1))).toBe(false)
 		expect(calls.settle(ok('never-issued', 1))).toBe(false)
@@ -68,6 +72,7 @@ describe('PendingCalls', () => {
 	it('forgets a call once it settles', async () => {
 		const calls = new PendingCalls()
 		const { callId, result } = calls.create()
+
 		expect(calls.size).toBe(1)
 		calls.settle(ok(callId, null))
 		await result

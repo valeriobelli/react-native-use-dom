@@ -21,11 +21,11 @@ describe('resolveDomSource', () => {
 	it('builds the page on the dev server the bundle was loaded from', () => {
 		native.scriptURL = 'http://192.168.1.4:8081/index.bundle?platform=ios&dev=true'
 
-		const url = new URL(resolveDomSource({ filePath: FILE, bundleFile: 'ignored.html' }))
+		const url = new URL(resolveDomSource({ bundleFile: 'ignored.html', filePath: FILE }))
 
 		expect(url.origin).toBe('http://192.168.1.4:8081')
 		expect(url.pathname).toBe(DEV_PAGE_PATH)
-		expect(Object.fromEntries(url.searchParams)).toEqual({ file: FILE, platform: 'web', dev: 'true' })
+		expect(Object.fromEntries(url.searchParams)).toEqual({ dev: 'true', file: FILE, platform: 'web' })
 	})
 
 	it.each([
@@ -35,13 +35,14 @@ describe('resolveDomSource', () => {
 		native.os = os
 		native.scriptURL = 'file:///data/app/index.android.bundle'
 
-		expect(resolveDomSource({ filePath: FILE, bundleFile: 'chart.html' })).toBe(expected)
+		expect(resolveDomSource({ bundleFile: 'chart.html', filePath: FILE })).toBe(expected)
 	})
 
 	it('explains the missing Metro config when a release build has no embedded page', () => {
 		native.scriptURL = ''
 
 		let thrown: unknown
+
 		try {
 			resolveDomSource({ filePath: FILE })
 		} catch (error) {

@@ -25,13 +25,15 @@ export async function buildPages(
 	outputDirectory: string,
 ): Promise<void> {
 	const server = new metro.Server(createWebConfig(config, metro), { watch: false })
+
 	try {
 		await server.ready()
-		await rm(outputDirectory, { recursive: true, force: true })
+		await rm(outputDirectory, { force: true, recursive: true })
 		await mkdir(outputDirectory, { recursive: true })
 		// Before the pages, which take precedence over a public file of the same name.
 		await copyPublicDirectory(publicDirectory(config.projectRoot), outputDirectory)
 		const options = { ...metro.Server.DEFAULT_BUNDLE_OPTIONS }
+
 		await Promise.all(components.map((component) => buildPage(server, options, component, outputDirectory)))
 	} finally {
 		await server.end()
@@ -48,12 +50,13 @@ async function buildPage(
 	const script = page.replace(/\.html$/u, '.js')
 	const { code } = await server.build({
 		...defaults,
-		entryFile: WEB_ENTRY_PATH,
 		customTransformOptions: { [DOM_TRANSFORM_OPTION]: component },
 		dev: false,
+		entryFile: WEB_ENTRY_PATH,
 		minify: true,
 		platform: WEB_PLATFORM,
 	})
+
 	await Promise.all([
 		writeFile(path.join(outputDirectory, script), code),
 		writeFile(path.join(outputDirectory, page), renderPage(`<script src="${script}"></script>`)),

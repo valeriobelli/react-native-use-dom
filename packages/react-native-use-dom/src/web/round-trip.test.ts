@@ -16,13 +16,14 @@ function connect(instanceId: string): { dom: DomBridge; native: NativeDomBridge 
 	})
 
 	;(globalThis as Record<string, unknown>)[POST_MESSAGE_GLOBAL] = {
+		injectedObjectJson: () => JSON.stringify({ actions: [], instanceId, props: {} }),
 		postMessage: (raw: string) => {
 			native.receive(raw)
 		},
-		injectedObjectJson: () => JSON.stringify({ instanceId, props: {}, actions: [] }),
 	}
 
-	const dom = createDomBridge({ instanceId, props: {}, actions: ['onSave'] })
+	const dom = createDomBridge({ actions: ['onSave'], instanceId, props: {} })
+
 	return { dom, native }
 }
 
@@ -44,9 +45,11 @@ describe('the two halves of the bridge, connected', () => {
 		const onReady = jest.fn(() => {
 			fresh.sendProps({ title: 'Hello' }, [])
 		})
+
 		fresh.setCallbacks({ onReady })
 
-		const late = createDomBridge({ instanceId: 'i2', props: {}, actions: [] })
+		const late = createDomBridge({ actions: [], instanceId: 'i2', props: {} })
+
 		expect(onReady).toHaveBeenCalledTimes(1)
 		expect(late.getProps()).toEqual({ title: 'Hello' })
 		late.dispose()
@@ -60,21 +63,21 @@ describe('the two halves of the bridge, connected', () => {
 	})
 
 	it('runs a native action for the page and returns its value', async () => {
-		native.setActions({ onSave: (async (draft: string) => ({ id: draft.length })) as never })
+		native.setActions({ onSave: async (draft: string) => ({ id: draft.length }) })
 		await expect(dom.callAction('onSave', ['draft'])).resolves.toEqual({ id: 5 })
 	})
 
 	it('rejects the page with the native error', async () => {
 		native.setActions({
-			onSave: (() => {
+			onSave: () => {
 				throw Object.assign(new RangeError('disk full'), { free: 0 })
-			}) as never,
+			},
 		})
 
 		await expect(dom.callAction('onSave', [])).rejects.toMatchObject({
-			name: 'RangeError',
-			message: 'disk full',
 			free: 0,
+			message: 'disk full',
+			name: 'RangeError',
 		})
 	})
 
@@ -89,17 +92,19 @@ describe('the two halves of the bridge, connected', () => {
 				throw new TypeError('nope')
 			},
 		})
+
 		await expect(native.callHandle('explode', [])).rejects.toMatchObject({
-			name: 'TypeError',
 			message: 'nope',
+			name: 'TypeError',
 		})
 	})
 
 	it('keeps two instances on one page from seeing each other', async () => {
 		const second = connect('i2')
 		const seen: string[] = []
-		native.setActions({ onSave: (() => seen.push('first')) as never })
-		second.native.setActions({ onSave: (() => seen.push('second')) as never })
+
+		native.setActions({ onSave: () => seen.push('first') })
+		second.native.setActions({ onSave: () => seen.push('second') })
 
 		await second.dom.callAction('onSave', [])
 

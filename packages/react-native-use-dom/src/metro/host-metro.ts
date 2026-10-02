@@ -48,13 +48,14 @@ export function hostMetro(server?: object): Metro {
 		getDefaultConfig: typeof getDefaultConfig
 		mergeConfig: typeof mergeConfig
 	}
+
 	return {
-		Server: MetroServer,
 		HmrServer: defaultExport(load('metro/private/HmrServer')),
-		createWebsocketServer: defaultExport(load('metro/private/lib/createWebsocketServer')),
-		formatBundlingError: defaultExport(load('metro/private/lib/formatBundlingError')),
+		Server: MetroServer,
 		baseJSBundle: defaultExport(load('metro/private/DeltaBundler/Serializers/baseJSBundle')),
 		bundleToString: defaultExport(load('metro/private/lib/bundleToString')),
+		createWebsocketServer: defaultExport(load('metro/private/lib/createWebsocketServer')),
+		formatBundlingError: defaultExport(load('metro/private/lib/formatBundlingError')),
 		getDefaultConfig: defaults,
 		mergeConfig: merge,
 		resolve: (request) => load.resolve(request),
@@ -73,9 +74,13 @@ export function findHostMetroPackage(cache: ModuleCache, server?: object): strin
 			: loaded.find(
 					(file) => (cache[file]?.exports as { default?: unknown } | undefined)?.default === server.constructor,
 				)
+
 	return match === undefined ? undefined : path.join(path.dirname(match), '..', 'package.json')
 }
 
+// The type parameter exists to type each call site's export; a parameter position would duplicate
+// the module's own type here.
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters
 function defaultExport<T>(module: unknown): T {
 	return (module as { default: T }).default
 }

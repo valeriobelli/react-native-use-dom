@@ -16,8 +16,13 @@ const EXPO_PACKAGE = /^(?:expo(?:$|-)|@expo\/)/u
 /** Where Node would find `name` from `directory`: the nearest `node_modules` holding it. */
 function findPackage(name: string, directory: string): string | undefined {
 	const candidate = path.join(directory, 'node_modules', name, 'package.json')
-	if (fs.existsSync(candidate)) return path.dirname(fs.realpathSync(candidate))
+
+	if (fs.existsSync(candidate)) {
+		return path.dirname(fs.realpathSync(candidate))
+	}
+
 	const parent = path.dirname(directory)
+
 	return parent === directory ? undefined : findPackage(name, parent)
 }
 
@@ -38,23 +43,30 @@ function dependencyTree(root: string): Set<string> {
 	const seen = new Set<string>()
 	const visited = new Set<string>([root])
 	const pending = [root]
+
 	for (let directory = pending.pop(); directory !== undefined; directory = pending.pop()) {
 		for (const name of requiredNames(readManifest(directory))) {
 			seen.add(name)
 			const found = findPackage(name, directory)
+
 			if (found !== undefined && !visited.has(found)) {
 				visited.add(found)
 				pending.push(found)
 			}
 		}
 	}
+
 	return seen
 }
 
 function sourceFiles(directory: string): string[] {
 	return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
 		const file = path.join(directory, entry.name)
-		if (entry.isDirectory()) return sourceFiles(file)
+
+		if (entry.isDirectory()) {
+			return sourceFiles(file)
+		}
+
 		return /\.tsx?$/u.test(entry.name) && !entry.name.includes('.test.') ? [file] : []
 	})
 }
@@ -62,6 +74,7 @@ function sourceFiles(directory: string): string[] {
 /** The module specifiers a source file imports or requires. */
 function importedModules(file: string): string[] {
 	const source = fs.readFileSync(file, 'utf8')
+
 	return [...source.matchAll(/(?:from\s+|import\s*\(\s*|require\s*\(\s*|^import\s+)'([^']+)'/gmu)].map(
 		([, specifier]) => specifier ?? '',
 	)

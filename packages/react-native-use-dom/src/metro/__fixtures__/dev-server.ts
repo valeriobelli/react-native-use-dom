@@ -80,25 +80,45 @@ export async function waitFor<T>(
 	deadline = Date.now() + 60_000,
 ): Promise<NonNullable<T>> {
 	const value = await read()
-	if (value) return value
-	if (Date.now() > deadline) throw new Error(`timed out waiting for ${what}`)
+
+	// The probe's contract is "first truthy value", which is a truthiness check on a generic and
+	// cannot be spelled more explicitly without changing what the probe accepts.
+	// oxlint-disable-next-line typescript/strict-boolean-expressions
+	if (value) {
+		return value
+	}
+
+	if (Date.now() > deadline) {
+		throw new Error(`timed out waiting for ${what}`)
+	}
+
 	await new Promise((resolve) => {
 		setTimeout(resolve, 50)
 	})
+
 	return waitFor(what, read, deadline)
 }
 
 /** Stands in for the rest of the dev server: whatever the DOM routes pass on ends here. */
 function nextMiddleware(res: http.ServerResponse): (error?: unknown) => void {
 	return (error) => {
-		res.writeHead(error ? 500 : 200)
-		res.end(error ? String(error) : PASSED_THROUGH)
+		if (error === undefined) {
+			res.writeHead(200)
+			res.end(PASSED_THROUGH)
+
+			return
+		}
+
+		res.writeHead(500)
+		res.end(error instanceof Error ? error.message : 'unrecognized error')
 	}
 }
 
 function createProject(): string {
 	const projectRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'use-dom-dev-')))
+
 	writeFileSync(path.join(projectRoot, 'package.json'), '{ "name": "dev-fixture" }\n')
+
 	writeFileSync(
 		path.join(projectRoot, 'babel.config.js'),
 		`module.exports = { presets: [${JSON.stringify(RN_BABEL_PRESET)}] };\n`,
@@ -110,6 +130,7 @@ function createProject(): string {
 	// Components with JSX import React's runtime, which an app has installed.
 	mkdirSync(path.join(projectRoot, 'node_modules'))
 	symlinkSync(path.dirname(require.resolve('react/package.json')), path.join(projectRoot, 'node_modules', 'react'))
+
 	return projectRoot
 }
 
@@ -128,24 +149,29 @@ async function loadPage(url: string): Promise<Page> {
 	const html = await (await fetch(url)).text()
 	let reloaded = false
 	const virtualConsole = new VirtualConsole()
+
 	virtualConsole.on('jsdomError', (error) => {
-		if (error.message.includes('navigation')) reloaded = true
-		else throw error
+		if (error.message.includes('navigation')) {
+			reloaded = true
+		} else {
+			throw error
+		}
 	})
 	const dom = new JSDOM(html, {
-		url,
-		runScripts: 'dangerously',
-		virtualConsole,
 		beforeParse(window) {
 			Object.assign(window, {
-				fetch: (input: string, init?: RequestInit) => fetch(new URL(input, url), init),
 				ReactNativeWebView: {
+					injectedObjectJson: () => JSON.stringify({ actions: [], instanceId: 'test', props: { name: 'dom' } }),
 					postMessage: () => {},
-					injectedObjectJson: () => JSON.stringify({ instanceId: 'test', props: { name: 'dom' }, actions: [] }),
 				},
+				fetch: (input: string, init?: RequestInit) => fetch(new URL(input, url), init),
 			})
 		},
+		runScripts: 'dangerously',
+		url,
+		virtualConsole,
 	})
+
 	return { dom, reloaded: () => reloaded }
 }
 
@@ -155,14 +181,17 @@ async function listen(
 ): Promise<{ httpServer: http.Server; connections: Set<http.IncomingMessage['socket']> }> {
 	const httpServer = http.createServer(handler)
 	const connections = new Set<http.IncomingMessage['socket']>()
+
 	httpServer.on('connection', (socket) => {
 		connections.add(socket)
 		socket.on('close', () => connections.delete(socket))
 	})
+
 	await new Promise<void>((resolve) => {
 		httpServer.listen(0, '127.0.0.1', resolve)
 	})
-	return { httpServer, connections }
+
+	return { connections, httpServer }
 }
 
 export async function startDevFixture(): Promise<DevFixture> {
@@ -176,41 +205,51 @@ export async function startDevFixture(): Promise<DevFixture> {
 	const origin = `http://127.0.0.1:${(httpServer.address() as { port: number }).port}`
 
 	const pageUrl = (): string => {
-		const query = new URLSearchParams({ file: component, platform: 'web', dev: 'true' })
+		const query = new URLSearchParams({ dev: 'true', file: component, platform: 'web' })
+
 		return `${origin}${DEV_PAGE_PATH}?${query.toString()}`
 	}
 
 	return {
+		close: async () => {
+			await new Promise((resolve) => {
+				httpServer.close(resolve)
+			})
+			await dev.close()
+			rmSync(projectRoot, { force: true, recursive: true })
+			delete process.env[WEB_TRANSFORMER_ENV]
+		},
+		closeHttpServer: () =>
+			new Promise<void>((resolve, reject) => {
+				httpServer.close((error) => {
+					if (error === undefined) {
+						resolve()
+					} else {
+						reject(error)
+					}
+				})
+				httpServer.closeAllConnections()
+			}),
 		component,
+		dropConnections: () => {
+			for (const socket of connections) {
+				socket.destroy()
+			}
+		},
+		fetchBundle: () => {
+			const query = new URLSearchParams({ dev: 'true', platform: 'web', 'transform.dom': component })
+
+			return fetch(`${origin}${DEV_ENTRY_PATH}?${query.toString()}`)
+		},
+		openPage: () => loadPage(pageUrl()),
 		origin,
+		pageUrl,
 		reported,
 		writeComponent: (source) => {
 			writeFileSync(component, source)
 		},
 		writeStylesheet: (css) => {
 			writeFileSync(path.join(projectRoot, STYLESHEET), css)
-		},
-		pageUrl,
-		fetchBundle: () => {
-			const query = new URLSearchParams({ platform: 'web', dev: 'true', 'transform.dom': component })
-			return fetch(`${origin}${DEV_ENTRY_PATH}?${query.toString()}`)
-		},
-		openPage: () => loadPage(pageUrl()),
-		dropConnections: () => {
-			for (const socket of connections) socket.destroy()
-		},
-		closeHttpServer: () =>
-			new Promise<void>((resolve, reject) => {
-				httpServer.close((error) => (error ? reject(error) : resolve()))
-				httpServer.closeAllConnections()
-			}),
-		close: async () => {
-			await new Promise((resolve) => {
-				httpServer.close(resolve)
-			})
-			await dev.close()
-			rmSync(projectRoot, { recursive: true, force: true })
-			delete process.env[WEB_TRANSFORMER_ENV]
 		},
 	}
 }

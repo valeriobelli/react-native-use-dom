@@ -5,5 +5,4 @@
  * to change for DOM components to build.
  */
 
-export { withDom } from './with-dom'
-export type { MetroConfigFunction, MetroConfigInput } from './with-dom'
+export { withDom, type MetroConfigFunction, type MetroConfigInput } from './with-dom'

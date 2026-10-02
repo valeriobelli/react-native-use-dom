@@ -110,8 +110,9 @@ export function encodeMessage(message: DomToNativeMessage | NativeToDomMessage):
  * rather than trusted, and a bad frame throws {@link DomErrorCode.MalformedMessage} instead of
  * corrupting state further along.
  */
-export function decodeMessage<T extends DomToNativeMessage | NativeToDomMessage>(raw: string): T {
+export function decodeMessage(raw: string): DomToNativeMessage | NativeToDomMessage {
 	let parsed: unknown
+
 	try {
 		parsed = JSON.parse(raw)
 	} catch (cause) {
@@ -124,12 +125,18 @@ export function decodeMessage<T extends DomToNativeMessage | NativeToDomMessage>
 	if (typeof parsed !== 'object' || parsed === null) {
 		throw malformed(`expected an object, received ${parsed === null ? 'null' : typeof parsed}`)
 	}
+
 	const message = parsed as Record<string, unknown>
-	if (typeof message['type'] !== 'string') throw malformed('`type` is missing or not a string')
+
+	if (typeof message['type'] !== 'string') {
+		throw malformed('`type` is missing or not a string')
+	}
+
 	if (typeof message['instanceId'] !== 'string') {
 		throw malformed('`instanceId` is missing or not a string')
 	}
-	return message as T
+
+	return message as DomToNativeMessage | NativeToDomMessage
 }
 
 function malformed(detail: string): DomError {

@@ -5,8 +5,9 @@ describe('reportContentSize', () => {
 	it("reports the document's size, which counts the body's margins as content", () => {
 		const reportSize = jest.fn()
 		const root = document.createElement('div')
-		root.getBoundingClientRect = () => ({ width: 374, height: 58 }) as DOMRect
-		jest.spyOn(document.documentElement, 'getBoundingClientRect').mockReturnValue({ width: 390, height: 74 } as DOMRect)
+
+		root.getBoundingClientRect = () => ({ height: 58, width: 374 }) as DOMRect
+		jest.spyOn(document.documentElement, 'getBoundingClientRect').mockReturnValue({ height: 74, width: 390 } as DOMRect)
 
 		reportContentSize({ reportSize } as unknown as DomBridge, root)
 

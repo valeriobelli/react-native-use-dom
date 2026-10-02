@@ -50,20 +50,25 @@ type MetroServer = Parameters<EnhanceMiddleware>[1]
  */
 export function withDom(config: MetroConfigInput | Promise<MetroConfigInput>): Promise<MetroConfigInput>
 export function withDom(config: MetroConfigFunction): MetroConfigFunction
+
 export function withDom(
 	config: MetroConfigInput | Promise<MetroConfigInput> | MetroConfigFunction,
 ): Promise<MetroConfigInput> | MetroConfigFunction {
 	if (typeof config === 'function') {
 		return async (defaults) => addDom(await config(defaults))
 	}
+
 	return Promise.resolve(config).then(addDom)
 }
 
 function addDom(config: MetroConfigInput): MetroConfigInput {
+	// `enhanceMiddleware` is deprecated by Metro, but it is the only hook a Metro config has for
+	// wrapping the middleware stack, which is how the DOM routes reach the dev server.
+	// oxlint-disable-next-line typescript/no-deprecated
 	const enhanceMiddleware = config.server?.enhanceMiddleware
 	// The config as Metro resolves it: what the project exported, over Metro's own defaults.
 	const resolveConfig = async (metro: Metro, projectRoot: string): Promise<ConfigT> =>
-		metro.mergeConfig(await metro.getDefaultConfig(projectRoot), config as InputConfigT)
+		metro.mergeConfig(await metro.getDefaultConfig(projectRoot), config)
 
 	// The dev server serializes bundles the same way, and leaves the pages to its own routes.
 	const command = readBundleCommand(process.argv)
@@ -78,8 +83,13 @@ function addDom(config: MetroConfigInput): MetroConfigInput {
 		}),
 		server: {
 			...config.server,
+			// See the note on the `enhanceMiddleware` read above: deprecated, and still the hook.
+			// oxlint-disable-next-line typescript/no-deprecated
 			enhanceMiddleware: (middleware, metroServer) => {
+				// oxlint cannot resolve Metro's middleware type here; tsc checks this chain.
+				// oxlint-disable-next-line typescript/no-unsafe-assignment
 				const rest = enhanceMiddleware ? enhanceMiddleware(middleware, metroServer) : middleware
+
 				return withDomRoutes(rest as Middleware, metroServer)
 			},
 		},
@@ -101,13 +111,18 @@ function withDomRoutes(rest: Middleware, metroServer: MetroServer): Middleware {
 	// oxlint-disable-next-line no-underscore-dangle
 	const dom = createDomDevServer(metroServer._config, hostMetro(metroServer))
 	const end = metroServer.end.bind(metroServer)
+
 	metroServer.end = async () => {
 		await Promise.all([end(), dom.close()])
 	}
+
 	return (req, res, next) => {
 		dom.middleware(req, res, (error) => {
-			if (error === undefined || error === null) rest(req, res, next)
-			else next(error)
+			if (error === undefined || error === null) {
+				rest(req, res, next)
+			} else {
+				next(error)
+			}
 		})
 	}
 }

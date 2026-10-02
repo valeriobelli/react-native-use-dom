@@ -59,6 +59,7 @@ it('serves a page that renders the component with the injected props', async () 
 	const { dom } = await fixture.openPage()
 
 	const text = await waitFor('the component', () => dom.window.document.querySelector('#root')?.textContent)
+
 	expect(text).toBe('hello dom')
 	dom.window.close()
 })
@@ -81,21 +82,22 @@ it('shows a build error with its location, reports it, and reloads once it is fi
 	fixture.reported.length = 0
 	// Metro sees the edit through its file watcher, a moment after it is written.
 	await waitFor('the watcher to see the edit', async () => !(await fixture.fetchBundle()).ok)
-	const { dom, reloaded } = await fixture.openPage()
+	const page = await fixture.openPage()
 
 	try {
 		const shown = await waitFor(
 			'the build error',
-			() => dom.window.document.querySelector('#use-dom-build-error')?.textContent,
+			() => page.dom.window.document.querySelector('#use-dom-build-error')?.textContent,
 		)
+
 		expect(shown).toContain(`${fixture.component}:`)
 		expect(fixture.reported.map((event) => event.type)).toContain('bundling_error')
 
 		fixture.writeComponent(HELLO)
-		await waitFor('the reload', reloaded)
+		await waitFor('the reload', () => page.reloaded())
 	} finally {
 		fixture.writeComponent(HELLO)
-		dom.window.close()
+		page.dom.window.close()
 	}
 })
 
@@ -103,9 +105,17 @@ it('closes the server while a page holds its hot socket open', async () => {
 	// One request installs the upgrade routing, which the socket then goes through.
 	await fetch(fixture.pageUrl())
 	const socket = new WebSocket(`${fixture.origin.replace(/^http/u, 'ws')}${DEV_HOT_PATH}`)
+
 	await new Promise((resolve, reject) => {
 		socket.addEventListener('open', resolve, { once: true })
-		socket.addEventListener('error', () => reject(new Error('the hot socket refused the connection')), { once: true })
+
+		socket.addEventListener(
+			'error',
+			() => {
+				reject(new Error('the hot socket refused the connection'))
+			},
+			{ once: true },
+		)
 	})
 
 	try {
@@ -118,7 +128,9 @@ it('closes the server while a page holds its hot socket open', async () => {
 		const outcome = await Promise.race([
 			closed,
 			new Promise<'held'>((resolve) => {
-				setTimeout(() => resolve('held'), 1_000)
+				setTimeout(() => {
+					resolve('held')
+				}, 1_000)
 			}),
 		])
 

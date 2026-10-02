@@ -16,7 +16,9 @@ export function forwardConsole(bridge: DomBridge): () => void {
 
 	for (const level of FORWARDED_LEVELS) {
 		const original = console[level].bind(console) as (...args: unknown[]) => void
+
 		originals.set(level, original)
+
 		console[level] = (...args: unknown[]) => {
 			original(...args)
 			bridge.reportConsole(level, args)
@@ -24,7 +26,9 @@ export function forwardConsole(bridge: DomBridge): () => void {
 	}
 
 	return () => {
-		for (const [level, original] of originals) console[level] = original
+		for (const [level, original] of originals) {
+			console[level] = original
+		}
 	}
 }
 
@@ -36,6 +40,7 @@ export function reportUncaughtErrors(bridge: DomBridge): () => void {
 	const onError = (event: ErrorEvent) => {
 		bridge.reportUncaughtError(event.error ?? event.message)
 	}
+
 	const onRejection = (event: PromiseRejectionEvent) => {
 		bridge.reportUncaughtError(event.reason)
 	}
@@ -59,17 +64,21 @@ export function reportUncaughtErrors(bridge: DomBridge): () => void {
 export function reportContentSize(bridge: DomBridge, element: HTMLElement): () => void {
 	const measure = () => {
 		const rect = document.documentElement.getBoundingClientRect()
+
 		bridge.reportSize(rect.width, rect.height)
 	}
 
 	if (typeof ResizeObserver === 'undefined') {
 		measure()
+
 		return noop
 	}
 
 	const observer = new ResizeObserver(measure)
+
 	observer.observe(element)
 	observer.observe(document.documentElement)
+
 	return () => {
 		observer.disconnect()
 	}

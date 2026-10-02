@@ -2,8 +2,8 @@ import { DomError, DomErrorCode } from '../runtime/errors'
 import { loadNativeView } from './web-view'
 
 jest.mock('react-native-nitro-modules', () => ({
-	getHostComponent: (name: string) => ({ hostComponent: name }),
 	callback: (f: unknown) => ({ f }),
+	getHostComponent: (name: string) => ({ hostComponent: name }),
 }))
 
 interface ExpoGlobal {
@@ -20,6 +20,7 @@ function capture(run: () => void): DomError {
 	} catch (error) {
 		return error as DomError
 	}
+
 	throw new Error('expected the call to throw, but it returned')
 }
 

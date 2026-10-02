@@ -41,17 +41,21 @@ export function transform(
 	options: TransformOptions,
 ): Promise<TransformResult> {
 	const upstream = loadWorker(readWebTransformerSettings().upstreamWorkerPath)
+
 	if (options.type === 'asset' || !STYLESHEET.test(filename)) {
 		return upstream.transform(config, projectRoot, filename, data, options)
 	}
+
 	// Named as a script, so that the upstream worker compiles it as one rather than as a stylesheet.
 	const source = stylesheetModule(filename, data.toString('utf8'))
+
 	return upstream.transform(config, projectRoot, `${filename}.js`, Buffer.from(source), options)
 }
 
 /** Combines the project worker's key with this file's, so editing either invalidates the cache. */
 export function getCacheKey(config: WorkerConfig, opts?: { projectRoot: string }): string {
 	const { upstreamWorkerPath } = readWebTransformerSettings()
+
 	return createHash('md5')
 		.update(readFileSync(__filename))
 		.update(readFileSync(upstreamWorkerPath))

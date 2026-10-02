@@ -19,19 +19,18 @@ const RN_TRANSFORMER = require.resolve('@react-native/metro-babel-transformer', 
 
 function publishSettings(upstreamTransformerPath = ECHO_TRANSFORMER): void {
 	const settings: WebTransformerSettings = {
+		allowedRoots: [PROJECT_ROOT],
 		upstreamTransformerPath,
 		// The Babel transformer never reads it: the worker in front of it does.
 		upstreamWorkerPath: require.resolve('metro-transform-worker'),
-		allowedRoots: [PROJECT_ROOT],
 	}
+
 	process.env[WEB_TRANSFORMER_ENV] = JSON.stringify(settings)
 }
 
 function args(filename: string, options: Partial<BabelTransformerArgs['options']> = {}): BabelTransformerArgs {
 	return {
 		filename,
-		src: 'module.exports = 1;',
-		plugins: [],
 		options: {
 			dev: true,
 			enableBabelRuntime: false,
@@ -42,12 +41,18 @@ function args(filename: string, options: Partial<BabelTransformerArgs['options']
 			publicPath: '/assets',
 			...options,
 		},
+		plugins: [],
+		src: 'module.exports = 1;',
 	}
 }
 
 function lastCall(): BabelTransformerArgs {
 	const call = calls.at(-1)
-	if (!call) throw new Error('the upstream transformer was not called')
+
+	if (!call) {
+		throw new Error('the upstream transformer was not called')
+	}
+
 	return call
 }
 
@@ -95,6 +100,7 @@ describe('entry synthesis', () => {
 		transform(args(entryFilename, { customTransformOptions: { dom: COMPONENT } }))
 
 		const { src, plugins } = lastCall()
+
 		expect(src).toContain(`import Component from ${JSON.stringify(COMPONENT)};`)
 		expect(src).toContain(`import { mountDomComponent } from ${JSON.stringify(require.resolve('../web/mount'))};`)
 		expect(src).toContain('mountDomComponent(Component);')
@@ -123,6 +129,7 @@ describe('entry synthesis', () => {
 describe('getCacheKey', () => {
 	it('changes when the upstream transformer changes', () => {
 		const withEcho = getCacheKey()
+
 		publishSettings(RN_TRANSFORMER)
 
 		expect(getCacheKey()).not.toBe(withEcho)

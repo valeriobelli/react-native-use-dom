@@ -25,7 +25,9 @@ export function loadNativeView(): NativeView {
 			fix: "Expo Go doesn't include react-native-use-dom's native view. Run the app as a development build: `npx expo run:ios`, `npx expo run:android` or EAS Build (https://docs.expo.dev/develop/development-builds/create-a-build/).",
 		})
 	}
+
 	nativeView ??= createNativeView()
+
 	return nativeView
 }
 
@@ -37,6 +39,7 @@ function createNativeView(): NativeView {
 	// eslint-disable-next-line
 	const viewConfig =
 		require('../../nitrogen/generated/shared/json/RNUseDomWebViewConfig.json') as ViewConfig<RNUseDomWebViewProps>
+
 	return {
 		RNUseDomWebView: nitro.getHostComponent<RNUseDomWebViewProps, RNUseDomWebViewMethods>(
 			'RNUseDomWebView',

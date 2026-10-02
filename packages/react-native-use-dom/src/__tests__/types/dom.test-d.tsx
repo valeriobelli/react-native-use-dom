@@ -4,7 +4,7 @@ import { useDOMImperativeHandle } from '../../web'
 
 export function HandleMethodsExchangeSerializableValues() {
 	useDOMImperativeHandle<{ getText(): string; clear(): void; load(id: number): Promise<{ title: string }> }>(
-		() => ({ getText: () => '', clear: () => {}, load: async () => ({ title: '' }) }),
+		() => ({ clear: () => {}, getText: () => '', load: async () => ({ title: '' }) }),
 		[],
 	)
 	// @ts-expect-error a Date does not survive the trip to the native side
@@ -13,6 +13,7 @@ export function HandleMethodsExchangeSerializableValues() {
 	useDOMImperativeHandle<{ later(): () => void }>(() => ({ later: () => () => {} }), [])
 	// @ts-expect-error every member of a handle is a method
 	useDOMImperativeHandle<{ count: number }>(() => ({ count: 1 }), [])
+
 	return null
 }
 

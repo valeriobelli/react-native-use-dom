@@ -1,4 +1,4 @@
-package com.bareexample
+package com.reactnativeusedombareexample
 
 import android.app.Application
 import com.facebook.react.PackageList

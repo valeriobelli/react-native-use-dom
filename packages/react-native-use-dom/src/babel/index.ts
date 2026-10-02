@@ -46,6 +46,9 @@ interface State extends PluginPass {
  * module.exports = { plugins: ['react-native-use-dom/babel'] };
  * ```
  */
+// Babel loads a plugin from the module's default export, which `plugins: ['react-native-use-dom/babel']`
+// depends on; a named export would break every consumer's config.
+// oxlint-disable-next-line import/no-default-export
 export default function useDomPlugin(
 	babel: { types: typeof BabelTypes },
 	options: UseDomPluginOptions = {},
@@ -56,15 +59,18 @@ export default function useDomPlugin(
 		name: 'react-native-use-dom',
 		visitor: {
 			Program(path, state) {
-				if (!hasUseDomDirective(path)) return
+				if (!hasUseDomDirective(path)) {
+					return
+				}
 
 				const filePath = state.file.opts.filename ?? '<unknown>'
 				const platform = options.platform ?? readCallerPlatform(state)
 
 				if (platform === 'web') {
-					state.file.metadata = Object.assign(state.file.metadata as object, {
-						useDom: { filePath, erased: false } satisfies UseDomMetadata,
+					state.file.metadata = Object.assign(state.file.metadata, {
+						useDom: { erased: false, filePath } satisfies UseDomMetadata,
 					})
+
 					return
 				}
 
@@ -74,8 +80,8 @@ export default function useDomPlugin(
 				// Not skipped: the other plugins still visit the proxy, and leave it as the rest of the bundle.
 				path.node.body = buildProxyModule(t, filePath)
 
-				state.file.metadata = Object.assign(state.file.metadata as object, {
-					useDom: { filePath, erased: true } satisfies UseDomMetadata,
+				state.file.metadata = Object.assign(state.file.metadata, {
+					useDom: { erased: true, filePath } satisfies UseDomMetadata,
 				})
 			},
 		},
@@ -84,11 +90,13 @@ export default function useDomPlugin(
 
 function hasUseDomDirective(path: NodePath<BabelTypes.Program>): boolean {
 	const [first] = path.node.directives
+
 	return first?.value.value === USE_DOM_DIRECTIVE
 }
 
 function readCallerPlatform(state: State): string | undefined {
 	const caller = (state.file.opts as { caller?: { platform?: unknown } }).caller
+
 	return typeof caller?.platform === 'string' ? caller.platform : undefined
 }
 
@@ -125,8 +133,12 @@ function assertOnlyDefaultExport(path: NodePath<BabelTypes.Program>, filePath: s
 }
 
 function isTypeOnlyExport(node: BabelTypes.ExportNamedDeclaration): boolean {
-	if (node.exportKind === 'type') return true
+	if (node.exportKind === 'type') {
+		return true
+	}
+
 	const declaration = node.declaration
+
 	return (
 		declaration?.type === 'TSTypeAliasDeclaration' ||
 		declaration?.type === 'TSInterfaceDeclaration' ||
@@ -136,18 +148,29 @@ function isTypeOnlyExport(node: BabelTypes.ExportNamedDeclaration): boolean {
 
 function describeNamedExport(node: BabelTypes.ExportNamedDeclaration): string {
 	const declaration = node.declaration
+
 	if (declaration?.type === 'FunctionDeclaration' && declaration.id) {
 		return `\`${declaration.id.name}\``
 	}
+
 	if (declaration?.type === 'ClassDeclaration' && declaration.id) {
 		return `\`${declaration.id.name}\``
 	}
+
 	if (declaration?.type === 'VariableDeclaration') {
 		const [first] = declaration.declarations
-		if (first?.id.type === 'Identifier') return `\`${first.id.name}\``
+
+		if (first?.id.type === 'Identifier') {
+			return `\`${first.id.name}\``
+		}
 	}
+
 	const [specifier] = node.specifiers
-	if (specifier?.exported.type === 'Identifier') return `\`${specifier.exported.name}\``
+
+	if (specifier?.exported.type === 'Identifier') {
+		return `\`${specifier.exported.name}\``
+	}
+
 	return 'a named export'
 }
 

@@ -2,6 +2,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
 	displayName: 'dom',
+	modulePathIgnorePatterns: ['<rootDir>/lib/'],
 	rootDir: __dirname,
 	testEnvironment: 'jsdom',
 	testMatch: ['<rootDir>/src/web/**/*.test.{ts,tsx}'],

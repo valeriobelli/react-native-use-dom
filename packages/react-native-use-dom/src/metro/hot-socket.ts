@@ -12,9 +12,9 @@ type HmrMessage = string | Buffer | ArrayBuffer | Buffer[]
 /** The part of the `ws` server Metro creates that is used here. */
 export interface HotSocketServer {
 	handleUpgrade(...args: [...Parameters<UpgradeListener>, (socket: unknown) => void]): void
-	emit(event: 'connection', socket: unknown, req: IncomingMessage): boolean
-	/** Ends every open connection, then stops taking upgrades. */
-	close(): void
+	emit(event: 'connection', socket: unknown, req: IncomingMessage): void
+	/** Ends every open connection, then stops taking upgrades. Answers whether this call did it. */
+	close(): boolean
 }
 
 /**
@@ -40,24 +40,44 @@ export function createHotSocketServer(
 					await hmr.onClientMessage(client, toWebHmrMessage(message, toBundleUrl), sendFn)
 				} catch (error) {
 					// Metro reports a failed registration nowhere, which leaves the page waiting for an answer.
-					sendFn(JSON.stringify({ type: 'error', body: formatBundlingError(error as Error) }))
+					sendFn(JSON.stringify({ body: formatBundlingError(error as Error), type: 'error' }))
 				}
 			},
 		},
 	})
 
+	return trackClose(sockets)
+}
+
+/**
+ * Adds the one-shot close to the `ws` server Metro created: it ends every open connection first,
+ * because a websocket server that closes leaves its connections open, which holds a dev server
+ * that waits for every connection before it reports itself closed.
+ */
+function trackClose(sockets: ReturnType<Metro['createWebsocketServer']>): HotSocketServer {
 	let closed = false
 
 	return {
-		handleUpgrade: (...args) => sockets.handleUpgrade(...args),
-		emit: (event, socket, req) => sockets.emit(event, socket, req),
-		// A websocket server that closes leaves its connections open, which holds a dev server that
-		// waits for every connection before it reports itself closed.
 		close: () => {
-			if (closed) return
+			if (closed) {
+				return false
+			}
+
 			closed = true
-			for (const socket of sockets.clients) socket.terminate()
+
+			for (const socket of sockets.clients) {
+				socket.terminate()
+			}
+
 			sockets.close()
+
+			return true
+		},
+		emit: (event, socket, req) => {
+			sockets.emit(event, socket, req)
+		},
+		handleUpgrade: (...args) => {
+			sockets.handleUpgrade(...args)
 		},
 	}
 }
@@ -85,20 +105,31 @@ function toWebHmrMessage(message: HmrMessage, toBundleUrl: (url: URL) => string)
 		...data,
 		entryPoints: data.entryPoints.map((entryPoint) => {
 			const url = new URL(entryPoint, 'http://localhost')
+
 			return url.pathname === DEV_ENTRY_PATH ? `${url.origin}${toBundleUrl(url)}` : entryPoint
 		}),
 	})
 }
 
 function messageText(message: HmrMessage): string {
-	if (typeof message === 'string') return message
-	if (Array.isArray(message)) return Buffer.concat(message).toString()
+	if (typeof message === 'string') {
+		return message
+	}
+
+	if (Array.isArray(message)) {
+		return Buffer.concat(message).toString()
+	}
+
 	return Buffer.from(message instanceof ArrayBuffer ? new Uint8Array(message) : message).toString()
 }
 
 function isRegisterEntryPoints(data: unknown): data is { type: 'register-entrypoints'; entryPoints: string[] } {
-	if (typeof data !== 'object' || data === null) return false
+	if (typeof data !== 'object' || data === null) {
+		return false
+	}
+
 	const { type, entryPoints } = data as { type?: unknown; entryPoints?: unknown }
+
 	return (
 		type === 'register-entrypoints' &&
 		Array.isArray(entryPoints) &&

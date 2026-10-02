@@ -47,32 +47,47 @@ export function publicDirectory(projectRoot: string): string {
  */
 export async function sendPublicFile(directory: string, relativeUrl: string, res: ServerResponse): Promise<boolean> {
 	const file = resolveInside(directory, relativeUrl)
-	if (file === undefined || !(await isFile(file))) return false
+
+	if (file === undefined || !(await isFile(file))) {
+		return false
+	}
+
 	res.writeHead(200, {
-		'Content-Type': CONTENT_TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream',
 		'Cache-Control': 'no-cache',
+		'Content-Type': CONTENT_TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream',
 	})
+
 	await new Promise<void>((resolve, reject) => {
 		createReadStream(file).on('error', reject).on('end', resolve).pipe(res)
 	})
+
 	return true
 }
 
 /** Copies `directory`, when the project has one, into `outputDirectory`. */
 export async function copyPublicDirectory(directory: string, outputDirectory: string): Promise<void> {
-	if (!(await isDirectory(directory))) return
+	if (!(await isDirectory(directory))) {
+		return
+	}
+
 	await cp(directory, outputDirectory, { recursive: true })
 }
 
 function resolveInside(directory: string, relativeUrl: string): string | undefined {
 	let decoded: string
+
 	try {
 		decoded = decodeURIComponent(relativeUrl)
 	} catch {
 		return undefined
 	}
-	if (decoded.includes('\0')) return undefined
+
+	if (decoded.includes('\0')) {
+		return undefined
+	}
+
 	const file = path.resolve(directory, `.${path.posix.sep}${decoded}`)
+
 	return file.startsWith(`${directory}${path.sep}`) ? file : undefined
 }
 

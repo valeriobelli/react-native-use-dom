@@ -6,8 +6,7 @@
  * `react-native-use-dom/dom`.
  */
 
-export { createDomComponentProxy } from './create-dom-component-proxy'
-export type { DomComponentProxyOptions } from './create-dom-component-proxy'
+export { createDomComponentProxy, type DomComponentProxyOptions } from './create-dom-component-proxy'
 
 export type {
 	DomComponent,
@@ -19,6 +18,5 @@ export type {
 	DomRefHandle,
 } from './types'
 
-export { DomError, DomErrorCode, isDomError } from '../runtime/errors'
-export type { DomErrorOptions } from '../runtime/errors'
+export { DomError, DomErrorCode, isDomError, type DomErrorOptions } from '../runtime/errors'
 export type { Serializable } from '../runtime/serializable'

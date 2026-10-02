@@ -68,12 +68,13 @@ export function createWebConfig(config: ConfigT, metro: Metro): ConfigT {
 	return {
 		...config,
 		cacheVersion: `${config.cacheVersion}:${CACHE_VERSION_SUFFIX}`,
-		watchFolders: unique([...config.watchFolders, PACKAGE_ROOT]),
+		reporter: withoutStartupBanner(config.reporter),
 		resolver: {
 			...config.resolver,
 			platforms: unique([...config.resolver.platforms, WEB_PLATFORM]),
-			sourceExts: unique([...config.resolver.sourceExts, CSS_EXTENSION]),
+			resolveRequest: createWebResolver(config.resolver.resolveRequest),
 			resolverMainFields: ['browser', 'module', 'main'],
+			sourceExts: unique([...config.resolver.sourceExts, CSS_EXTENSION]),
 			// `browser` comes from `unstable_conditionsByPlatform.web`; a global list would also
 			// apply it to the native bundle's resolution if the two configs were ever shared.
 			unstable_conditionNames: config.resolver.unstable_conditionNames.filter(
@@ -83,40 +84,44 @@ export function createWebConfig(config: ConfigT, metro: Metro): ConfigT {
 				...config.resolver.unstable_conditionsByPlatform,
 				[WEB_PLATFORM]: config.resolver.unstable_conditionsByPlatform[WEB_PLATFORM] ?? ['browser'],
 			},
-			resolveRequest: createWebResolver(config.resolver.resolveRequest),
 		},
 		serializer: {
 			...config.serializer,
-			getPolyfills: () => [],
-			polyfillModuleNames: [],
-			getModulesRunBeforeMainModule: () => [],
 			// A framework serializer (Expo's, for one) shapes output for its own web runtime; DOM
 			// bundles are loaded by the page this library generates.
 			customSerializer: null,
+			getModulesRunBeforeMainModule: () => [],
+			getPolyfills: () => [],
+			polyfillModuleNames: [],
 		},
-		reporter: withoutStartupBanner(config.reporter),
-		transformerPath: WEB_WORKER_PATH,
+		server: {
+			...config.server,
+			// The web instance is never served on its own: requests reach it already routed. oxlint
+			// cannot resolve Metro's middleware type here; tsc checks this pass-through.
+			// oxlint-disable-next-line typescript/no-deprecated, typescript/no-unsafe-return
+			enhanceMiddleware: (middleware) => middleware,
+			rewriteRequestUrl: (url) => url,
+		},
 		transformer: {
 			...config.transformer,
 			babelTransformerPath: WEB_TRANSFORMER_PATH,
 		},
-		server: {
-			...config.server,
-			// The web instance is never served on its own: requests reach it already routed.
-			enhanceMiddleware: (middleware) => middleware,
-			rewriteRequestUrl: (url) => url,
-		},
+		transformerPath: WEB_WORKER_PATH,
+		watchFolders: unique([...config.watchFolders, PACKAGE_ROOT]),
 	}
 }
 
 /** Reads the settings {@link createWebConfig} published for the web Babel transformer. */
 export function readWebTransformerSettings(): WebTransformerSettings {
 	const raw = process.env[WEB_TRANSFORMER_ENV]
-	if (raw === undefined) {
+
+	if (!raw) {
 		throw new DomError(DomErrorCode.MissingMetroConfig, 'The DOM component transformer ran without its settings.', {
 			fix: "DOM bundles are built by the bundler `withDom()` starts. Wrap your Metro config with `withDom` from 'react-native-use-dom/metro' instead of pointing Metro at the transformer directly.",
 		})
 	}
+
+	// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 	return JSON.parse(raw) as WebTransformerSettings
 }
 
@@ -139,6 +144,7 @@ export function createWebResolver(upstream: CustomResolver | null | undefined): 
 		if (resolvesIntoReactNative(resolution)) {
 			throw reactNativeImport(context.originModulePath, moduleName)
 		}
+
 		return resolution
 	}
 }
@@ -167,9 +173,9 @@ function unique<T>(values: readonly T[]): T[] {
 
 function webTransformerSettings(config: ConfigT, metro: Metro): WebTransformerSettings {
 	return {
+		allowedRoots: unique([config.projectRoot, ...config.watchFolders]),
 		upstreamTransformerPath: resolveUpstreamTransformer(config),
 		upstreamWorkerPath: metro.resolve(config.transformerPath),
-		allowedRoots: unique([config.projectRoot, ...config.watchFolders]),
 	}
 }
 
@@ -180,7 +186,9 @@ function webTransformerSettings(config: ConfigT, metro: Metro): WebTransformerSe
 function withoutStartupBanner(reporter: ConfigT['reporter']): ConfigT['reporter'] {
 	return {
 		update: (event) => {
-			if (event.type !== 'dep_graph_loading') reporter.update(event)
+			if (event.type !== 'dep_graph_loading') {
+				reporter.update(event)
+			}
 		},
 	}
 }

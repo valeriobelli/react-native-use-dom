@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+import { createContext, use } from 'react'
 
 import { DomError, DomErrorCode } from '../runtime/errors'
 import type { DomBridge } from './bridge'
@@ -14,11 +14,13 @@ export const DomBridgeProvider = BridgeContext.Provider
  * mistake is instead of silently doing nothing.
  */
 export function useDomBridge(hookName: string): DomBridge {
-	const bridge = useContext(BridgeContext)
+	const bridge = use(BridgeContext)
+
 	if (!bridge) {
 		throw new DomError(DomErrorCode.BridgeClosed, `\`${hookName}\` was called outside a DOM component.`, {
 			fix: "Hooks from 'react-native-use-dom/dom' only work inside a module whose first statement is 'use dom', and only while that module is being rendered by the native side.",
 		})
 	}
+
 	return bridge
 }

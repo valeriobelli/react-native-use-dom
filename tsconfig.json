@@ -1,4 +1,3 @@
 {
-	"files": [],
-	"references": [{ "path": "./packages/react-native-use-dom/tsconfig.build.json" }]
+	"files": []
 }

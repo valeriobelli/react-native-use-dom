@@ -1,6 +1,6 @@
 import { DomError, DomErrorCode } from './errors'
 import { findSerializableViolation } from './serializable'
-import type { Serializable } from './serializable'
+import type { Serializable, SerializableViolation } from './serializable'
 
 /** A function prop, which the DOM side calls as an async native action. */
 export type NativeAction = (...args: never[]) => unknown
@@ -42,7 +42,9 @@ export function splitProps(props: Record<string, unknown>, componentName: string
 	const actions: Record<string, NativeAction> = {}
 
 	for (const [name, value] of Object.entries(props)) {
-		if (RESERVED.has(name)) continue
+		if (RESERVED.has(name)) {
+			continue
+		}
 
 		if (typeof value === 'function') {
 			actions[name] = value as NativeAction
@@ -50,30 +52,37 @@ export function splitProps(props: Record<string, unknown>, componentName: string
 		}
 
 		const violation = findSerializableViolation(value)
-		if (violation === null) {
+
+		if (!violation) {
 			data[name] = value as Serializable
+
 			continue
 		}
 
-		const where = violation.path === '' ? `prop \`${name}\`` : `prop \`${name}.${violation.path}\``
-		if (violation.kind === 'function') {
-			throw new DomError(
-				DomErrorCode.NestedFunctionProp,
-				`<${componentName}> received a function at ${where}, which cannot be called from the DOM side.`,
-				{
-					fix: 'Only top-level function props become native actions. Pass it as its own prop instead of nesting it.',
-				},
-			)
-		}
+		rejectViolation(componentName, name, violation)
+	}
 
+	return { actions, data }
+}
+
+function rejectViolation(componentName: string, name: string, violation: SerializableViolation): never {
+	const where = violation.path === '' ? `prop \`${name}\`` : `prop \`${name}.${violation.path}\``
+
+	if (violation.kind === 'function') {
 		throw new DomError(
-			DomErrorCode.NonSerializableProp,
-			`<${componentName}> received a value at ${where} that cannot be sent to a DOM component: ${violation.reason}.`,
+			DomErrorCode.NestedFunctionProp,
+			`<${componentName}> received a function at ${where}, which cannot be called from the DOM side.`,
 			{
-				fix: 'DOM components exchange JSON-compatible values only: strings, finite numbers, booleans, null, arrays and plain objects.',
+				fix: 'Only top-level function props become native actions. Pass it as its own prop instead of nesting it.',
 			},
 		)
 	}
 
-	return { data, actions }
+	throw new DomError(
+		DomErrorCode.NonSerializableProp,
+		`<${componentName}> received a value at ${where} that cannot be sent to a DOM component: ${violation.reason}.`,
+		{
+			fix: 'DOM components exchange JSON-compatible values only: strings, finite numbers, booleans, null, arrays and plain objects.',
+		},
+	)
 }

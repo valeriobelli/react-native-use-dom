@@ -4,7 +4,9 @@ import { findHostMetroPackage, hostMetro } from './host-metro'
 
 // What identifies a server is the class that built it.
 const ExpoServer = (): void => {}
+
 const OwnServer = (): void => {}
+
 const builtBy = (Class: () => void): object => ({ constructor: Class })
 
 const EXPO_METRO = path.join('/app', 'node_modules', '.pnpm', 'metro@0.84.5', 'node_modules', 'metro')
@@ -31,6 +33,7 @@ it('picks the only Metro the process has loaded when there is no server', () => 
 
 it('knows no host when several Metros are loaded, or the server comes from none of them', () => {
 	expect(findHostMetroPackage(cache)).toBeUndefined()
+
 	expect(
 		findHostMetroPackage(
 			cache,

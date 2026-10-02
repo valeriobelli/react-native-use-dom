@@ -1,3 +1,3 @@
 steps:
-  - launch: { ios: org.reactjs.native.example.BareExample, android: com.bareexample }
+  - launch: { ios: org.reactjs.native.example.BareExample, android: com.reactnativeusedombareexample }
   - run: ../shared/native-action

@@ -20,23 +20,36 @@ const SKIPPED_PROPERTIES = new Set(['name', 'message', 'stack'])
 /** Converts anything that was thrown into a payload that survives the boundary. */
 export function serializeError(thrown: unknown): WireError {
 	if (!(thrown instanceof Error)) {
-		return { name: 'Error', message: safeStringify(thrown) }
+		return { message: safeStringify(thrown), name: 'Error' }
 	}
 
-	const wire: WireError = { name: thrown.name, message: thrown.message }
-	if (typeof thrown.stack === 'string') wire.stack = thrown.stack
+	const wire: WireError = { message: thrown.message, name: thrown.name }
+
+	if (typeof thrown.stack === 'string') {
+		wire.stack = thrown.stack
+	}
 
 	const properties: Record<string, Serializable> = {}
 	let hasProperties = false
+
 	for (const [key, value] of Object.entries(thrown)) {
-		if (SKIPPED_PROPERTIES.has(key)) continue
+		if (SKIPPED_PROPERTIES.has(key)) {
+			continue
+		}
 		// A property that cannot be transferred is dropped rather than turning error reporting itself
 		// into an error: the developer is already looking at a failure.
-		if (findSerializableViolation(value) !== null) continue
+
+		if (findSerializableViolation(value) !== null) {
+			continue
+		}
+
 		properties[key] = value as Serializable
 		hasProperties = true
 	}
-	if (hasProperties) wire.properties = properties
+
+	if (hasProperties) {
+		wire.properties = properties
+	}
 
 	return wire
 }
@@ -50,19 +63,30 @@ export function serializeError(thrown: unknown): WireError {
  */
 export function deserializeError(wire: WireError): Error {
 	const error = new Error(wire.message)
+
 	Object.defineProperty(error, 'name', {
-		value: wire.name,
-		writable: true,
 		configurable: true,
 		enumerable: false,
+		value: wire.name,
+		writable: true,
 	})
-	if (wire.stack !== undefined) error.stack = wire.stack
-	if (wire.properties) Object.assign(error, wire.properties)
+
+	if (wire.stack !== undefined) {
+		error.stack = wire.stack
+	}
+
+	if (wire.properties) {
+		Object.assign(error, wire.properties)
+	}
+
 	return error
 }
 
 function safeStringify(value: unknown): string {
-	if (typeof value === 'string') return value
+	if (typeof value === 'string') {
+		return value
+	}
+
 	try {
 		return JSON.stringify(value) ?? String(value)
 	} catch {

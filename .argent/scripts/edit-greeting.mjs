@@ -6,6 +6,7 @@ const examples = new URL('../../examples/', import.meta.url)
 async function relabel(example) {
 	const file = new URL(`${example}/src/Greeting.tsx`, examples)
 	const source = await readFile(file, 'utf8')
+
 	await writeFile(file, source.replace('Clicked {clicks} times.', 'Pressed {clicks} times.'))
 }
 

@@ -21,7 +21,7 @@ const userResolver: CustomResolver = (context, moduleName, platform) =>
 		? context.resolveRequest(context, './platform', platform)
 		: context.resolveRequest(context, moduleName, platform)
 
-const resolved: Resolution = { type: 'sourceFile', filePath: '/app/node_modules/react-dom/index.js' }
+const resolved: Resolution = { filePath: '/app/node_modules/react-dom/index.js', type: 'sourceFile' }
 
 function fakeContext(resolveRequest: CustomResolver): CustomResolutionContext {
 	return {
@@ -32,8 +32,8 @@ function fakeContext(resolveRequest: CustomResolver): CustomResolutionContext {
 }
 
 const aliasIntoReactNative = (): Resolution => ({
-	type: 'sourceFile',
 	filePath: '/app/node_modules/react-native/index.js',
+	type: 'sourceFile',
 })
 
 /**
@@ -43,22 +43,23 @@ const aliasIntoReactNative = (): Resolution => ({
 function projectConfig(): ConfigT {
 	return mergeConfig(getDefaultConfig(FIXTURE_ROOT), {
 		cacheStores: [],
-		// Metro keeps its file map in the OS temp folder across runs, which a stale copy can break.
-		resetCache: true,
 		maxWorkers: 1,
 		reporter: silentReporter,
-		watchFolders: [FIXTURE_ROOT, EXTRA_WATCH_FOLDER],
+		// Metro keeps its file map in the OS temp folder across runs, which a stale copy can break.
+		resetCache: true,
 		resolver: {
 			blockList: [/ignored-dir/u],
 			extraNodeModules: { 'dual-pkg': path.join(FIXTURE_ROOT, 'vendor', 'dual-pkg') },
 			resolveRequest: userResolver,
 			useWatchman: false,
 		},
+		watchFolders: [FIXTURE_ROOT, EXTRA_WATCH_FOLDER],
 	})
 }
 
 async function resolvedPaths(config: ConfigT, entry: string): Promise<string[]> {
 	const graph = await buildGraph(config, { entries: [path.join(FIXTURE_ROOT, entry)], platform: 'web' })
+
 	return [...graph.dependencies.keys()].map((file) => path.relative(FIXTURE_ROOT, file)).toSorted()
 }
 
@@ -100,14 +101,15 @@ describe('createWebConfig', () => {
 
 	it('publishes the project transformer and worker for the web ones to wrap', () => {
 		const project = projectConfig()
+
 		createWebConfig(project, hostMetro())
 
 		expect(readWebTransformerSettings()).toEqual({
+			allowedRoots: [FIXTURE_ROOT, EXTRA_WATCH_FOLDER],
 			upstreamTransformerPath: project.transformer.babelTransformerPath,
 			upstreamWorkerPath: require.resolve('metro-transform-worker', {
 				paths: [path.dirname(require.resolve('metro/package.json'))],
 			}),
-			allowedRoots: [FIXTURE_ROOT, EXTRA_WATCH_FOLDER],
 		})
 	})
 

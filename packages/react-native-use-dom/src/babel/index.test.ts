@@ -8,13 +8,17 @@ import type { UseDomMetadata, UseDomPluginOptions } from './index'
 
 function compile(source: string, options: UseDomPluginOptions = {}) {
 	const result = transformSync(source, {
-		filename: '/app/src/Chart.tsx',
 		babelrc: false,
 		configFile: false,
-		presets: [['@babel/preset-typescript', { isTSX: true, allExtensions: true }]],
+		filename: '/app/src/Chart.tsx',
 		plugins: [[useDomPlugin, options]],
+		presets: [['@babel/preset-typescript', { allExtensions: true, isTSX: true }]],
 	})
-	if (!result?.code) throw new Error('transform produced no code')
+
+	if (!result?.code) {
+		throw new Error('transform produced no code')
+	}
+
 	return {
 		code: result.code,
 		metadata: (result.metadata as { useDom?: UseDomMetadata }).useDom,
@@ -27,6 +31,7 @@ function capture(run: () => unknown): DomError {
 	} catch (error) {
 		return error as DomError
 	}
+
 	throw new Error('expected the transform to throw, but it returned')
 }
 
@@ -39,6 +44,7 @@ export default function Chart({ points }: { points: number[] }) {
 describe('on a native platform', () => {
 	it('replaces the module with a proxy that points back at the file', () => {
 		const { code } = compile(COMPONENT, { platform: 'ios' })
+
 		expect(code).toContain('createDomComponentProxy')
 		expect(code).toContain('react-native-use-dom')
 		expect(code).toContain('/app/src/Chart.tsx')
@@ -46,6 +52,7 @@ describe('on a native platform', () => {
 
 	it('names the page a release build embeds for the file', () => {
 		const { code } = compile(COMPONENT, { platform: 'ios' })
+
 		expect(code).toContain(`bundleFile: "${domBundleFileName('/app/src/Chart.tsx')}"`)
 	})
 
@@ -54,19 +61,21 @@ describe('on a native platform', () => {
 			paths: [require.resolve('@react-native/metro-config')],
 		})
 		const result = transformSync(COMPONENT, {
-			filename: '/app/src/Chart.tsx',
 			babelrc: false,
-			configFile: false,
 			caller: { name: 'metro', platform: 'ios' } as never,
-			presets: [preset],
+			configFile: false,
+			filename: '/app/src/Chart.tsx',
 			plugins: [useDomPlugin],
+			presets: [preset],
 		})
+
 		expect(result?.code).toContain('require("react-native-use-dom")')
 		expect(result?.code).not.toMatch(/^\s*(import|export) /mu)
 	})
 
 	it('leaves none of the original body in the native bundle', () => {
 		const { code } = compile(COMPONENT, { platform: 'ios' })
+
 		expect(code).not.toContain('svg')
 		expect(code).not.toContain('points')
 		expect(code).not.toContain('use dom')
@@ -79,13 +88,14 @@ describe('on a native platform', () => {
        export default () => <div />;`,
 			{ platform: 'android' },
 		)
+
 		expect(code).not.toContain('some-enormous-charting-library')
 	})
 
 	it('records the file in metadata so the bundler can collect it', () => {
 		expect(compile(COMPONENT, { platform: 'ios' }).metadata).toEqual({
-			filePath: '/app/src/Chart.tsx',
 			erased: true,
+			filePath: '/app/src/Chart.tsx',
 		})
 	})
 
@@ -105,14 +115,15 @@ describe('on a native platform', () => {
 describe('on web', () => {
 	it('leaves the module exactly as written', () => {
 		const { code } = compile(COMPONENT, { platform: 'web' })
+
 		expect(code).toContain('function Chart')
 		expect(code).not.toContain('createDomComponentProxy')
 	})
 
 	it('records the file but marks it as not erased', () => {
 		expect(compile(COMPONENT, { platform: 'web' }).metadata).toEqual({
-			filePath: '/app/src/Chart.tsx',
 			erased: false,
+			filePath: '/app/src/Chart.tsx',
 		})
 	})
 })
@@ -120,6 +131,7 @@ describe('on web', () => {
 describe('modules without the directive', () => {
 	it('are untouched', () => {
 		const { code, metadata } = compile(`export default () => <div />;`, { platform: 'ios' })
+
 		expect(code).not.toContain('createDomComponentProxy')
 		expect(metadata).toBeUndefined()
 	})
@@ -131,6 +143,7 @@ describe('modules without the directive', () => {
        export default () => <div />;`,
 			{ platform: 'ios' },
 		)
+
 		expect(code).not.toContain('createDomComponentProxy')
 	})
 })
@@ -138,6 +151,7 @@ describe('modules without the directive', () => {
 describe('invalid module shapes', () => {
 	it('rejects a module with no default export, naming the file', () => {
 		const error = capture(() => compile(`'use dom'; export const Chart = () => <div />;`, { platform: 'ios' }))
+
 		expect(error.code).toBe(DomErrorCode.InvalidModuleExports)
 		expect(error.message).toContain('/app/src/Chart.tsx')
 	})
@@ -148,6 +162,7 @@ describe('invalid module shapes', () => {
 				platform: 'ios',
 			}),
 		)
+
 		expect(error.code).toBe(DomErrorCode.InvalidModuleExports)
 		expect(error.message).toContain('`helper`')
 	})
@@ -158,6 +173,7 @@ describe('invalid module shapes', () => {
 				platform: 'ios',
 			}),
 		)
+
 		expect(error.message).toContain('`helper`')
 	})
 
@@ -167,6 +183,7 @@ describe('invalid module shapes', () => {
 				platform: 'ios',
 			}),
 		)
+
 		expect(error.message).toContain('`a`')
 	})
 
@@ -176,6 +193,7 @@ describe('invalid module shapes', () => {
 				platform: 'ios',
 			}),
 		)
+
 		expect(error.message).toContain('`export *`')
 	})
 
@@ -185,6 +203,7 @@ describe('invalid module shapes', () => {
 				platform: 'ios',
 			}),
 		)
+
 		expect(error.fix).toContain('separate module')
 	})
 })

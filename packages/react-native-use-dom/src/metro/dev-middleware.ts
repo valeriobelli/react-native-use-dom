@@ -64,48 +64,62 @@ export function createDomDevServer(config: ConfigT, metro: Metro): DomDevServer 
 
 	const getBundler = (): Promise<WebBundler> => {
 		bundler ??= startWebBundler(metro, config)
+
 		return bundler
 	}
 
 	/** Ends the hot socket, now if its bundler has started, else the moment it has. */
 	const stopHot = (): void => {
 		stopping = true
-		// One that failed to start owns no hot socket.
+
+		// A bundler that failed to start owns no hot socket.
 		void bundler?.then(
 			(started) => started.hot.close(),
-			() => {},
+			() => false,
 		)
 	}
 
 	const middleware: Middleware = (req, res, next) => {
 		const url = new URL(req.url ?? '/', 'http://localhost')
 
-		if (!url.pathname.startsWith(MOUNT_PREFIX)) {
-			next()
-			return
-		}
 		// The server is only reachable through a request, and a page makes one before it connects.
-		if (!routedUpgrades && req.socket.server !== null) {
+		if (!routedUpgrades && url.pathname.startsWith(MOUNT_PREFIX) && req.socket.server !== null) {
 			routedUpgrades = true
-			routeUpgrade(req.socket.server, DEV_HOT_PATH, (...upgrade) => {
-				void upgradeHot(getBundler, () => stopping, ...upgrade)
-			})
-			// An open hot socket would hold the server's close past every shutdown's timeout, so the
-			// close ends the hot socket first.
-			routeClose(req.socket.server, stopHot)
+
+			routeServer(req.socket.server, getBundler, stopHot, () => stopping)
 		}
+
 		routeRequest(config, getBundler, url, req, res, next)
 	}
 
 	return {
-		middleware,
 		close: async () => {
 			stopHot()
 			const started = await bundler?.catch(() => null)
+
 			bundler = null
 			await started?.server.end()
 		},
+		middleware,
 	}
+}
+
+/**
+ * Routes the hot socket's upgrades to the dev server, and ends that socket when the server closes
+ * itself: `close` waits for every connection before it reports itself closed, and an open hot
+ * socket would hold it past every shutdown's timeout.
+ */
+function routeServer(
+	server: Parameters<typeof routeUpgrade>[0],
+	getBundler: () => Promise<WebBundler>,
+	stopHot: () => void,
+	isStopping: () => boolean,
+): void {
+	routeUpgrade(server, DEV_HOT_PATH, (...upgrade) => {
+		void upgradeHot(getBundler, isStopping, ...upgrade)
+	})
+
+	routeClose(server, stopHot)
 }
 
 /** Answers a `/_dom` request: the page, the entry bundle, a file of the public folder, or nothing. */
@@ -117,14 +131,24 @@ function routeRequest(
 	res: ServerResponse,
 	next: (error?: unknown) => void,
 ): void {
+	if (!url.pathname.startsWith(MOUNT_PREFIX)) {
+		next()
+
+		return
+	}
+
 	if (url.pathname === DEV_PAGE_PATH) {
 		servePage(url, res)
+
 		return
 	}
+
 	if (url.pathname === DEV_ENTRY_PATH) {
 		void forwardBundleRequest(getBundler, url, req, res, next)
+
 		return
 	}
+
 	void servePublicFile(config.projectRoot, url, res, next)
 }
 
@@ -141,14 +165,17 @@ async function upgradeHot(
 	} catch {
 		// The page learns why from its bundle request, which fails the same way.
 		socket.destroy()
+
 		return
 	}
 
 	if (isStopping()) {
 		// The dev server closed while the bundler was starting: nothing will answer the socket.
 		socket.destroy()
+
 		return
 	}
+
 	hot.handleUpgrade(req, socket, head, (ws) => {
 		hot.emit('connection', ws, req)
 	})
@@ -160,12 +187,15 @@ async function forwardBundleRequest(
 	...[req, res, next]: Parameters<Middleware>
 ): Promise<void> {
 	let started: WebBundler
+
 	try {
 		started = await getBundler()
 	} catch (error) {
 		next(error)
+
 		return
 	}
+
 	req.url = toWebBundleUrl(url, started.bundleEntry)
 	started.server.processRequest(req, res, next)
 }
@@ -173,13 +203,15 @@ async function forwardBundleRequest(
 async function startWebBundler(metro: Metro, config: ConfigT): Promise<WebBundler> {
 	const webConfig = createWebConfig(config, metro)
 	const server = new metro.Server(webConfig, { watch: true })
+
 	await server.ready()
 	const bundleEntry = entryBundlePath(webConfig)
 	// Metro's HMR server resolves entries from the server root, and knows no watch folder prefix.
 	const serverRoot = webConfig.server.unstable_serverRoot ?? webConfig.projectRoot
 	const hotBundleEntry = toPosix(path.relative(serverRoot, ENTRY_BUNDLE_PATH))
 	const hot = createHotSocketServer(metro, server, webConfig, (url) => toWebBundleUrl(url, hotBundleEntry))
-	return { server, bundleEntry, hot }
+
+	return { bundleEntry, hot, server }
 }
 
 /**
@@ -191,6 +223,7 @@ function entryBundlePath(webConfig: ConfigT): string {
 	const index = webConfig.watchFolders.findIndex((folder) => !path.relative(folder, ENTRY_BUNDLE_PATH).startsWith('..'))
 	const root = webConfig.watchFolders[index] ?? webConfig.projectRoot
 	const relative = toPosix(path.relative(root, ENTRY_BUNDLE_PATH))
+
 	return index === -1 ? relative : `[metro-watchFolders]/${index}/${relative}`
 }
 
@@ -201,8 +234,10 @@ function toPosix(filePath: string): string {
 /** Source maps are inlined: the page has no route to fetch a separate one from. */
 function toWebBundleUrl(url: URL, bundleEntry: string): string {
 	const query = new URLSearchParams(url.search)
+
 	query.set('bundleEntry', bundleEntry)
 	query.set('platform', WEB_PLATFORM)
 	query.set('inlineSourceMap', 'true')
+
 	return `${url.pathname}?${query.toString()}`
 }

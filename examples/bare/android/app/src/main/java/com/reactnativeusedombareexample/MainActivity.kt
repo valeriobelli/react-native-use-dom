@@ -1,4 +1,4 @@
-package com.bareexample
+package com.reactnativeusedombareexample
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

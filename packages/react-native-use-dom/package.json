@@ -19,7 +19,7 @@
 		"directory": "packages/react-native-use-dom"
 	},
 	"files": [
-		"dist",
+		"lib",
 		"src",
 		"nitrogen",
 		"nitro.json",
@@ -34,7 +34,8 @@
 		"css.d.ts",
 		"README.md",
 		"AGENTS.md",
-		"!dist/.tsbuildinfo",
+		"!lib/**/*.test.*",
+		"!lib/docs",
 		"!src/**/__tests__",
 		"!src/**/__fixtures__",
 		"!src/**/*.test.ts",
@@ -42,26 +43,39 @@
 		"!src/docs"
 	],
 	"type": "commonjs",
+	"main": "./lib/commonjs/native/index.js",
+	"module": "./lib/module/native/index.js",
+	"types": "./lib/typescript/commonjs/native/index.d.ts",
 	"exports": {
 		".": {
-			"types": "./dist/native/index.d.ts",
-			"default": "./dist/native/index.js"
+			"react-native": {
+				"types": "./lib/typescript/module/native/index.d.ts",
+				"default": "./lib/module/native/index.js"
+			},
+			"module": {
+				"types": "./lib/typescript/module/native/index.d.ts",
+				"default": "./lib/module/native/index.js"
+			},
+			"default": {
+				"types": "./lib/typescript/commonjs/native/index.d.ts",
+				"default": "./lib/commonjs/native/index.js"
+			}
 		},
 		"./dom": {
-			"types": "./dist/web/index.d.ts",
-			"default": "./dist/web/index.js"
+			"types": "./lib/typescript/commonjs/web/index.d.ts",
+			"default": "./lib/commonjs/web/index.js"
 		},
 		"./babel": {
-			"types": "./dist/babel/index.d.ts",
-			"default": "./dist/babel/index.js"
+			"types": "./lib/typescript/commonjs/babel/index.d.ts",
+			"default": "./lib/commonjs/babel/index.js"
 		},
 		"./metro": {
-			"types": "./dist/metro/index.d.ts",
-			"default": "./dist/metro/index.js"
+			"types": "./lib/typescript/commonjs/metro/index.d.ts",
+			"default": "./lib/commonjs/metro/index.js"
 		},
 		"./internal": {
-			"types": "./dist/runtime/index.d.ts",
-			"default": "./dist/runtime/index.js"
+			"types": "./lib/typescript/commonjs/runtime/index.d.ts",
+			"default": "./lib/commonjs/runtime/index.js"
 		},
 		"./css": {
 			"types": "./css.d.ts"
@@ -73,8 +87,9 @@
 		"provenance": true
 	},
 	"scripts": {
-		"build": "tsc --build tsconfig.build.json",
-		"clean": "rm -rf dist *.tsbuildinfo",
+		"build": "bob build && node ./scripts/copy-view-config.mjs",
+		"prepack": "pnpm build",
+		"clean": "rm -rf lib dist *.tsbuildinfo",
 		"codegen": "nitrogen"
 	},
 	"dependencies": {
@@ -86,6 +101,7 @@
 		"@types/jsdom": "21.1.7",
 		"@types/react": "19.3.0",
 		"@types/react-dom": "19.3.0",
+		"@types/ws": "8.5.10",
 		"jsdom": "26.1.0",
 		"metro": "0.87.1",
 		"metro-babel-transformer": "0.87.1",
@@ -96,7 +112,9 @@
 		"react": "19.3.0",
 		"react-dom": "19.3.0",
 		"react-native": "0.87.1",
-		"react-native-nitro-modules": "0.37.1"
+		"react-native-builder-bob": "0.43.1",
+		"react-native-nitro-modules": "0.37.1",
+		"ws": "8.22.0"
 	},
 	"peerDependencies": {
 		"metro": ">=0.83.1",
@@ -106,5 +124,25 @@
 		"react-dom": ">=19.1.0",
 		"react-native": ">=0.81.0",
 		"react-native-nitro-modules": ">=0.29.0"
+	},
+	"react-native-builder-bob": {
+		"source": "src",
+		"output": "lib",
+		"exclude": "**/{__tests__,__fixtures__,__mocks__,docs}/**",
+		"targets": [
+			[
+				"module",
+				{
+					"esm": true
+				}
+			],
+			"commonjs",
+			[
+				"typescript",
+				{
+					"project": "tsconfig.build.json"
+				}
+			]
+		]
 	}
 }

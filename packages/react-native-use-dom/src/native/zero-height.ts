@@ -5,14 +5,17 @@ import type { LayoutChangeEvent, ViewStyle } from 'react-native'
 export type ZeroHeightCheck = 'checking' | 'zero' | 'sized'
 
 /** Outlines the view and gives it some height, so that it can be found on screen. */
-export const ZERO_HEIGHT_DEBUG_STYLE: ViewStyle = { minHeight: 40, borderWidth: 1, borderColor: 'red' }
+export const ZERO_HEIGHT_DEBUG_STYLE: ViewStyle = { borderColor: 'red', borderWidth: 1, minHeight: 40 }
 
 /**
  * The check after a layout `height` tall. A view sized to its content is skipped: it is 0 tall until
  * the page reports its size, and that is expected.
  */
 export function checkLayout(current: ZeroHeightCheck, height: number, matchContents: boolean): ZeroHeightCheck {
-	if (current !== 'checking' || matchContents) return current
+	if (current !== 'checking' || matchContents) {
+		return current
+	}
+
 	return height === 0 ? 'zero' : 'sized'
 }
 
@@ -37,9 +40,18 @@ export function useZeroHeightCheck(
 	const onLayout = useCallback(
 		(event: LayoutChangeEvent) => {
 			const next = checkLayout(check, event.nativeEvent.layout.height, matchContents)
-			if (next === check) return
-			// oxlint-disable-next-line no-console
-			if (next === 'zero') console.warn(zeroHeightWarning(componentName))
+
+			if (next === check) {
+				return
+			}
+
+			// The warning is the whole point of the check: it tells the developer why the view is
+			// invisible, which no other channel reports.
+			if (next === 'zero') {
+				// oxlint-disable-next-line no-console
+				console.warn(zeroHeightWarning(componentName))
+			}
+
 			setCheck(next)
 		},
 		[check, componentName, matchContents],

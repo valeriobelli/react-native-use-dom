@@ -3,6 +3,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
 	displayName: 'node',
+	modulePathIgnorePatterns: ['<rootDir>/lib/'],
 	rootDir: __dirname,
 	testEnvironment: 'node',
 	testMatch: ['<rootDir>/src/*.test.ts', '<rootDir>/src/{runtime,babel,metro,native,docs}/**/*.test.ts'],

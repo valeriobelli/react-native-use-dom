@@ -15,13 +15,19 @@ export type UpgradeListener = (req: IncomingMessage, socket: Duplex, head: Buffe
  */
 export function routeUpgrade(server: Server, pathname: string, handle: UpgradeListener): void {
 	const original = server.listeners('upgrade') as UpgradeListener[]
+
 	server.removeAllListeners('upgrade')
+
 	server.on('upgrade', (req: IncomingMessage, socket: Duplex, head: Buffer) => {
 		if (new URL(req.url ?? '/', 'http://localhost').pathname === pathname) {
 			handle(req, socket, head)
+
 			return
 		}
-		for (const listener of original) listener.call(server, req, socket, head)
+
+		for (const listener of original) {
+			listener.call(server, req, socket, head)
+		}
 	})
 }
 
@@ -33,8 +39,10 @@ export function routeUpgrade(server: Server, pathname: string, handle: UpgradeLi
  */
 export function routeClose(server: Server, end: () => void): void {
 	const close = server.close.bind(server)
+
 	server.close = (callback) => {
 		end()
+
 		return close(callback)
 	}
 }

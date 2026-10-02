@@ -13,3 +13,6 @@ steps:
       - await: { visible: { text: 'Hello, a second instance.' }, timeout: 15000 }
       - await: { visible: { text: Line 1 of the page }, timeout: 15000 }
   - await: { idle: true, stableFor: 1000 }
+  # The WebView starts accepting touches a moment after its first paint on iOS 27; a tap
+  # dispatched before that is lost. Settle briefly so the flows' first tap always lands.
+  - wait: 1500

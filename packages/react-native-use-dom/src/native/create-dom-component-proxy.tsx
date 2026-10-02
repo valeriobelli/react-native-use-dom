@@ -54,15 +54,17 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 		const { data: props, actions } = splitProps(rest, componentName)
 		// Hermes has no `toSorted`, and `Object.keys` returns a fresh array, so sorting it in place is safe.
 		const actionNames = useMemo(() => Object.keys(actions).sort(), [actions])
+
 		bridge.setActions(actions)
 
 		const [contentHeight, setContentHeight] = useState<number | null>(null)
+
 		useBridgeCallbacks(bridge, dom, props, actionNames, setContentHeight)
 
 		// The payload the page reads before its first script runs, so the first paint already has
 		// real data. Frozen at mount: later changes travel as messages, which is what keeps a prop
 		// change from reloading the WebView.
-		const injectedObjectJson = useConstant(() => JSON.stringify({ instanceId, props, actions: actionNames }))
+		const injectedObjectJson = useConstant(() => JSON.stringify({ actions: actionNames, instanceId, props }))
 
 		useDomLifecycle(bridge, props, actionNames)
 		useImperativeHandle(ref, () => createHandleProxy(bridge), [bridge])
@@ -83,6 +85,7 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 	}
 
 	DomComponent.displayName = componentName
+
 	return DomComponent
 }
 
@@ -101,6 +104,7 @@ function useDomLifecycle(
 	// both without unmounting: during Fast Refresh, and once after mounting in Strict Mode.
 	useEffect(() => {
 		bridge.open()
+
 		return () => {
 			bridge.dispose()
 		}
@@ -121,6 +125,7 @@ function useDomLifecycle(
  */
 function useConstant<T>(create: () => T): T {
 	const [value] = useState(create)
+
 	return value
 }
 
@@ -154,8 +159,10 @@ function useBridgeCallbacks(
 		onUncaughtError: (error) => {
 			if (dom.onError) {
 				dom.onError(error)
+
 				return
 			}
+
 			// Without an `onError` handler, an error that escaped the DOM component would otherwise
 			// leave nothing but a blank view.
 			// oxlint-disable-next-line no-console
@@ -169,19 +176,26 @@ function useBridgeCallbacks(
  * imperative handle needs no declaration on the native side.
  */
 function createHandleProxy(bridge: NativeDomBridge): DomComponentHandle {
-	return new Proxy({} as DomComponentHandle, {
-		get(target, property) {
-			// A symbol read is something the runtime is doing to the object itself — `Symbol.toString`,
-			// promise unwrapping — never a method call from application code.
-			if (typeof property !== 'string') return Reflect.get(target, property)
-			return (...args: readonly unknown[]) => bridge.callHandle(property, args)
+	return new Proxy(
+		{},
+		{
+			get: (target, property): unknown => {
+				// A symbol read is something the runtime is doing to the object itself — `Symbol.toString`,
+				// promise unwrapping — never a method call from application code.
+				if (typeof property !== 'string') {
+					return Reflect.get(target, property)
+				}
+
+				return (...args: readonly unknown[]) => bridge.callHandle(property, args)
+			},
 		},
-	})
+	)
 }
 
 /** A readable name for error messages: the module's file name without its extension. */
 function describeComponent(filePath: string): string {
 	const fileName = filePath.split('/').pop() ?? filePath
+
 	return fileName.replace(/\.[^.]+$/u, '')
 }
 
@@ -267,7 +281,8 @@ function useViewStyles(componentName: string, dom: DomProps, contentHeight: numb
 		() => (dom.matchContents ? { height: contentHeight ?? 0 } : FILL_PARENT),
 		[dom.matchContents, contentHeight],
 	)
-	return { style, webViewStyle, onLayout }
+
+	return { onLayout, style, webViewStyle }
 }
 
 /**

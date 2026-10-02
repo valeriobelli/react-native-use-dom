@@ -20,11 +20,12 @@ export default function Greeting(props: {
 }) {
 	useDOMImperativeHandle<GreetingHandle>(
 		() => ({
-			reset: () => {},
 			getClicks: () => 0,
 			rename: async (name) => name,
+			reset: () => {},
 		}),
 		[],
 	)
+
 	return <p>{props.name}</p>
 }

@@ -19,8 +19,9 @@ export class PendingCalls {
 		this.#nextId += 1
 		const callId = String(this.#nextId)
 		const result = new Promise<Serializable>((resolve, reject) => {
-			this.#pending.set(callId, { resolve, reject })
+			this.#pending.set(callId, { reject, resolve })
 		})
+
 		return { callId, result }
 	}
 
@@ -32,7 +33,11 @@ export class PendingCalls {
 	 */
 	settle(message: ResultMessage): boolean {
 		const entry = this.#pending.get(message.callId)
-		if (!entry) return false
+
+		if (!entry) {
+			return false
+		}
+
 		this.#pending.delete(message.callId)
 
 		if (message.ok) {
@@ -40,6 +45,7 @@ export class PendingCalls {
 		} else {
 			entry.reject(deserializeError(message.error))
 		}
+
 		return true
 	}
 
@@ -50,11 +56,15 @@ export class PendingCalls {
 	 */
 	abortAll(reason: string): void {
 		const entries = [...this.#pending.values()]
+
 		this.#pending.clear()
 		const error = new DomError(DomErrorCode.BridgeClosed, `A call to a DOM component could not complete: ${reason}.`, {
 			fix: 'Calls do not survive the component unmounting; cancel them when the screen goes away.',
 		})
-		for (const entry of entries) entry.reject(error)
+
+		for (const entry of entries) {
+			entry.reject(error)
+		}
 	}
 
 	/** How many calls are still awaiting a result. */

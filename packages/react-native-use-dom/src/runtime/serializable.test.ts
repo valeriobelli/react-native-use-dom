@@ -39,39 +39,67 @@ describe('findSerializableViolation', () => {
 
 	it('reports the path to the offending member, the way a developer reads it', () => {
 		const value = { user: { tags: ['a', 'b', new Date(0)] } }
+
 		expect(findSerializableViolation(value)?.path).toBe('user.tags[2]')
 	})
 
 	it('reports a nested function as a function, not as an object', () => {
 		const violation = findSerializableViolation({ handlers: { onSave: () => {} } })
+
 		expect(violation?.path).toBe('handlers.onSave')
 		expect(violation?.reason).toContain('only supported as top-level props')
 	})
 
 	it('detects a circular object without hanging', () => {
 		const value: Record<string, unknown> = { name: 'a' }
+
 		value['self'] = value
+
 		expect(findSerializableViolation(value)).toEqual({
+			kind: 'value',
 			path: 'self',
 			reason: 'the value is circular',
-			kind: 'value',
 		})
 	})
 
 	it('detects a circular array without hanging', () => {
 		const value: unknown[] = [1]
+
 		value.push(value)
 		expect(findSerializableViolation(value)?.reason).toBe('the value is circular')
 	})
 
 	it('allows the same object to appear twice side by side', () => {
 		const shared = { a: 1 }
+
 		expect(findSerializableViolation({ left: shared, right: shared })).toBeNull()
+	})
+
+	it('walks a sparse array by index, reading holes as undefined', () => {
+		const sparse: unknown[] = ['a', 'b']
+
+		sparse[3] = 'c'
+
+		expect(findSerializableViolation(sparse)).toBeNull()
+
+		const holeBefore: unknown[] = ['a', 'b']
+
+		holeBefore[3] = 1n
+
+		expect(findSerializableViolation(holeBefore)).toEqual({
+			kind: 'value',
+			path: '[3]',
+			reason: 'a bigint has no JSON representation; send a string instead',
+		})
 	})
 
 	it('rejects structures nested beyond the depth limit', () => {
 		let value: unknown = 'leaf'
-		for (let i = 0; i < 80; i += 1) value = { next: value }
+
+		for (let i = 0; i < 80; i += 1) {
+			value = { next: value }
+		}
+
 		expect(findSerializableViolation(value)?.reason).toContain('deeper than')
 	})
 })
@@ -82,29 +110,38 @@ function capture(run: () => void): DomError {
 	} catch (error) {
 		return error as DomError
 	}
+
 	throw new Error('expected the call to throw, but it returned')
 }
 
 describe('assertSerializable', () => {
 	it('passes a valid value through', () => {
-		expect(() => assertSerializable({ a: 1 }, 'prop "x"', DomErrorCode.NonSerializableProp)).not.toThrow()
+		expect(() => {
+			assertSerializable({ a: 1 }, 'prop "x"', DomErrorCode.NonSerializableProp)
+		}).not.toThrow()
 	})
 
 	it('throws a DomError carrying the code it was given', () => {
-		const error = capture(() => assertSerializable(new Date(0), 'prop "startedAt"', DomErrorCode.NonSerializableProp))
+		const error = capture(() => {
+			assertSerializable(new Date(0), 'prop "startedAt"', DomErrorCode.NonSerializableProp)
+		})
+
 		expect(error).toBeInstanceOf(DomError)
 		expect(error.code).toBe(DomErrorCode.NonSerializableProp)
 		expect(error.message).toContain('prop "startedAt" cannot be sent')
 	})
 
 	it('names the path when the failure is nested', () => {
-		expect(() =>
-			assertSerializable({ a: { b: new Map() } }, 'argument 1', DomErrorCode.NonSerializableArgument),
-		).toThrow(/argument 1 at `a\.b`/u)
+		expect(() => {
+			assertSerializable({ a: { b: new Map() } }, 'argument 1', DomErrorCode.NonSerializableArgument)
+		}).toThrow(/argument 1 at `a\.b`/u)
 	})
 
 	it('states the concrete fix', () => {
-		const error = capture(() => assertSerializable(10n, 'prop "id"', DomErrorCode.NonSerializableProp))
+		const error = capture(() => {
+			assertSerializable(10n, 'prop "id"', DomErrorCode.NonSerializableProp)
+		})
+
 		expect(error.fix).toContain('JSON-compatible values only')
 	})
 })

@@ -12,8 +12,8 @@
  * `https` requests themselves.
  */
 export const OFFLINE_ORIGINS = {
-	ios: 'use-dom://localhost',
 	android: 'https://use-dom.localhost',
+	ios: 'use-dom://localhost',
 } as const
 
 /** A platform DOM components can be rendered on natively. */

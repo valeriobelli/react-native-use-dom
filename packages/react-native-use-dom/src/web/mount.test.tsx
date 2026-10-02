@@ -10,10 +10,12 @@ let sent: DomToNativeMessage[]
 
 function install(payload: InjectedPayload): void {
 	sent = []
+
 	document.body.innerHTML = '<div id="root"></div>'
+
 	;(globalThis as Record<string, unknown>)[POST_MESSAGE_GLOBAL] = {
-		postMessage: (raw: string) => sent.push(JSON.parse(raw) as DomToNativeMessage),
 		injectedObjectJson: () => JSON.stringify(payload),
+		postMessage: (raw: string) => sent.push(JSON.parse(raw) as DomToNativeMessage),
 	}
 }
 
@@ -25,6 +27,7 @@ function lastOfType<T extends DomToNativeMessage['type']>(
 	type: T,
 ): Extract<DomToNativeMessage, { type: T }> | undefined {
 	const matches = sent.filter((message) => message.type === type)
+
 	return matches.at(-1) as Extract<DomToNativeMessage, { type: T }> | undefined
 }
 
@@ -36,7 +39,11 @@ function flush(): Promise<void> {
 
 function root(): HTMLElement {
 	const element = document.querySelector<HTMLElement>('#root')
-	if (!element) throw new Error('missing root')
+
+	if (!element) {
+		throw new Error('missing root')
+	}
+
 	return element
 }
 
@@ -46,10 +53,16 @@ function Greeting({ title }: { title: string }) {
 
 function GreetingWithInput({ title }: { title: string }) {
 	const [typed, setTyped] = useState('')
+
 	return (
 		<>
 			<h1>{title}</h1>
-			<input value={typed} onChange={(event) => setTyped(event.target.value)} />
+			<input
+				value={typed}
+				onChange={(event) => {
+					setTyped(event.target.value)
+				}}
+			/>
 			<span data-testid="typed">{typed}</span>
 		</>
 	)
@@ -64,6 +77,7 @@ function Editor({ onSave }: { onSave: (draft: string) => Promise<unknown> }) {
 			saved = value
 		})
 	}
+
 	return (
 		<button type="button" onClick={save}>
 			save
@@ -73,11 +87,13 @@ function Editor({ onSave }: { onSave: (draft: string) => Promise<unknown> }) {
 
 function Counter({ seed }: { seed: number }) {
 	useDOMImperativeHandle(() => ({ getDouble: () => seed * 2 }), [seed])
+
 	return <span>{seed}</span>
 }
 
 function Noisy() {
 	console.warn('rendering', 1)
+
 	return null
 }
 
@@ -87,7 +103,7 @@ beforeEach(() => {
 
 describe('mountDomComponent', () => {
 	it('renders with the injected props on first paint, without waiting for a message', async () => {
-		install({ instanceId: 'i1', props: { title: 'Hello' }, actions: [] })
+		install({ actions: [], instanceId: 'i1', props: { title: 'Hello' } })
 
 		await act(async () => {
 			mountDomComponent(Greeting as never, { strict: false })
@@ -97,13 +113,14 @@ describe('mountDomComponent', () => {
 	})
 
 	it('re-renders on a prop change while keeping DOM state alive', async () => {
-		install({ instanceId: 'i1', props: { title: 'First' }, actions: [] })
+		install({ actions: [], instanceId: 'i1', props: { title: 'First' } })
 
 		await act(async () => {
 			mountDomComponent(GreetingWithInput as never, { strict: false })
 		})
 
 		const input = root().querySelector('input')
+
 		await act(async () => {
 			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'draft')
 			input!.dispatchEvent(new Event('input', { bubbles: true }))
@@ -111,7 +128,7 @@ describe('mountDomComponent', () => {
 		expect(root().querySelector('[data-testid="typed"]')?.textContent).toBe('draft')
 
 		await act(async () => {
-			deliver({ type: 'props', instanceId: 'i1', props: { title: 'Second' }, actions: [] })
+			deliver({ actions: [], instanceId: 'i1', props: { title: 'Second' }, type: 'props' })
 		})
 
 		expect(root().querySelector('h1')?.textContent).toBe('Second')
@@ -121,33 +138,36 @@ describe('mountDomComponent', () => {
 	})
 
 	it('turns a function prop into a stub that calls native and resolves with its result', async () => {
-		install({ instanceId: 'i1', props: {}, actions: ['onSave'] })
+		install({ actions: ['onSave'], instanceId: 'i1', props: {} })
 
 		await act(async () => {
 			mountDomComponent(Editor as never, { strict: false })
 		})
+
 		await act(async () => {
 			root().querySelector('button')?.click()
 		})
 
 		const call = lastOfType('action-call')
+
 		expect(call).toMatchObject({ action: 'onSave', args: ['draft'] })
 
 		await act(async () => {
-			deliver({ type: 'result', instanceId: 'i1', callId: call!.callId, ok: true, value: 'saved' })
+			deliver({ callId: call!.callId, instanceId: 'i1', ok: true, type: 'result', value: 'saved' })
 			await flush()
 		})
 		expect(saved).toBe('saved')
 	})
 
 	it('exposes methods to native through useDOMImperativeHandle', async () => {
-		install({ instanceId: 'i1', props: { seed: 2 }, actions: [] })
+		install({ actions: [], instanceId: 'i1', props: { seed: 2 } })
 
 		await act(async () => {
 			mountDomComponent(Counter as never, { strict: false })
 		})
+
 		await act(async () => {
-			deliver({ type: 'handle-call', instanceId: 'i1', callId: 'c1', method: 'getDouble', args: [] })
+			deliver({ args: [], callId: 'c1', instanceId: 'i1', method: 'getDouble', type: 'handle-call' })
 			await flush()
 		})
 
@@ -155,16 +175,18 @@ describe('mountDomComponent', () => {
 	})
 
 	it('re-reads the handle after a prop change, so a method never closes over a stale render', async () => {
-		install({ instanceId: 'i1', props: { seed: 2 }, actions: [] })
+		install({ actions: [], instanceId: 'i1', props: { seed: 2 } })
 
 		await act(async () => {
 			mountDomComponent(Counter as never, { strict: false })
 		})
+
 		await act(async () => {
-			deliver({ type: 'props', instanceId: 'i1', props: { seed: 5 }, actions: [] })
+			deliver({ actions: [], instanceId: 'i1', props: { seed: 5 }, type: 'props' })
 		})
+
 		await act(async () => {
-			deliver({ type: 'handle-call', instanceId: 'i1', callId: 'c2', method: 'getDouble', args: [] })
+			deliver({ args: [], callId: 'c2', instanceId: 'i1', method: 'getDouble', type: 'handle-call' })
 			await flush()
 		})
 
@@ -172,14 +194,15 @@ describe('mountDomComponent', () => {
 	})
 
 	it('forwards console output from inside the component', async () => {
-		install({ instanceId: 'i1', props: {}, actions: [] })
+		install({ actions: [], instanceId: 'i1', props: {} })
 
 		const original = console.warn
+
 		await act(async () => {
 			mountDomComponent(Noisy as never, { strict: false })
 		})
 		console.warn = original
 
-		expect(lastOfType('console')).toMatchObject({ level: 'warn', args: ['rendering', 1] })
+		expect(lastOfType('console')).toMatchObject({ args: ['rendering', 1], level: 'warn' })
 	})
 })

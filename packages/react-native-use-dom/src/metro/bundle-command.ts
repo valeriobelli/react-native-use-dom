@@ -16,15 +16,25 @@ export interface BundleCommand {
  */
 export function readBundleCommand(argv: readonly string[]): BundleCommand | null {
 	const bundleOutput = readArgument(argv, '--bundle-output')
-	if (bundleOutput === undefined) return null
-	return { bundleOutput, assetsDest: readArgument(argv, '--assets-dest') }
+
+	if (bundleOutput === undefined) {
+		return null
+	}
+
+	return { assetsDest: readArgument(argv, '--assets-dest'), bundleOutput }
 }
 
 function readArgument(argv: readonly string[], name: string): string | undefined {
 	for (const [index, argument] of argv.entries()) {
-		if (argument === name) return argv[index + 1]
-		if (argument.startsWith(`${name}=`)) return argument.slice(name.length + 1)
+		if (argument === name) {
+			return argv[index + 1]
+		}
+
+		if (argument.startsWith(`${name}=`)) {
+			return argument.slice(name.length + 1)
+		}
 	}
+
 	return undefined
 }
 
@@ -39,6 +49,7 @@ export function resolveOutputDirectory(command: BundleCommand, platform: string)
 	if (platform === 'android') {
 		return path.join(path.dirname(path.resolve(command.bundleOutput)), OFFLINE_BUNDLE_DIR)
 	}
+
 	if (command.assetsDest === undefined) {
 		throw new DomError(
 			DomErrorCode.MissingBundleOutput,
@@ -48,5 +59,6 @@ export function resolveOutputDirectory(command: BundleCommand, platform: string)
 			},
 		)
 	}
+
 	return path.join(path.resolve(command.assetsDest), OFFLINE_BUNDLE_DIR)
 }

@@ -4,7 +4,7 @@ steps:
   - echo: A prop change re-renders the DOM component and keeps its state
   - run: ready
   - tap: { id: first-greeting }
-  - await: { visible: { text: The first greeting reported 1 clicks } }
+  - await: { visible: { text: The first greeting reported 1 clicks }, timeout: 15000 }
   - tap: { text: Rename to Metro }
   - await: { visible: { text: Rename to React Native } }
   - when: { platform: android }
@@ -13,4 +13,4 @@ steps:
   - await: { idle: true }
   - snapshot: { name: first-greeting-renamed, cropOn: { id: first-greeting } }
   - tap: { id: first-greeting }
-  - await: { visible: { text: The first greeting reported 2 clicks } }
+  - await: { visible: { text: The first greeting reported 2 clicks }, timeout: 15000 }

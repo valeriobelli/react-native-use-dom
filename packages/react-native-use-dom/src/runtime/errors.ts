@@ -7,36 +7,36 @@
  * the two never drift.
  */
 export const DomErrorCode = {
-	/** The project's Metro config was never wrapped with `withDom()`. */
-	MissingMetroConfig: 'ERR_USE_DOM_MISSING_METRO_CONFIG',
-	/** A release build did not say where the app's resources go, so its DOM component pages had nowhere to be written. */
-	MissingBundleOutput: 'ERR_USE_DOM_MISSING_BUNDLE_OUTPUT',
+	/** The WebView went away while a call was in flight. */
+	BridgeClosed: 'ERR_USE_DOM_BRIDGE_CLOSED',
+	/** A DOM component was rendered with `children`, which cannot cross the boundary. */
+	ChildrenUnsupported: 'ERR_USE_DOM_CHILDREN_UNSUPPORTED',
 	/** The app runs in Expo Go, which does not include the library's native view. */
 	ExpoGoUnsupported: 'ERR_USE_DOM_EXPO_GO_UNSUPPORTED',
 	/** A `'use dom'` module exported something other than a single default export. */
 	InvalidModuleExports: 'ERR_USE_DOM_INVALID_MODULE_EXPORTS',
-	/** A DOM component was rendered with `children`, which cannot cross the boundary. */
-	ChildrenUnsupported: 'ERR_USE_DOM_CHILDREN_UNSUPPORTED',
-	/** A prop's value cannot be represented in the wire format. */
-	NonSerializableProp: 'ERR_USE_DOM_NON_SERIALIZABLE_PROP',
-	/** An argument passed to a native action cannot be represented in the wire format. */
-	NonSerializableArgument: 'ERR_USE_DOM_NON_SERIALIZABLE_ARGUMENT',
-	/** A native action's return value cannot be represented in the wire format. */
-	NonSerializableResult: 'ERR_USE_DOM_NON_SERIALIZABLE_RESULT',
+	/** A message arrived that does not match the wire protocol. */
+	MalformedMessage: 'ERR_USE_DOM_MALFORMED_MESSAGE',
+	/** A release build did not say where the app's resources go, so its DOM component pages had nowhere to be written. */
+	MissingBundleOutput: 'ERR_USE_DOM_MISSING_BUNDLE_OUTPUT',
+	/** The project's Metro config was never wrapped with `withDom()`. */
+	MissingMetroConfig: 'ERR_USE_DOM_MISSING_METRO_CONFIG',
 	/** A function was nested inside an object or array prop rather than passed at the top level. */
 	NestedFunctionProp: 'ERR_USE_DOM_NESTED_FUNCTION_PROP',
-	/** The dev server was asked to build a DOM component from a file outside the project. */
-	UnknownDomComponent: 'ERR_USE_DOM_UNKNOWN_COMPONENT',
+	/** An argument passed to a native action cannot be represented in the wire format. */
+	NonSerializableArgument: 'ERR_USE_DOM_NON_SERIALIZABLE_ARGUMENT',
+	/** A prop's value cannot be represented in the wire format. */
+	NonSerializableProp: 'ERR_USE_DOM_NON_SERIALIZABLE_PROP',
+	/** A native action's return value cannot be represented in the wire format. */
+	NonSerializableResult: 'ERR_USE_DOM_NON_SERIALIZABLE_RESULT',
 	/** A `'use dom'` module imported `react-native`, which does not exist in a browser context. */
 	ReactNativeImportInDom: 'ERR_USE_DOM_REACT_NATIVE_IMPORT',
 	/** The DOM side called a native action that is not among the component's current props. */
 	UnknownAction: 'ERR_USE_DOM_UNKNOWN_ACTION',
+	/** The dev server was asked to build a DOM component from a file outside the project. */
+	UnknownDomComponent: 'ERR_USE_DOM_UNKNOWN_COMPONENT',
 	/** Native called a ref method the DOM component never exposed. */
 	UnknownHandleMethod: 'ERR_USE_DOM_UNKNOWN_HANDLE_METHOD',
-	/** A message arrived that does not match the wire protocol. */
-	MalformedMessage: 'ERR_USE_DOM_MALFORMED_MESSAGE',
-	/** The WebView went away while a call was in flight. */
-	BridgeClosed: 'ERR_USE_DOM_BRIDGE_CLOSED',
 } as const
 
 export type DomErrorCode = (typeof DomErrorCode)[keyof typeof DomErrorCode]
@@ -77,7 +77,11 @@ export class DomError extends Error {
 
 /** Narrows an unknown value to a {@link DomError}, including across a realm boundary. */
 export function isDomError(value: unknown): value is DomError {
-	if (!(value instanceof Error)) return false
+	if (!(value instanceof Error)) {
+		return false
+	}
+
 	const code: unknown = (value as Error & { code?: unknown }).code
+
 	return typeof code === 'string' && code.startsWith('ERR_USE_DOM_')
 }

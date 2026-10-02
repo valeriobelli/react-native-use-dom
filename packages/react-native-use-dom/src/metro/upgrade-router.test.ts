@@ -9,7 +9,9 @@ const head = Buffer.alloc(0)
 function upgrade(server: http.Server, url: string): { req: IncomingMessage; socket: Duplex } {
 	const req = { url } as IncomingMessage
 	const socket = new Duplex()
+
 	server.emit('upgrade', req, socket, head)
+
 	return { req, socket }
 }
 
@@ -17,6 +19,7 @@ describe('routeUpgrade', () => {
 	it('sends upgrades for its path to the handler, and to nothing else', () => {
 		const server = http.createServer()
 		const existing = jest.fn()
+
 		server.on('upgrade', existing)
 		const handle = jest.fn()
 
@@ -30,9 +33,11 @@ describe('routeUpgrade', () => {
 	it('sends every other upgrade to the listeners the server had, in order, as the server', () => {
 		const server = http.createServer()
 		const calls: [string, unknown][] = []
+
 		server.on('upgrade', function first(this: unknown) {
 			calls.push(['first', this])
 		})
+
 		server.on('upgrade', function second(this: unknown) {
 			calls.push(['second', this])
 		})
@@ -43,6 +48,7 @@ describe('routeUpgrade', () => {
 		upgrade(server, '/_dom/hotter')
 
 		expect(handle).not.toHaveBeenCalled()
+
 		expect(calls).toEqual([
 			['first', server],
 			['second', server],
@@ -54,8 +60,10 @@ describe('routeUpgrade', () => {
 	it('leaves listeners added afterwards to run as they would', () => {
 		const server = http.createServer()
 		const handle = jest.fn()
+
 		routeUpgrade(server, '/_dom/hot', handle)
 		const later = jest.fn()
+
 		server.on('upgrade', later)
 
 		upgrade(server, '/_dom/hot')

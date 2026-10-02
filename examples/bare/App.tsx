@@ -21,8 +21,10 @@ function useDemo() {
 	const onClick = useMemo(() => {
 		const report = (greeting: string) => (clicks: number) => {
 			setStatus(`The ${greeting} greeting reported ${clicks} clicks.`)
+
 			return Promise.resolve(clicks % 2 === 0 ? 'Even.' : 'Odd.')
 		}
+
 		return { first: report('first'), second: report('second') }
 	}, [])
 
@@ -41,6 +43,7 @@ function useDemo() {
 	// The ref reaches the first greeting only: the second keeps its count.
 	const reset = useCallback(async () => {
 		const clicks = await first.current?.getClicks()
+
 		await first.current?.reset()
 		setStatus(`Reset the first greeting after ${clicks ?? 0} clicks.`)
 	}, [])
@@ -50,11 +53,14 @@ function useDemo() {
 		setName((current) => (current === NAMES[0] ? NAMES[1] : NAMES[0]))
 	}, [])
 
-	return { first, status, name, onClick, noteDom, reset, rename }
+	return { first, name, noteDom, onClick, rename, reset, status }
 }
 
 export default function App() {
 	const { first, status, name, onClick, noteDom, reset, rename } = useDemo()
+	const handleReset = useCallback(() => {
+		void reset()
+	}, [reset])
 
 	return (
 		<SafeAreaProvider>
@@ -73,7 +79,7 @@ export default function App() {
 					{status}
 				</Text>
 				<View style={styles.buttons}>
-					<Button title="Reset the first" onPress={reset} />
+					<Button title="Reset the first" onPress={handleReset} />
 					<Button title={`Rename to ${name === NAMES[0] ? NAMES[1] : NAMES[0]}`} onPress={rename} />
 				</View>
 				<View testID="lines" style={styles.lines}>
@@ -85,10 +91,10 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-	screen: { flex: 1 },
-	title: { fontSize: 20, fontWeight: '600', padding: 16 },
-	greeting: { height: 56, marginHorizontal: 16, marginBottom: 8 },
-	status: { padding: 16 },
 	buttons: { flexDirection: 'row', justifyContent: 'space-around' },
+	greeting: { height: 56, marginBottom: 8, marginHorizontal: 16 },
 	lines: { flex: 1 },
+	screen: { flex: 1 },
+	status: { padding: 16 },
+	title: { fontSize: 20, fontWeight: '600', padding: 16 },
 })

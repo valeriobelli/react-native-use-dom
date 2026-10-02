@@ -37,6 +37,7 @@ function isRunConfig(candidate: Partial<ConfigT> | undefined, projectRoot: strin
 function loadExport(request: string): unknown {
 	try {
 		const module = require(request) as { default?: unknown }
+
 		return module.default ?? module
 	} catch {
 		return undefined
@@ -71,6 +72,7 @@ describe('Metro modules outside its public API', () => {
 		const { default: Server } = require('metro/private/Server') as {
 			default: { DEFAULT_BUNDLE_OPTIONS?: { dev?: unknown } }
 		}
+
 		expect(
 			breakage(
 				'Server.DEFAULT_BUNDLE_OPTIONS is a bundle options object',
@@ -98,20 +100,22 @@ describe('a Metro dev server', () => {
 	beforeAll(async () => {
 		projectRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'use-dom-contract-')))
 		writeFileSync(path.join(projectRoot, 'package.json'), '{ "name": "contract-fixture" }\n')
+
 		config = mergeConfig(getDefaultConfig(projectRoot), {
 			cacheStores: [],
 			maxWorkers: 1,
 			reporter: { update: () => {} },
 			resolver: { useWatchman: false },
 			server: {
-				port: 0,
 				enhanceMiddleware: (middleware, metroServer) => {
 					server = metroServer as typeof server
+
 					return middleware
 				},
+				port: 0,
 			},
 		})
-		;({ httpServer } = (await runServer(config, { host: '127.0.0.1' })) as { httpServer: http.Server })
+		;({ httpServer } = await runServer(config, { host: '127.0.0.1' }))
 	})
 
 	afterAll(async () => {
@@ -120,7 +124,7 @@ describe('a Metro dev server', () => {
 		})
 		await server?.ready()
 		await server?.end()
-		rmSync(projectRoot, { recursive: true, force: true })
+		rmSync(projectRoot, { force: true, recursive: true })
 	})
 
 	it('hands enhanceMiddleware the server, carrying the config it runs with', () => {
@@ -152,6 +156,7 @@ describe('a Metro dev server', () => {
 		const { getBundler, getCreateModuleId } = server as { getBundler: () => unknown; getCreateModuleId: () => unknown }
 		const hmr = new HmrServer(getBundler.call(server), getCreateModuleId.call(server), config)
 		const handlers = ['onClientConnect', 'onClientMessage', 'onClientError', 'onClientDisconnect']
+
 		expect(
 			breakage(
 				`HmrServer's ${handlers.join(', ')} are functions bound to the instance`,
@@ -175,6 +180,7 @@ describe('a Metro dev server', () => {
 describe('Metro sources the library mirrors', () => {
 	it('HmrServer answers with update and error messages that carry what the dev client reads', () => {
 		const source = packageFile('metro', 'src/HmrServer.js')
+
 		expect(
 			breakage(
 				'HmrServer sends `update` messages with `isInitialUpdate`, and `error` messages',
@@ -182,6 +188,7 @@ describe('Metro sources the library mirrors', () => {
 				includesAll(source, 'type: "update"', 'isInitialUpdate', 'type: "error"'),
 			),
 		).toBeUndefined()
+
 		expect(
 			breakage(
 				'HmrServer takes `register-entrypoints` messages with `entryPoints`',
@@ -193,6 +200,7 @@ describe('Metro sources the library mirrors', () => {
 
 	it('the module system calls Fast Refresh through the prefixed __ReactRefresh global', () => {
 		const source = packageFile('metro-runtime', 'src/polyfills/require.js', require.resolve('metro'))
+
 		expect(
 			breakage(
 				'metro-runtime reads `global[__METRO_GLOBAL_PREFIX__ + "__ReactRefresh"]`',
@@ -206,6 +214,7 @@ describe('Metro sources the library mirrors', () => {
 describe('React Native release builds', () => {
 	it('Xcode bundles with --bundle-output and the app resources as --assets-dest', () => {
 		const script = readFileSync(path.join(REACT_NATIVE_ROOT, 'scripts', 'react-native-xcode.sh'), 'utf8')
+
 		expect(
 			breakage(
 				'react-native-xcode.sh passes `--assets-dest "$DEST"`, DEST being the app resources folder',
@@ -225,6 +234,7 @@ describe('React Native release builds', () => {
 			'react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/BundleHermesCTask.kt',
 			REACT_NATIVE_ROOT,
 		)
+
 		expect(
 			breakage(
 				'BundleHermesCTask passes `--bundle-output` inside the assets folder it packages',
@@ -243,6 +253,7 @@ describe('React Native release builds', () => {
 			path.join(REACT_NATIVE_ROOT, 'src', 'private', 'specs_DEPRECATED', 'modules', 'NativeSourceCode.js'),
 			'utf8',
 		)
+
 		expect(
 			breakage(
 				"the SourceCode native module's constants include `scriptURL`",

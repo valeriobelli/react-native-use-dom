@@ -24,15 +24,19 @@ afterEach(() => {
  */
 async function openWith(greeting: string, source = withInput(greeting)): Promise<Page> {
 	fixture.writeComponent(source)
+
 	await waitFor('the watcher to see the edit', async () =>
 		(await (await fixture.fetchBundle()).text()).includes(greeting),
 	)
 	const page = await fixture.openPage()
+
 	await waitFor('the component', () => page.dom.window.document.querySelector('#typed'))
+
 	// The page registers for updates as it starts; one sent before it did would never arrive.
 	await new Promise((resolve) => {
 		setTimeout(resolve, 500)
 	})
+
 	return page
 }
 
@@ -43,6 +47,7 @@ function textOf(page: Page): string {
 it('updates the component in place, keeping what was typed into it', async () => {
 	const page = await openWith('hallo')
 	const input = await waitFor('the input', () => page.dom.window.document.querySelector<HTMLInputElement>('#typed'))
+
 	input.value = 'typed before the edit'
 
 	try {
@@ -99,7 +104,7 @@ it('reloads the page once the dev server is back after it went away', async () =
 
 	try {
 		fixture.dropConnections()
-		await waitFor('the reload', page.reloaded)
+		await waitFor('the reload', () => page.reloaded())
 
 		expect(page.reloaded()).toBe(true)
 	} finally {
@@ -113,7 +118,7 @@ it('reloads the page for an edit that cannot be applied in place', async () => {
 	try {
 		// A module that exports more than components is no boundary Fast Refresh can stop at.
 		fixture.writeComponent(`${withInput('hola')}export const notAComponent = 1;\n`)
-		await waitFor('the reload', page.reloaded)
+		await waitFor('the reload', () => page.reloaded())
 
 		expect(page.reloaded()).toBe(true)
 	} finally {
@@ -128,6 +133,7 @@ it('shows a build error over the component, and takes it away once the edit buil
 	try {
 		fixture.writeComponent(BROKEN)
 		const shown = await waitFor('the build error', () => document.querySelector('#use-dom-hot-error')?.textContent)
+
 		expect(shown).toContain(fixture.component)
 		// The component is still underneath, for when the edit is fixed.
 		expect(document.querySelector('#typed')).not.toBeNull()

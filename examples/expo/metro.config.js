@@ -16,6 +16,7 @@ const config = getDefaultConfig(__dirname)
 config.resolver.resolveRequest = (context, moduleName, platform) => {
 	const [packageName] = moduleName.split('/')
 	const origin = SINGLETONS.has(packageName) ? { originModulePath: APP } : {}
+
 	return context.resolveRequest({ ...context, ...origin }, moduleName, platform)
 }
 

@@ -28,25 +28,68 @@ export interface SerializableViolation {
 const MAX_DEPTH = 64
 
 function describe(value: unknown): string {
-	if (value === null) return 'null'
-	if (Array.isArray(value)) return 'an array'
-	const type = typeof value
-	if (type === 'object') {
-		const name = (value as object).constructor?.name
+	if (value === null) {
+		return 'null'
+	}
+
+	if (Array.isArray(value)) {
+		return 'an array'
+	}
+
+	if (typeof value === 'object') {
+		const { constructor } = value as { constructor?: { name?: string } }
+		const name = constructor?.name
+
 		return name && name !== 'Object' ? `an instance of ${name}` : 'an object'
 	}
-	if (type === 'number') return Number.isNaN(value) ? 'NaN' : String(value)
-	return `a ${type}`
+
+	if (typeof value === 'number') {
+		return Number.isNaN(value) ? 'NaN' : String(value)
+	}
+
+	return `a ${typeof value}`
 }
 
 function isPlainObject(value: object): boolean {
 	const proto: unknown = Object.getPrototypeOf(value)
+
 	return proto === Object.prototype || proto === null
 }
 
 function join(path: string, key: string | number): string {
-	if (typeof key === 'number') return `${path}[${key}]`
+	if (typeof key === 'number') {
+		return `${path}[${key}]`
+	}
+
 	return path === '' ? key : `${path}.${key}`
+}
+
+/** A value at `path` that cannot cross the boundary for the given reason. */
+function valueRejection(path: string, reason: string): SerializableViolation {
+	return { kind: 'value', path, reason }
+}
+
+/** Walks the members of a container, returning the first violation among them, if any. */
+function findContainerViolation(
+	value: object,
+	members: Iterable<readonly [string | number, unknown]>,
+	path: string,
+	seen: Set<object>,
+	depth: number,
+): SerializableViolation | null {
+	seen.add(value)
+
+	for (const [key, member] of members) {
+		const violation = findSerializableViolation(member, join(path, key), seen, depth + 1)
+
+		if (violation) {
+			return violation
+		}
+	}
+
+	seen.delete(value)
+
+	return null
 }
 
 function findPrimitiveViolation(value: unknown, path: string): SerializableViolation | null {
@@ -58,22 +101,27 @@ function findPrimitiveViolation(value: unknown, path: string): SerializableViola
 		case 'number':
 			return Number.isFinite(value)
 				? null
-				: { path, reason: `${describe(value)} has no JSON representation`, kind: 'value' }
+				: { kind: 'value', path, reason: `${describe(value)} has no JSON representation` }
 		case 'bigint':
 			return {
+				kind: 'value',
 				path,
 				reason: 'a bigint has no JSON representation; send a string instead',
-				kind: 'value',
 			}
 		case 'symbol':
-			return { path, reason: 'a symbol cannot be transferred', kind: 'value' }
-		default:
+			return { kind: 'value', path, reason: 'a symbol cannot be transferred' }
+		case 'function':
+		case 'object':
 			return {
+				kind: 'function',
 				path,
 				reason: 'functions are only supported as top-level props, where they become async native actions',
-				kind: 'function',
 			}
 	}
+
+	// Unreachable: every `typeof` result is handled above. Returned for linters that cannot see the
+	// exhaustiveness of a `typeof` switch.
+	return null
 }
 
 /**
@@ -89,39 +137,36 @@ export function findSerializableViolation(
 	depth = 0,
 ): SerializableViolation | null {
 	if (depth > MAX_DEPTH) {
-		return { path, reason: `nesting is deeper than ${MAX_DEPTH} levels`, kind: 'value' }
+		return valueRejection(path, `nesting is deeper than ${MAX_DEPTH} levels`)
 	}
 
-	if (typeof value !== 'object') return findPrimitiveViolation(value, path)
-	if (value === null) return null
+	if (typeof value !== 'object') {
+		return findPrimitiveViolation(value, path)
+	}
 
-	if (seen.has(value)) return { path, reason: 'the value is circular', kind: 'value' }
-
-	if (Array.isArray(value)) {
-		seen.add(value)
-		for (let index = 0; index < value.length; index += 1) {
-			const violation = findSerializableViolation(value[index], join(path, index), seen, depth + 1)
-			if (violation) return violation
-		}
-		seen.delete(value)
+	if (value === null) {
 		return null
 	}
 
-	if (!isPlainObject(value)) {
-		return {
-			path,
-			reason: `${describe(value)} cannot be transferred; convert it to a plain object first`,
-			kind: 'value',
-		}
+	if (seen.has(value)) {
+		return valueRejection(path, 'the value is circular')
 	}
 
-	seen.add(value)
-	for (const [key, member] of Object.entries(value)) {
-		const violation = findSerializableViolation(member, join(path, key), seen, depth + 1)
-		if (violation) return violation
+	if (Array.isArray(value)) {
+		return findContainerViolation(
+			value,
+			Array.from({ length: value.length }, (_, index) => [index, value[index]] as const),
+			path,
+			seen,
+			depth,
+		)
 	}
-	seen.delete(value)
-	return null
+
+	if (!isPlainObject(value)) {
+		return valueRejection(path, `${describe(value)} cannot be transferred; convert it to a plain object first`)
+	}
+
+	return findContainerViolation(value, Object.entries(value), path, seen, depth)
 }
 
 /** Whether `value` can cross the boundary unchanged. */
@@ -143,9 +188,13 @@ export function assertSerializable(
 		| typeof DomErrorCode.NonSerializableResult,
 ): asserts value is Serializable {
 	const violation = findSerializableViolation(value)
-	if (!violation) return
+
+	if (!violation) {
+		return
+	}
 
 	const where = violation.path === '' ? label : `${label} at \`${violation.path}\``
+
 	throw new DomError(code, `${where} cannot be sent to a DOM component: ${violation.reason}.`, {
 		fix: 'DOM components exchange JSON-compatible values only: strings, finite numbers, booleans, null, arrays and plain objects.',
 	})

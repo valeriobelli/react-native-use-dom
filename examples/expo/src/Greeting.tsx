@@ -15,7 +15,7 @@ export interface GreetingHandle {
 interface GreetingProps {
 	name: string
 	/** A native action: the DOM side awaits what the app answers. */
-	onClick(clicks: number): Promise<string>
+	onClick: (clicks: number) => Promise<string>
 	ref?: DomRef<GreetingHandle>
 	dom?: DomProps
 }
@@ -26,23 +26,27 @@ export default function Greeting({ name, onClick }: GreetingProps) {
 
 	useDOMImperativeHandle<GreetingHandle>(
 		() => ({
+			getClicks: () => clicks,
 			reset: () => {
 				setClicks(0)
 				setReply('')
 			},
-			getClicks: () => clicks,
 		}),
 		[clicks],
 	)
 
 	const click = useCallback(async () => {
 		const next = clicks + 1
+
 		setClicks(next)
 		setReply(await onClick(next))
 	}, [clicks, onClick])
+	const handleClick = useCallback(() => {
+		void click()
+	}, [click])
 
 	return (
-		<button type="button" className="greeting" onClick={click}>
+		<button type="button" className="greeting" onClick={handleClick}>
 			Hello, {name}. Clicked {clicks} times. {reply}
 		</button>
 	)

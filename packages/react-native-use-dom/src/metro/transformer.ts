@@ -35,8 +35,8 @@ export function transform(args: BabelTransformerArgs): ReturnType<BabelTransform
 
 	return upstream.transform({
 		...args,
-		src: isEntry ? synthesizeEntry(args, settings) : args.src,
 		plugins: isEntry || !shouldRefresh(args) ? args.plugins : withRefreshPlugin(args.plugins),
+		src: isEntry ? synthesizeEntry(args, settings) : args.src,
 	})
 }
 
@@ -44,6 +44,7 @@ export function transform(args: BabelTransformerArgs): ReturnType<BabelTransform
 export function getCacheKey(options?: BabelTransformerCacheKeyOptions): string {
 	const settings = readWebTransformerSettings()
 	const upstream = loadTransformer(settings.upstreamTransformerPath)
+
 	return createHash('md5')
 		.update(readFileSync(__filename))
 		.update(JSON.stringify(settings))
@@ -70,6 +71,7 @@ function withRefreshPlugin(plugins: BabelTransformerArgs['plugins']): BabelPlugi
  */
 function synthesizeEntry(args: BabelTransformerArgs, settings: WebTransformerSettings): string {
 	const componentPath = readRequestedComponent(args, settings)
+
 	return [
 		...(args.options.dev ? [`import ${JSON.stringify(DEV_CLIENT_MODULE_PATH)};`] : []),
 		`import Component from ${JSON.stringify(componentPath)};`,
@@ -97,6 +99,7 @@ function readRequestedComponent(args: BabelTransformerArgs, settings: WebTransfo
 	}
 
 	const componentPath = path.normalize(requested)
+
 	if (!settings.allowedRoots.some((root) => isInside(root, componentPath))) {
 		throw new DomError(
 			DomErrorCode.UnknownDomComponent,
@@ -106,15 +109,18 @@ function readRequestedComponent(args: BabelTransformerArgs, settings: WebTransfo
 			},
 		)
 	}
+
 	return componentPath
 }
 
 function isInside(root: string, filePath: string): boolean {
 	const relative = path.relative(root, filePath)
+
 	return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative)
 }
 
 function loadTransformer(modulePath: string): BabelTransformer {
 	const loaded = require(modulePath) as BabelTransformer | { __esModule: true; default: BabelTransformer }
-	return '__esModule' in loaded && 'default' in loaded ? loaded.default : (loaded as BabelTransformer)
+
+	return '__esModule' in loaded && 'default' in loaded ? loaded.default : loaded
 }

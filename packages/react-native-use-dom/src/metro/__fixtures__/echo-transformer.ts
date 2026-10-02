@@ -5,6 +5,7 @@ export const calls: BabelTransformerArgs[] = []
 
 export const transform: BabelTransformer['transform'] = (args) => {
 	calls.push(args)
+
 	return { ast: null as never }
 }
 

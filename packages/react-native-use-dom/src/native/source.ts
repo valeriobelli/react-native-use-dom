@@ -17,6 +17,7 @@ interface SourceCodeSpec extends TurboModule {
  */
 function devServerOrigin(): string | null {
 	const scriptUrl = TurboModuleRegistry.get<SourceCodeSpec>('SourceCode')?.getConstants().scriptURL ?? ''
+
 	return /^https?:\/\/.*?\//u.exec(scriptUrl)?.[0] ?? null
 }
 
@@ -33,16 +34,18 @@ export interface DomSourceOptions {
 /** Resolves the URL the native view loads for a DOM component. */
 export function resolveDomSource(options: DomSourceOptions): string {
 	const devServer = devServerOrigin()
+
 	if (devServer !== null) {
 		const query = new URLSearchParams({
+			dev: 'true',
 			file: options.filePath,
 			platform: 'web',
-			dev: 'true',
 		})
+
 		return `${new URL(DEV_PAGE_PATH, devServer).href}?${query.toString()}`
 	}
 
-	if (options.bundleFile === undefined) {
+	if (!options.bundleFile) {
 		throw new DomError(
 			DomErrorCode.MissingMetroConfig,
 			`No pre-built page was found for the DOM component in ${options.filePath}.`,

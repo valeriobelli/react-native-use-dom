@@ -30,10 +30,10 @@ function projectConfig(overrides: InputConfigT = {}): ConfigT {
 		getDefaultConfig(projectRoot),
 		{
 			cacheStores: [],
-			// Metro keeps its file map in the OS temp folder across runs, which a stale copy can break.
-			resetCache: true,
 			maxWorkers: 1,
 			reporter: { update: () => {} },
+			// Metro keeps its file map in the OS temp folder across runs, which a stale copy can break.
+			resetCache: true,
 			resolver: { useWatchman: false },
 			server: { port: 0 },
 			watchFolders: [projectRoot, WORKSPACE_ROOT],
@@ -48,25 +48,30 @@ const projectEnhancer: NonNullable<ConfigT['server']['enhanceMiddleware']> = (mi
 		res.setHeader(ENHANCED_HEADER, 'yes')
 		middleware(req, res, next)
 	}
+
 	return enhanced
 }
 
 async function serve(config: ConfigT): Promise<{ origin: string; close: () => Promise<void> }> {
 	const { httpServer } = await runServer(config, { host: '127.0.0.1' })
 	const { port } = (httpServer as http.Server).address() as { port: number }
+
 	return {
-		origin: `http://127.0.0.1:${port}`,
 		close: () =>
 			new Promise((resolve) => {
-				httpServer.close(() => resolve())
+				httpServer.close(() => {
+					resolve()
+				})
 				;(httpServer as http.Server).closeAllConnections()
 			}),
+		origin: `http://127.0.0.1:${port}`,
 	}
 }
 
 beforeAll(() => {
 	projectRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'use-dom-with-')))
 	writeFileSync(path.join(projectRoot, 'package.json'), '{ "name": "with-dom-fixture" }\n')
+
 	writeFileSync(
 		path.join(projectRoot, 'babel.config.js'),
 		`module.exports = { presets: [${JSON.stringify(RN_BABEL_PRESET)}] };\n`,
@@ -76,7 +81,7 @@ beforeAll(() => {
 })
 
 afterAll(() => {
-	rmSync(projectRoot, { recursive: true, force: true })
+	rmSync(projectRoot, { force: true, recursive: true })
 	delete process.env[WEB_TRANSFORMER_ENV]
 })
 
@@ -109,6 +114,7 @@ describe('withDom', () => {
 
 		try {
 			const native = await fetch(`${server.origin}/index.bundle?platform=ios&dev=true`)
+
 			expect(native.status).toBe(200)
 			expect(await native.text()).toContain('native entry')
 			// The project's own middleware still runs for everything that is not a DOM component.
@@ -116,10 +122,12 @@ describe('withDom', () => {
 
 			const file = path.join(projectRoot, 'Hello.js')
 			const page = await fetch(`${server.origin}${DEV_PAGE_PATH}?${new URLSearchParams({ file }).toString()}`)
+
 			expect(await page.text()).toContain(DEV_ENTRY_PATH)
 
-			const query = new URLSearchParams({ platform: 'web', dev: 'true', 'transform.dom': file })
+			const query = new URLSearchParams({ dev: 'true', platform: 'web', 'transform.dom': file })
 			const dom = await fetch(`${server.origin}${DEV_ENTRY_PATH}?${query.toString()}`)
+
 			expect(dom.status).toBe(200)
 			expect(await dom.text()).toContain('mountDomComponent')
 		} finally {
@@ -133,18 +141,23 @@ describe('withDom', () => {
 
 		try {
 			const file = path.join(projectRoot, 'Hello.js')
+
 			await fetch(`${server.origin}${DEV_PAGE_PATH}?${new URLSearchParams({ file }).toString()}`)
-			const domBundle = `${DEV_ENTRY_PATH}?${new URLSearchParams({ platform: 'web', dev: 'true', 'transform.dom': file }).toString()}`
+			const domBundle = `${DEV_ENTRY_PATH}?${new URLSearchParams({ dev: 'true', platform: 'web', 'transform.dom': file }).toString()}`
+
 			await (await fetch(`${server.origin}${domBundle}`)).text()
 			const nativeBundle = '/index.bundle?platform=ios&dev=true'
+
 			await (await fetch(`${server.origin}${nativeBundle}`)).text()
 
 			await expect(registerBundle(`${socketOrigin}${DEV_HOT_PATH}`, `${server.origin}${domBundle}`)).resolves.toBe(
 				'bundle-registered',
 			)
+
 			await expect(registerBundle(`${socketOrigin}/hot`, `${server.origin}${nativeBundle}`)).resolves.toBe(
 				'bundle-registered',
 			)
+
 			// The DOM socket only knows DOM bundles, which is what keeps the two apart.
 			await expect(registerBundle(`${socketOrigin}${DEV_HOT_PATH}`, `${server.origin}${nativeBundle}`)).resolves.toBe(
 				'error',
@@ -159,15 +172,24 @@ describe('withDom', () => {
 function registerBundle(socketUrl: string, bundleUrl: string): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const socket = new WebSocket(socketUrl)
+
 		socket.addEventListener('open', () => {
-			socket.send(JSON.stringify({ type: 'register-entrypoints', entryPoints: [bundleUrl] }))
+			socket.send(JSON.stringify({ entryPoints: [bundleUrl], type: 'register-entrypoints' }))
 		})
+
 		socket.addEventListener('message', (event: MessageEvent<string>) => {
 			const { type } = JSON.parse(event.data) as { type: string }
-			if (type !== 'bundle-registered' && type !== 'error') return
+
+			if (type !== 'bundle-registered' && type !== 'error') {
+				return
+			}
+
 			socket.close()
 			resolve(type)
 		})
-		socket.addEventListener('error', () => reject(new Error(`${socketUrl} refused the connection.`)))
+
+		socket.addEventListener('error', () => {
+			reject(new Error(`${socketUrl} refused the connection.`))
+		})
 	})
 }

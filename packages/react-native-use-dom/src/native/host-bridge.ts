@@ -1,6 +1,6 @@
 import { DomError, DomErrorCode } from '../runtime/errors'
 import { PendingCalls } from '../runtime/pending-calls'
-import type { ConsoleMessage, DomToNativeMessage, NativeToDomMessage, ResultMessage } from '../runtime/protocol'
+import type { ConsoleMessage, DomToNativeMessage, NativeToDomMessage } from '../runtime/protocol'
 import { decodeMessage, encodeMessage, nativeEventName } from '../runtime/protocol'
 import { assertSerializable } from '../runtime/serializable'
 import type { Serializable } from '../runtime/serializable'
@@ -52,7 +52,7 @@ export class NativeDomBridge {
 
 	/** Sends the current props. Sent on every render and again whenever the DOM side reports ready. */
 	sendProps(props: Record<string, Serializable>, actionNames: readonly string[]): void {
-		this.#post({ type: 'props', instanceId: this.instanceId, props, actions: actionNames })
+		this.#post({ actions: actionNames, instanceId: this.instanceId, props, type: 'props' })
 	}
 
 	/**
@@ -65,22 +65,29 @@ export class NativeDomBridge {
 		})
 
 		const { callId, result } = this.#calls.create()
+
 		this.#post({
-			type: 'handle-call',
-			instanceId: this.instanceId,
-			callId,
-			method,
 			args: args as Serializable[],
+			callId,
+			instanceId: this.instanceId,
+			method,
+			type: 'handle-call',
 		})
+
 		return result
 	}
 
 	/** Handles one `window.ReactNativeWebView.postMessage` string from the page. */
 	receive(raw: string): void {
-		if (this.#closed) return
+		if (this.#closed) {
+			return
+		}
 
-		const message = decodeMessage<DomToNativeMessage>(raw)
-		if (message.instanceId !== this.instanceId) return
+		const message = decodeMessage(raw) as DomToNativeMessage
+
+		if (message.instanceId !== this.instanceId) {
+			return
+		}
 
 		switch (message.type) {
 			case 'ready':
@@ -90,7 +97,7 @@ export class NativeDomBridge {
 				this.#runAction(message.callId, message.action, message.args)
 				break
 			case 'result':
-				this.#calls.settle(message as ResultMessage)
+				this.#calls.settle(message)
 				break
 			case 'resize':
 				this.#callbacks.onResize?.(message.width, message.height)
@@ -121,7 +128,10 @@ export class NativeDomBridge {
 	}
 
 	#post(message: NativeToDomMessage): void {
-		if (this.#closed) return
+		if (this.#closed) {
+			return
+		}
+
 		this.#send(this.#eventName, encodeMessage(message))
 	}
 
@@ -129,9 +139,10 @@ export class NativeDomBridge {
 		void invokeAction(this.#actions[name], name, args).then((outcome) => {
 			this.#post(
 				outcome.ok
-					? { type: 'result', instanceId: this.instanceId, callId, ok: true, value: outcome.value }
-					: { type: 'result', instanceId: this.instanceId, callId, ok: false, error: outcome.error },
+					? { callId, instanceId: this.instanceId, ok: true, type: 'result', value: outcome.value }
+					: { callId, error: outcome.error, instanceId: this.instanceId, ok: false, type: 'result' },
 			)
+
 			return outcome
 		})
 	}
@@ -151,21 +162,23 @@ async function invokeAction(
 ): Promise<ActionOutcome> {
 	if (typeof action !== 'function') {
 		return {
-			ok: false,
 			error: serializeError(
 				new DomError(DomErrorCode.UnknownAction, `\`${name}\` is not a native action on this DOM component.`, {
 					fix: 'Native actions are the function props the component was rendered with. Check the name, and that the prop is still being passed.',
 				}),
 			),
+			ok: false,
 		}
 	}
 
 	try {
-		const returned = (await action(...(args as never[]))) as unknown
+		const returned = await action(...(args as never[]))
 		const value = returned === undefined ? null : returned
+
 		assertSerializable(value, `the value returned by \`${name}\``, DomErrorCode.NonSerializableResult)
+
 		return { ok: true, value }
 	} catch (error) {
-		return { ok: false, error: serializeError(error) }
+		return { error: serializeError(error), ok: false }
 	}
 }

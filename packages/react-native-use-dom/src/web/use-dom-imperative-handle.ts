@@ -55,7 +55,8 @@ export function useDOMImperativeHandle<THandle extends { [K in keyof THandle]: D
 
 	useEffect(() => {
 		// Every key holds a method, which is all an index signature would add.
-		bridge.setHandle(create() as DomHandle)
+		bridge.setHandle(create())
+
 		return () => {
 			bridge.setHandle(null)
 		}

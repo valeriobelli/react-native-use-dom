@@ -6,18 +6,19 @@ import { createDomBridge, readInjectedPayload } from './bridge'
 import type { DomBridge, InjectedPayload } from './bridge'
 
 const PAYLOAD: InjectedPayload = {
+	actions: ['onSave'],
 	instanceId: 'i1',
 	props: { title: 'Hello' },
-	actions: ['onSave'],
 }
 
 let sent: DomToNativeMessage[]
 
 function installWebViewGlobal(payload: InjectedPayload | null = PAYLOAD): void {
 	sent = []
+
 	;(globalThis as Record<string, unknown>)[POST_MESSAGE_GLOBAL] = {
-		postMessage: (raw: string) => sent.push(JSON.parse(raw) as DomToNativeMessage),
 		injectedObjectJson: () => (payload === null ? undefined : JSON.stringify(payload)),
+		postMessage: (raw: string) => sent.push(JSON.parse(raw) as DomToNativeMessage),
 	}
 }
 
@@ -35,13 +36,14 @@ function deliver(message: NativeToDomMessage, instanceId = message.instanceId): 
 
 /** Asks the DOM side to run a method exposed through `useDOMImperativeHandle`. */
 function callHandle(method: string, args: unknown[] = []): void {
-	deliver({ type: 'handle-call', instanceId: 'i1', callId: 'c1', method, args: args as never })
+	deliver({ args: args as never, callId: 'c1', instanceId: 'i1', method, type: 'handle-call' })
 }
 
 function lastOfType<T extends DomToNativeMessage['type']>(
 	type: T,
 ): Extract<DomToNativeMessage, { type: T }> | undefined {
 	const matches = sent.filter((message) => message.type === type)
+
 	return matches.at(-1) as Extract<DomToNativeMessage, { type: T }> | undefined
 }
 
@@ -75,7 +77,7 @@ describe('createDomBridge', () => {
 	})
 
 	it('announces itself so the native side can re-send props', () => {
-		expect(sent[0]).toEqual({ type: 'ready', instanceId: 'i1', protocolVersion: 1 })
+		expect(sent[0]).toEqual({ instanceId: 'i1', protocolVersion: 1, type: 'ready' })
 	})
 
 	it('exposes the injected props immediately, before any message arrives', () => {
@@ -85,9 +87,10 @@ describe('createDomBridge', () => {
 
 	it('updates props and notifies subscribers', () => {
 		const listener = jest.fn()
+
 		bridge.subscribe(listener)
 
-		deliver({ type: 'props', instanceId: 'i1', props: { title: 'Updated' }, actions: ['onSave'] })
+		deliver({ actions: ['onSave'], instanceId: 'i1', props: { title: 'Updated' }, type: 'props' })
 
 		expect(bridge.getProps()).toEqual({ title: 'Updated' })
 		expect(listener).toHaveBeenCalledTimes(1)
@@ -95,25 +98,18 @@ describe('createDomBridge', () => {
 
 	it('stops notifying an unsubscribed listener', () => {
 		const listener = jest.fn()
+
 		bridge.subscribe(listener)()
-		deliver({ type: 'props', instanceId: 'i1', props: {}, actions: [] })
+		deliver({ actions: [], instanceId: 'i1', props: {}, type: 'props' })
 		expect(listener).not.toHaveBeenCalled()
 	})
 
 	it('ignores traffic addressed to another instance on the same page', () => {
 		const listener = jest.fn()
+
 		bridge.subscribe(listener)
 
-		globalThis.dispatchEvent(
-			new CustomEvent(nativeEventName('i1'), {
-				detail: encodeMessage({
-					type: 'props',
-					instanceId: 'other',
-					props: { title: 'Not mine' },
-					actions: [],
-				}),
-			}),
-		)
+		deliver({ actions: [], instanceId: 'other', props: { title: 'Not mine' }, type: 'props' }, 'i1')
 
 		expect(bridge.getProps()).toEqual({ title: 'Hello' })
 		expect(listener).not.toHaveBeenCalled()
@@ -124,13 +120,14 @@ describe('createDomBridge', () => {
 			const pending = bridge.callAction('onSave', ['draft', 2])
 
 			const call = lastOfType('action-call')
+
 			expect(call).toMatchObject({ action: 'onSave', args: ['draft', 2] })
 
 			deliver({
-				type: 'result',
-				instanceId: 'i1',
 				callId: call!.callId,
+				instanceId: 'i1',
 				ok: true,
+				type: 'result',
 				value: { saved: true },
 			})
 			await expect(pending).resolves.toEqual({ saved: true })
@@ -141,17 +138,17 @@ describe('createDomBridge', () => {
 			const call = lastOfType('action-call')
 
 			deliver({
-				type: 'result',
-				instanceId: 'i1',
 				callId: call!.callId,
-				ok: false,
 				error: serializeError(Object.assign(new RangeError('disk full'), { free: 0 })),
+				instanceId: 'i1',
+				ok: false,
+				type: 'result',
 			})
 
 			await expect(pending).rejects.toMatchObject({
-				name: 'RangeError',
-				message: 'disk full',
 				free: 0,
+				message: 'disk full',
+				name: 'RangeError',
 			})
 		})
 
@@ -175,14 +172,15 @@ describe('createDomBridge', () => {
 			const second = bridge.callAction('onSave', ['b'])
 			const calls = sent.filter((message) => message.type === 'action-call')
 
-			deliver({ type: 'result', instanceId: 'i1', callId: calls[1]!.callId, ok: true, value: 'B' })
-			deliver({ type: 'result', instanceId: 'i1', callId: calls[0]!.callId, ok: true, value: 'A' })
+			deliver({ callId: calls[1]!.callId, instanceId: 'i1', ok: true, type: 'result', value: 'B' })
+			deliver({ callId: calls[0]!.callId, instanceId: 'i1', ok: true, type: 'result', value: 'A' })
 
 			await expect(Promise.all([first, second])).resolves.toEqual(['A', 'B'])
 		})
 
 		it('rejects in-flight calls when the component goes away', async () => {
 			const pending = bridge.callAction('onSave', [])
+
 			bridge.dispose()
 			await expect(pending).rejects.toMatchObject({ code: DomErrorCode.BridgeClosed })
 		})
@@ -201,6 +199,7 @@ describe('createDomBridge', () => {
 			bridge.setHandle({
 				load: async () => {
 					await flush()
+
 					return { items: 3 }
 				},
 			})
@@ -228,8 +227,9 @@ describe('createDomBridge', () => {
 			await flush()
 
 			const result = lastOfType('result')
+
 			expect(result).toMatchObject({ ok: false })
-			expect(result).toMatchObject({ error: { name: 'TypeError', message: 'nope' } })
+			expect(result).toMatchObject({ error: { message: 'nope', name: 'TypeError' } })
 		})
 
 		it('rejects a method that returns something unserializable', async () => {
@@ -238,8 +238,8 @@ describe('createDomBridge', () => {
 			await flush()
 
 			expect(lastOfType('result')).toMatchObject({
-				ok: false,
 				error: { message: expect.stringContaining('the value returned by `getNode`') },
+				ok: false,
 			})
 		})
 
@@ -249,8 +249,8 @@ describe('createDomBridge', () => {
 			await flush()
 
 			expect(lastOfType('result')).toMatchObject({
-				ok: false,
 				error: { message: expect.stringContaining('`unknown`') },
+				ok: false,
 			})
 		})
 	})
@@ -258,34 +258,40 @@ describe('createDomBridge', () => {
 	describe('reporting back to the app', () => {
 		it('sends measured size', () => {
 			bridge.reportSize(320, 180)
-			expect(lastOfType('resize')).toMatchObject({ width: 320, height: 180 })
+			expect(lastOfType('resize')).toMatchObject({ height: 180, width: 320 })
 		})
 
 		it('forwards console output', () => {
 			bridge.reportConsole('warn', ['slow render', 42])
-			expect(lastOfType('console')).toMatchObject({ level: 'warn', args: ['slow render', 42] })
+			expect(lastOfType('console')).toMatchObject({ args: ['slow render', 42], level: 'warn' })
 		})
 
 		it('describes a console argument that cannot be serialized instead of throwing', () => {
 			const circular: Record<string, unknown> = {}
+
 			circular['self'] = circular
-			expect(() => bridge.reportConsole('log', [circular])).not.toThrow()
+
+			expect(() => {
+				bridge.reportConsole('log', [circular])
+			}).not.toThrow()
 			expect(lastOfType('console')?.args).toEqual(['[object Object]'])
 		})
 
 		it('forwards an uncaught error', () => {
 			bridge.reportUncaughtError(new Error('render failed'))
+
 			expect(lastOfType('uncaught-error')).toMatchObject({
-				error: { name: 'Error', message: 'render failed' },
+				error: { message: 'render failed', name: 'Error' },
 			})
 		})
 	})
 
 	it('stops listening once disposed', () => {
 		const listener = jest.fn()
+
 		bridge.subscribe(listener)
 		bridge.dispose()
-		deliver({ type: 'props', instanceId: 'i1', props: { title: 'Late' }, actions: [] })
+		deliver({ actions: [], instanceId: 'i1', props: { title: 'Late' }, type: 'props' })
 		expect(bridge.getProps()).toEqual({ title: 'Hello' })
 	})
 })

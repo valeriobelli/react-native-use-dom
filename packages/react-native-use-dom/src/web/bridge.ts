@@ -1,28 +1,13 @@
 import { DomError, DomErrorCode } from '../runtime/errors'
 import { PendingCalls } from '../runtime/pending-calls'
-import {
-	decodeMessage,
-	encodeMessage,
-	nativeEventName,
-	POST_MESSAGE_GLOBAL,
-	PROTOCOL_VERSION,
-} from '../runtime/protocol'
-import type { DomToNativeMessage, NativeToDomMessage, PropsMessage, ResultMessage } from '../runtime/protocol'
+import { decodeMessage, encodeMessage, nativeEventName, PROTOCOL_VERSION } from '../runtime/protocol'
+import type { DomToNativeMessage, NativeToDomMessage, PropsMessage } from '../runtime/protocol'
 import { assertSerializable } from '../runtime/serializable'
 import type { Serializable } from '../runtime/serializable'
 import { serializeError } from '../runtime/wire-error'
+import { readWebViewGlobal, type InjectedPayload } from './injected-payload'
 
-/** What the native side injects into the page before the bundle runs. */
-export interface InjectedPayload {
-	instanceId: string
-	props: Record<string, Serializable>
-	actions: readonly string[]
-}
-
-interface ReactNativeWebViewGlobal {
-	postMessage(message: string): void
-	injectedObjectJson?: () => string | undefined
-}
+export { readInjectedPayload, type InjectedPayload } from './injected-payload'
 
 /** A method exposed to the native side through `useDOMImperativeHandle`. */
 export type HandleMethod = (...args: never[]) => unknown
@@ -47,33 +32,6 @@ export interface DomBridge {
 	reportUncaughtError(error: unknown): void
 	/** Stops listening. Used when the page is torn down. */
 	dispose(): void
-}
-
-function readWebViewGlobal(): ReactNativeWebViewGlobal {
-	const value = (globalThis as Record<string, unknown>)[POST_MESSAGE_GLOBAL]
-	if (typeof value === 'object' && value !== null && 'postMessage' in value) {
-		return value as ReactNativeWebViewGlobal
-	}
-	throw new DomError(DomErrorCode.BridgeClosed, 'This DOM component is not running inside a React Native WebView.', {
-		fix: `A '"use dom"' module can only be mounted by this library. Opening the bundle directly in a browser leaves \`window.${POST_MESSAGE_GLOBAL}\` undefined.`,
-	})
-}
-
-/**
- * Reads the props the native side injected before the bundle ran.
- *
- * Reading them synchronously is what lets the first paint already show real data (E3-AC1); the
- * native side also re-sends them once the bridge reports ready, which closes the race where the
- * page loaded before the props were set.
- */
-export function readInjectedPayload(): InjectedPayload {
-	const raw = readWebViewGlobal().injectedObjectJson?.()
-	if (raw === undefined || raw === '') {
-		throw new DomError(DomErrorCode.MalformedMessage, 'The DOM component was mounted without its initial props.', {
-			fix: 'This is an internal inconsistency; please report it with the app and library versions.',
-		})
-	}
-	return JSON.parse(raw) as InjectedPayload
 }
 
 /**
@@ -105,15 +63,17 @@ class WebDomBridge implements DomBridge {
 		this.#actionNames = payload.actions
 
 		this.#eventName = nativeEventName(payload.instanceId)
+
 		this.#onNativeEvent = (event) => {
 			this.#receive((event as CustomEvent<string>).detail)
 		}
+
 		globalThis.addEventListener(this.#eventName, this.#onNativeEvent)
 
 		this.#post({
-			type: 'ready',
 			instanceId: this.instanceId,
 			protocolVersion: PROTOCOL_VERSION,
+			type: 'ready',
 		})
 	}
 
@@ -125,11 +85,14 @@ class WebDomBridge implements DomBridge {
 
 	readonly subscribe = (listener: () => void): (() => void) => {
 		this.#listeners.add(listener)
+
 		return () => {
 			this.#listeners.delete(listener)
 		}
 	}
 
+	// The `async` keyword turns the validation throws below into rejections, which is the contract.
+	// oxlint-disable-next-line typescript/require-await
 	async callAction(name: string, args: readonly unknown[]): Promise<Serializable> {
 		if (!this.#actionNames.includes(name)) {
 			throw new DomError(DomErrorCode.UnknownAction, `\`${name}\` is not a native action on this DOM component.`, {
@@ -142,14 +105,16 @@ class WebDomBridge implements DomBridge {
 		})
 
 		const { callId, result } = this.#calls.create()
+
 		this.#post({
-			type: 'action-call',
-			instanceId: this.instanceId,
-			callId,
 			action: name,
 			args: args as Serializable[],
+			callId,
+			instanceId: this.instanceId,
+			type: 'action-call',
 		})
-		return await result
+
+		return result
 	}
 
 	setHandle(methods: Record<string, HandleMethod> | null): void {
@@ -157,22 +122,23 @@ class WebDomBridge implements DomBridge {
 	}
 
 	reportSize(width: number, height: number): void {
-		this.#post({ type: 'resize', instanceId: this.instanceId, width, height })
+		this.#post({ height, instanceId: this.instanceId, type: 'resize', width })
 	}
 
 	reportConsole(level: 'log' | 'info' | 'warn' | 'error' | 'debug', args: readonly unknown[]): void {
 		// Forwarding a log must never itself throw, so an unprintable argument is described instead.
 		const safe = args.map((arg) => (isJsonSafe(arg) ? arg : describeForLog(arg)))
+
 		this.#post({
-			type: 'console',
+			args: safe,
 			instanceId: this.instanceId,
 			level,
-			args: safe as Serializable[],
+			type: 'console',
 		})
 	}
 
 	reportUncaughtError(error: unknown): void {
-		this.#post({ type: 'uncaught-error', instanceId: this.instanceId, error: serializeError(error) })
+		this.#post({ error: serializeError(error), instanceId: this.instanceId, type: 'uncaught-error' })
 	}
 
 	dispose(): void {
@@ -182,22 +148,24 @@ class WebDomBridge implements DomBridge {
 	}
 
 	#post(message: DomToNativeMessage): void {
-		// This is the WebView's own message channel, not `window.postMessage`: it takes a single
-		// string and has no target origin.
+		// This is the WebView's own message channel, not `window.postMessage`: it takes a single string and has no target origin.
 		// oxlint-disable-next-line unicorn/require-post-message-target-origin
 		this.#webView.postMessage(encodeMessage(message))
 	}
 
 	#receive(raw: string): void {
-		const message = decodeMessage<NativeToDomMessage>(raw)
-		if (message.instanceId !== this.instanceId) return
+		const message = decodeMessage(raw) as NativeToDomMessage
+
+		if (message.instanceId !== this.instanceId) {
+			return
+		}
 
 		switch (message.type) {
 			case 'props':
 				this.#applyProps(message)
 				break
 			case 'result':
-				this.#calls.settle(message as ResultMessage)
+				this.#calls.settle(message)
 				break
 			case 'handle-call':
 				this.#runHandleMethod(message.callId, message.method, message.args)
@@ -211,16 +179,20 @@ class WebDomBridge implements DomBridge {
 		this.#props = message.props
 		this.#actionNames = message.actions
 		// Snapshot, so a listener that unsubscribes while being notified cannot skip the next one.
-		for (const listener of Array.from(this.#listeners)) listener()
+
+		for (const listener of Array.from(this.#listeners)) {
+			listener()
+		}
 	}
 
 	#runHandleMethod(callId: string, method: string, args: readonly Serializable[]): void {
 		void invokeHandleMethod(this.#handle?.[method], method, args).then((outcome) => {
 			this.#post(
 				outcome.ok
-					? { type: 'result', instanceId: this.instanceId, callId, ok: true, value: outcome.value }
-					: { type: 'result', instanceId: this.instanceId, callId, ok: false, error: outcome.error },
+					? { callId, instanceId: this.instanceId, ok: true, type: 'result', value: outcome.value }
+					: { callId, error: outcome.error, instanceId: this.instanceId, ok: false, type: 'result' },
 			)
+
 			return outcome
 		})
 	}
@@ -240,7 +212,6 @@ async function invokeHandleMethod(
 ): Promise<HandleOutcome> {
 	if (!implementation) {
 		return {
-			ok: false,
 			error: serializeError(
 				new DomError(
 					DomErrorCode.UnknownHandleMethod,
@@ -250,22 +221,26 @@ async function invokeHandleMethod(
 					},
 				),
 			),
+			ok: false,
 		}
 	}
 
 	try {
-		const returned = (await implementation(...(args as never[]))) as unknown
+		const returned = await implementation(...(args as never[]))
 		const value = returned === undefined ? null : returned
+
 		assertSerializable(value, `the value returned by \`${method}\``, DomErrorCode.NonSerializableResult)
+
 		return { ok: true, value }
 	} catch (error) {
-		return { ok: false, error: serializeError(error) }
+		return { error: serializeError(error), ok: false }
 	}
 }
 
 function isJsonSafe(value: unknown): value is Serializable {
 	try {
 		JSON.stringify(value)
+
 		return true
 	} catch {
 		return false

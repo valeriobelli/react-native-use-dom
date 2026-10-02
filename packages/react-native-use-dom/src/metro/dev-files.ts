@@ -14,18 +14,21 @@ const MOUNT_PREFIX = `/${DEV_MOUNT_PATH}/`
 /** Answers `url`, a page request, with the page that loads the component it names. */
 export function servePage(url: URL, res: ServerResponse): void {
 	const file = url.searchParams.get('file')
+
 	if (file === null || file === '') {
 		res.writeHead(400, { 'Content-Type': 'text/plain; charset=UTF-8' })
 		res.end('A DOM component page needs the `file` of the component to render.')
+
 		return
 	}
 
 	const bundleQuery = new URLSearchParams({
-		platform: WEB_PLATFORM,
 		dev: url.searchParams.get('dev') ?? 'true',
+		platform: WEB_PLATFORM,
 		[`transform.${DOM_TRANSFORM_OPTION}`]: file,
 	})
-	res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' })
+
+	res.writeHead(200, { 'Cache-Control': 'no-store', 'Content-Type': 'text/html; charset=UTF-8' })
 	res.end(renderDevPage(`${DEV_ENTRY_PATH}?${bundleQuery.toString()}`))
 }
 
@@ -92,7 +95,10 @@ export async function servePublicFile(
 	next: (error?: unknown) => void,
 ): Promise<void> {
 	try {
-		if (await sendPublicFile(publicDirectory(projectRoot), url.pathname.slice(MOUNT_PREFIX.length), res)) return
+		if (await sendPublicFile(publicDirectory(projectRoot), url.pathname.slice(MOUNT_PREFIX.length), res)) {
+			return
+		}
+
 		res.writeHead(404, { 'Content-Type': 'text/plain; charset=UTF-8' })
 		res.end(`${url.pathname} is not a DOM component route or a file of ${PUBLIC_DIRECTORY}/.`)
 	} catch (error) {
