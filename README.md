@@ -6,6 +6,13 @@ A module marked `'use dom'` runs in a native web view on iOS and Android, and na
 other component: props go in, function props become native actions the component can await, and methods it
 exposes are reachable through a `ref`. Release builds embed every page, so components load offline.
 
+<p align="center">
+	<img src="./docs/assets/native-bridge.gif" width="260" alt="Calling a DOM component: native actions, a ref reset, and a prop update" />
+	&nbsp;&nbsp;&nbsp;
+	<img src="./docs/assets/fast-refresh.gif" width="260" alt="Fast Refresh updates a DOM component in place and keeps its state" />
+</p>
+<p align="center"><sub>Function props, ref methods and props cross the bridge in both directions · Fast Refresh keeps the component's state</sub></p>
+
 - **Use it:** [the package README](./packages/react-native-use-dom/README.md), then the [guide](./docs/README.md).
 - **Errors:** [docs/errors.md](./docs/errors.md) explains every `ERR_USE_DOM_*` code.
 - **Coding agents:** [`AGENTS.md`](./packages/react-native-use-dom/AGENTS.md) has the rules in one page.

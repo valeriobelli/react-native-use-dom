@@ -26,6 +26,12 @@ On iOS and Android the component renders in a native web view. Its props are sen
 become native actions it can await, and methods it exposes are reachable through a `ref`. Release builds embed
 every page, so components load offline. On web, the module is an ordinary React component.
 
+<p align="center">
+	<img src="https://raw.githubusercontent.com/valeriobelli/react-native-use-dom/main/docs/assets/native-bridge.gif" width="260" alt="Calling a DOM component: native actions, a ref reset, and a prop update" />
+	&nbsp;&nbsp;&nbsp;
+	<img src="https://raw.githubusercontent.com/valeriobelli/react-native-use-dom/main/docs/assets/fast-refresh.gif" width="260" alt="Fast Refresh updates a DOM component in place and keeps its state" />
+</p>
+
 - Works in bare React Native apps and in Expo development builds.
 - New Architecture, React Native 0.81 or newer, iOS 15.1+, Android API 24+.
 - Fast Refresh for DOM components, stylesheets, and a `public` folder for images and fonts.
