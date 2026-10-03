@@ -19,7 +19,7 @@ test('the shared app uses the workspace library rather than a second registry co
 	expect(manifest.peerDependencies['react-native-use-dom']).toBe('workspace:*')
 })
 
-test.each(['bare-0.87', 'expo'])('the %s example keeps the shared public assets', (example) => {
+test.each(['bare-0.87', 'expo-57'])('the %s example keeps the shared public assets', (example) => {
 	const source = readFileSync(path.join(sharedFolder, 'public/atom.svg'), 'utf8')
 	const appCopy = readFileSync(path.join(root, 'examples', example, 'public/atom.svg'), 'utf8')
 

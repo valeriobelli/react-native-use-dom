@@ -6,11 +6,11 @@
 		"orientation": "portrait",
 		"icon": "./assets/icon.png",
 		"ios": {
-			"bundleIdentifier": "com.reactnativeusedomexample",
+			"bundleIdentifier": "dev.reactnativeusedom.expo57",
 			"supportsTablet": true
 		},
 		"android": {
-			"package": "com.reactnativeusedomexample",
+			"package": "dev.reactnativeusedom.expo57",
 			"adaptiveIcon": {
 				"backgroundColor": "#E6F4FE",
 				"foregroundImage": "./assets/android-icon-foreground.png",
