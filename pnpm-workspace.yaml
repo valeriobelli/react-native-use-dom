@@ -1,6 +1,7 @@
 packages:
   - packages/*
   - examples/*
+  - e2e/*
 
 # Browser-data packages publish almost daily, so an unpinned install trips the workspace's
 # minimum-release-age policy on every refresh. Pinned to the newest builds that clear it.

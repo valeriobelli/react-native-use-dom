@@ -44,9 +44,9 @@ export default defineConfig({
 			},
 		},
 		{
-			// App code defaults-exports its screens, and `'use dom'` modules must default-export their
+			// App code default-exports its screens, and `'use dom'` modules must default-export their
 			// component — the rule guards library source only.
-			files: ['examples/**/*.{ts,tsx}', 'packages/react-native-use-dom/src/__tests__/types/**'],
+			files: ['{examples,e2e}/**/*.{ts,tsx}', 'packages/react-native-use-dom/src/__tests__/types/**'],
 			rules: {
 				'import/no-default-export': 'off',
 			},

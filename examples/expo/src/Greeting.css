@@ -1,7 +1,0 @@
-/* The button is the whole page, so that a tap anywhere on the component presses it. */
-.greeting {
-	position: fixed;
-	inset: 0;
-	width: 100%;
-	font: 16px system-ui;
-}
