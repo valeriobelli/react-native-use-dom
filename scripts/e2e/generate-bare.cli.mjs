@@ -23,7 +23,7 @@ try {
 		throw new Error(`unknown option ${unknown.join(' ')}; the only option is --no-pods`)
 	}
 
-	const installPods = process.platform === 'darwin' && flags.indexOf('--no-pods') === -1
+	const installPods = process.platform === 'darwin' && flags.filter((argument) => argument === '--no-pods').length === 0
 
 	const { cells } =
 		/** @type {{ cells: import('./matrix.mjs').MatrixCell[] }} */
