@@ -1,5 +1,11 @@
 # react-native-use-dom
 
+## 0.0.2
+
+### Patch Changes
+
+- [#37](https://github.com/valeriobelli/react-native-use-dom/pull/37) [`7e8a0e8`](https://github.com/valeriobelli/react-native-use-dom/commit/7e8a0e8320ce3f5346c242ce4db70c80debaa5ec) Thanks [@valeriobelli](https://github.com/valeriobelli)! - Fix release builds of Expo apps in a monorepo failing with "outside the project and its watch folders" for a DOM component in a workspace package. DOM components under Metro's server root are now allowed.
+
 ## 0.0.1
 
 ### Patch Changes
