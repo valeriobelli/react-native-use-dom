@@ -47,20 +47,34 @@ each example app on a simulator or emulator. They cover the first render, native
 blocked navigation, scrolling and Fast Refresh, and compare screenshots of the DOM components with the baselines in
 `__baselines__`.
 
-They run against a debug build that loads from the example's own dev server, on port 8081, so run one example at a
-time: start its dev server and install its app as its README says. Then, from the repository root:
+Each example app has its own directory, `.argent/flows/<app>`, named after the example (`bare-0.87`, `expo-57`).
+It splits the flows by the build they need. Every flow is a small wrapper, `<slug>-<scenario>.yaml`, that launches
+the app and runs the scenario in `.argent/flows/shared`.
+
+| Directory                      | Scenarios                                                                     | Build                               |
+| ------------------------------ | ----------------------------------------------------------------------------- | ----------------------------------- |
+| `.argent/flows/<app>/release/` | first-render, prop-change, refs, scroll, native-action and navigation-blocked | A Release build, with no dev server |
+| `.argent/flows/<app>/dev/`     | fast-refresh                                                                  | A Debug build, with the dev server  |
+
+The Debug build loads from the example's own dev server, on port 8081, so run one example at a time: start its
+dev server and install its app as its README says. Then, from the repository root, run one directory:
 
 ```sh
-pnpm e2e:bare --device <simulator udid or emulator serial>
-pnpm e2e:expo --device <simulator udid or emulator serial>
+pnpm e2e bare-0.87 release --device <simulator udid or emulator serial>
+pnpm e2e expo-57 dev --device <simulator udid or emulator serial>
 ```
+
+`pnpm e2e <app> <release|dev>` runs `argent flow run .argent/flows/<app>/<release|dev>` and passes `--device` and
+`--update-baselines` on to it. `pnpm exec argent flow list` shows every wrapper.
 
 On Android, run `adb reverse tcp:8081 tcp:8081` first. The Fast Refresh flow edits and restores
 `e2e/example-app/src/Greeting.tsx`, the greeting every example renders, so don't edit it while the flows run.
 
-The baselines are keyed by platform and screen size: they were taken on an iPhone 16 Pro (iOS 18) and a
-1080x2400 Android emulator. On another device, or after changing what a DOM component looks like, write new ones
-with `--update-baselines`, check them, and run the flows again to compare.
+The baselines live next to the wrappers, in `.argent/flows/<app>/<release|dev>/__baselines__`, so every app and
+every kind of build has its own. They are keyed by platform and screen size: they were taken on an iPhone 16 Pro
+(iOS 18) and a 1080x2400 Android emulator, from a Debug build. On another device, with a Release build, or after
+changing what a DOM component looks like, write new ones with `--update-baselines`, check them, and run the flows
+again to compare.
 
 On iOS a flow can't find text inside a WebView, so the flows tap the native views that hold the DOM components
 and check the results in native text and screenshots. On Android they also check the text of the pages.
