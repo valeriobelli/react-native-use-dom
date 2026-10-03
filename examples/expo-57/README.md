@@ -45,10 +45,10 @@ pnpm install
 pnpm build
 ```
 
-Then, in `examples/expo`, generate the native projects:
+Then, in `examples/expo-57`, generate the native projects:
 
 ```sh
-cd examples/expo
+cd examples/expo-57
 pnpm exec expo prebuild --no-install
 ```
 
@@ -58,7 +58,7 @@ Start the dev server and leave it running:
 pnpm start
 ```
 
-In a second terminal in `examples/expo`, build and launch the app.
+In a second terminal in `examples/expo-57`, build and launch the app.
 
 ### iOS
 
