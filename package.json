@@ -11,7 +11,6 @@
 		"test": "jest",
 		"e2e:bare": "argent flow run .argent/flows/bare",
 		"e2e:expo": "argent flow run .argent/flows/expo",
-		"e2e:matrix": "node scripts/e2e/matrix.cli.mjs",
 		"docs:errors": "WRITE_ERRORS_DOC=1 jest packages/react-native-use-dom/src/docs",
 		"changeset": "changeset",
 		"release": "pnpm build && changeset publish"
