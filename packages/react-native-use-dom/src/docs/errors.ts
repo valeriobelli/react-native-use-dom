@@ -58,9 +58,9 @@ export const ERROR_DOCS: { readonly [Code in DomErrorCode]: ErrorDoc } = {
 		why: 'Only a top-level function prop becomes a native action that the DOM component can call. A function nested in another value has no way to be called from the WebView.',
 	},
 	[DomErrorCode.UnknownDomComponent]: {
-		fix: 'Render the component through its native proxy, not by opening the page URL. If the component lives outside the project, add its folder to `watchFolders` in `metro.config.js`.',
+		fix: 'Render the component through its native proxy, not by opening the page URL. If the component lives outside the project and the Metro server root, add its folder to `watchFolders` in `metro.config.js`.',
 		what: 'The dev server refuses to build a DOM component page.',
-		why: 'The dev server builds a page only for a component the native view names, and only from a file Metro serves: one in the project or its `watchFolders`. That keeps the dev server from bundling arbitrary files on request.',
+		why: 'The dev server builds a page only for a component the native view names, and only from a file Metro serves: one in the project, its `watchFolders` or the Metro server root (Expo sets it to the workspace root in a monorepo). That keeps the dev server from bundling arbitrary files on request.',
 	},
 	[DomErrorCode.ReactNativeImportInDom]: {
 		fix: 'Use DOM elements and web libraries inside the DOM component. For a native capability, pass a function prop from the native side and call it from the DOM component.',

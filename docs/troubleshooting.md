@@ -48,6 +48,7 @@ Errors the library raises carry a stable code, starting `ERR_USE_DOM_`. Look it 
 ## The dev server
 
 - **`ERR_USE_DOM_UNKNOWN_COMPONENT`.** The dev server builds pages only for files it serves. A DOM component
-  outside the project, as in a monorepo, needs its folder in `watchFolders`.
+  outside the project needs its folder in `watchFolders`, unless Metro's server root already contains it: Expo
+  sets the server root to the workspace root, so a workspace package in an Expo monorepo needs nothing.
 - **The device can't load the page.** It loads from the dev server like the app's bundle. Check that the device
   reaches Metro, and on Android over USB run `adb reverse tcp:8081 tcp:8081`.
