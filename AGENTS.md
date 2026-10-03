@@ -34,3 +34,9 @@ zizmor .github
   `src/docs/errors.ts` and run `pnpm docs:errors`.
 - The docs describe behaviour and contracts, not how the library implements them.
 - A DOM bundle can never import `react-native`: keep `src/web` free of it.
+
+## Task issues
+
+Issues that track work follow the structure of [`.github/ISSUE_TEMPLATE/task.md`](./.github/ISSUE_TEMPLATE/task.md).
+Never remove or rename its sections: `scripts/issue-template.test.mjs` compares them with the issue form
+in `task.yml`, so the two stay interchangeable.

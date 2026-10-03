@@ -1,0 +1,97 @@
+name: Task
+description: One self-contained unit of work that an agent or a contributor can pick up without extra context.
+title: ''
+labels: [enhancement]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One or two sentences - what exists when this is done.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why this task exists. Link the parent issue and the issues this one is blocked by.
+    validations:
+      required: false
+  - type: textarea
+    id: read-before-starting
+    attributes:
+      label: Read before starting
+      description: Files to read first, with their paths.
+    validations:
+      required: false
+  - type: textarea
+    id: decisions-already-made
+    attributes:
+      label: Decisions already made (do not change them)
+      description: The decisions this task relies on, each with its source. If one looks wrong, comment on the issue and stop.
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      description: One concrete action per step - exact paths, exact commands.
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What a reader might think belongs here, but does not.
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Checkable with a command, a file, or a visible behaviour.
+    validations:
+      required: true
+  - type: textarea
+    id: verify-before-opening-the-pr
+    attributes:
+      label: Verify before opening the PR
+      description: Run these from the repository root. All must pass, with zero warnings.
+      value: |
+        ```sh
+        pnpm lint
+        pnpm format:check   # `pnpm format` fixes formatting
+        pnpm typecheck
+        pnpm test
+        zizmor .github
+        ```
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: Rules
+      value: |
+        - Never rely on memory for external tools, versions or APIs. Open the sources linked in the issue
+          (or the official docs) and cite them in the PR description. If a source does not settle a
+          question, comment on the issue and stop.
+        - Do not change the decisions listed in the issue. If one looks wrong, comment on the issue and stop.
+        - Commits follow Conventional Commits, with a lower-case subject and body lines of at most 100
+          characters.
+        - Needs a booted iOS simulator / Android emulator: <yes/no>
+    validations:
+      required: false
+  - type: textarea
+    id: open-questions
+    attributes:
+      label: Open questions
+      description: What to check before or while working, and what to do with each possible answer.
+    validations:
+      required: false
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: Links that back the external facts this task depends on.
+    validations:
+      required: false
