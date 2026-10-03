@@ -32,14 +32,14 @@ pnpm install
 pnpm build
 ```
 
-Then, in `examples/bare`, start Metro and leave it running:
+Then, in `examples/bare-0.87`, start Metro and leave it running:
 
 ```sh
-cd examples/bare
+cd examples/bare-0.87
 pnpm start
 ```
 
-In a second terminal in `examples/bare`, build and launch the app.
+In a second terminal in `examples/bare-0.87`, build and launch the app.
 
 ### iOS
 

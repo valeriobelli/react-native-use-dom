@@ -10,7 +10,7 @@ This is the source of `react-native-use-dom`. To use the library in an app, read
   both sides: errors, protocol, serialization).
 - `packages/react-native-use-dom/ios` and `android`: the Nitro hybrid view, with `nitrogen/generated` produced by
   Nitrogen from `src/native/specs`.
-- `examples/bare` and `examples/expo`: the same DOM components in both apps.
+- `examples/bare-0.87` and `examples/expo`: the same DOM components in both apps.
 - `docs`: the user guide. `docs/errors.md` is generated.
 
 ## Before committing

@@ -275,7 +275,7 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
-  examples/bare:
+  examples/bare-0.87:
     dependencies:
       '@react-native-use-dom/example-app':
         specifier: workspace:*

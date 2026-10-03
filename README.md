@@ -22,7 +22,7 @@ exposes are reachable through a `ref`. Release builds embed every page, so compo
 | Path                                                               | What it holds                                                       |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------- |
 | [`packages/react-native-use-dom`](./packages/react-native-use-dom) | the library: Babel plugin, Metro integration, runtimes, native view |
-| [`examples/bare`](./examples/bare)                                 | a React Native Community CLI app, without Expo                      |
+| [`examples/bare-0.87`](./examples/bare-0.87)                       | a React Native Community CLI app, without Expo                      |
 | [`examples/expo`](./examples/expo)                                 | an Expo app with a development build                                |
 | [`docs`](./docs)                                                   | the user guide                                                      |
 
@@ -53,7 +53,7 @@ Run the example apps on a simulator or device, which needs the
 [React Native environment](https://reactnative.dev/docs/set-up-your-environment) for each platform. Each README
 has the steps, for development and release builds:
 
-- [Bare React Native](./examples/bare/README.md#run-it)
+- [Bare React Native](./examples/bare-0.87/README.md#run-it)
 - [Expo](./examples/expo/README.md#run-it)
 
 The examples use the library from the workspace, through its build: run `pnpm build` again after changing it.

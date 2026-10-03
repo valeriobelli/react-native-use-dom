@@ -1696,7 +1696,7 @@ PODS:
     - React-utils (= 0.87.1)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.87.1)
-  - ReactNativeUseDom (0.0.0):
+  - ReactNativeUseDom (0.0.1):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -2081,7 +2081,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 2c05459d2f48d9b20108f05ccd179324b5af1ba8
   ReactCommon: 749169e12aa3461a3df3656a00e48dbe0456b2d6
   ReactNativeDependencies: 94c922c39e0e6150ee9ad05e2ca1946e0ef55783
-  ReactNativeUseDom: 232da9f9d85d38e7f6cd839b14733075c7fe56c3
+  ReactNativeUseDom: ed32857e0763cdfa110d98615338338701e1a7ef
   SocketRocket: 37aec555668fb852ec12e3c0de59a86ca58f0871
   Yoga: d1c536142c5ff8ec8cd856ab2a7c227a1d875c8e
 
