@@ -113,6 +113,16 @@ describe('createWebConfig', () => {
 		})
 	})
 
+	it("allows components under Metro's server root that is not a watch folder", () => {
+		const workspaceRoot = path.resolve(PACKAGE_ROOT, '..', '..')
+		const project = mergeConfig(projectConfig(), { server: { unstable_serverRoot: workspaceRoot } })
+
+		const web = createWebConfig(project, hostMetro())
+
+		expect(readWebTransformerSettings().allowedRoots).toEqual([FIXTURE_ROOT, EXTRA_WATCH_FOLDER, workspaceRoot])
+		expect(web.watchFolders).toEqual([FIXTURE_ROOT, EXTRA_WATCH_FOLDER, workspaceRoot, PACKAGE_ROOT])
+	})
+
 	it('resolves browser fields and never native platform files', async () => {
 		const paths = await resolvedPaths(createWebConfig(projectConfig(), hostMetro()), 'index.js')
 

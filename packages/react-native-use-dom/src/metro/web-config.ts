@@ -25,7 +25,7 @@ export interface WebTransformerSettings {
 	upstreamTransformerPath: string
 	/** Absolute path of the transform worker the project uses for its native bundle. */
 	upstreamWorkerPath: string
-	/** Directories a DOM component may be built from: the project root and its watch folders. */
+	/** Directories a DOM component may be built from: the project root, its watch folders and Metro's server root. */
 	allowedRoots: readonly string[]
 }
 
@@ -107,7 +107,7 @@ export function createWebConfig(config: ConfigT, metro: Metro): ConfigT {
 			babelTransformerPath: WEB_TRANSFORMER_PATH,
 		},
 		transformerPath: WEB_WORKER_PATH,
-		watchFolders: unique([...config.watchFolders, PACKAGE_ROOT]),
+		watchFolders: unique([...config.watchFolders, ...serverRoot(config), PACKAGE_ROOT]),
 	}
 }
 
@@ -171,9 +171,19 @@ function unique<T>(values: readonly T[]): T[] {
 	return [...new Set(values)]
 }
 
+/**
+ * Metro's server root, which serves every file under it whether or not it is a watch folder. Expo
+ * sets it to the workspace root, and while it exports it cuts the watch folders down to the project.
+ */
+function serverRoot(config: ConfigT): string[] {
+	const root = config.server.unstable_serverRoot
+
+	return root === null || root === undefined ? [] : [root]
+}
+
 function webTransformerSettings(config: ConfigT, metro: Metro): WebTransformerSettings {
 	return {
-		allowedRoots: unique([config.projectRoot, ...config.watchFolders]),
+		allowedRoots: unique([config.projectRoot, ...config.watchFolders, ...serverRoot(config)]),
 		upstreamTransformerPath: resolveUpstreamTransformer(config),
 		upstreamWorkerPath: metro.resolve(config.transformerPath),
 	}
