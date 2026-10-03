@@ -1,0 +1,31 @@
+name: Publish wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - wiki/**
+      - .github/workflows/publish-wiki.yml
+
+permissions: {}
+
+concurrency:
+  group: publish-wiki
+  cancel-in-progress: true
+
+jobs:
+  publish-wiki:
+    name: Publish wiki
+    runs-on: ubuntu-latest
+    permissions:
+      # The action pushes the mirrored pages to the repository's wiki Git storage.
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The wiki is disabled until a maintainer enables it and creates one page in its editor,
+      # which is what creates the wiki Git storage this action pushes to.
+      - uses: Andrew-Chen-Wang/github-wiki-action@1bbb4280446f9630e8e21a18012cbacf3b0f992e # v5.0.6
+        with:
+          disable-empty-commits: true

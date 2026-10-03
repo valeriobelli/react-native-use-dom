@@ -65,6 +65,17 @@ with `--update-baselines`, check them, and run the flows again to compare.
 On iOS a flow can't find text inside a WebView, so the flows tap the native views that hold the DOM components
 and check the results in native text and screenshots. On Android they also check the text of the pages.
 
+## Decisions (wiki)
+
+The repository's [wiki](https://github.com/valeriobelli/react-native-use-dom/wiki) holds the library's product and
+architecture decisions, one page per decision, and the [`wiki` folder](./wiki) in the repository is its source of
+truth: the [Publish wiki workflow](./.github/workflows/publish-wiki.yml) mirrors it to the wiki on every push to
+`main` that changes it. One direction only — edits made in the wiki's editor are overwritten by the next publish.
+
+Write a decision page when the change is about what the library is or guarantees, and update
+[docs](./docs/README.md) when it changes user-facing behaviour. Pages reach the wiki through pull requests, like
+any other change.
+
 ## Releasing
 
 Releases are made with [Changesets](https://changesets.dev) and published from GitHub Actions with
