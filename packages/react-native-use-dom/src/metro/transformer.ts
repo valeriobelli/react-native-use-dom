@@ -83,7 +83,7 @@ function synthesizeEntry(args: BabelTransformerArgs, settings: WebTransformerSet
 
 /**
  * The component path arrives in a URL anyone who can reach the dev server can craft, so it is
- * only honoured for files Metro would serve anyway: the project and its watch folders.
+ * only honoured for files Metro would serve anyway: the project, its watch folders and its server root.
  */
 function readRequestedComponent(args: BabelTransformerArgs, settings: WebTransformerSettings): string {
 	const requested = args.options.customTransformOptions?.[DOM_TRANSFORM_OPTION]
@@ -103,7 +103,7 @@ function readRequestedComponent(args: BabelTransformerArgs, settings: WebTransfo
 	if (!settings.allowedRoots.some((root) => isInside(root, componentPath))) {
 		throw new DomError(
 			DomErrorCode.UnknownDomComponent,
-			`${componentPath} was requested as a DOM component, but it is outside the project and its watch folders.`,
+			`${componentPath} was requested as a DOM component, but it is outside the project, its watch folders and Metro's server root.`,
 			{
 				fix: 'Only files Metro serves can be DOM components. Move the component into the project, or add its directory to `watchFolders` in metro.config.js.',
 			},

@@ -112,9 +112,9 @@ Every error `react-native-use-dom` throws is a `DomError` with a stable `code`, 
 
 **What happens.** The dev server refuses to build a DOM component page.
 
-**Why.** The dev server builds a page only for a component the native view names, and only from a file Metro serves: one in the project or its `watchFolders`. That keeps the dev server from bundling arbitrary files on request.
+**Why.** The dev server builds a page only for a component the native view names, and only from a file Metro serves: one in the project, its `watchFolders` or the Metro server root (Expo sets it to the workspace root in a monorepo). That keeps the dev server from bundling arbitrary files on request.
 
-**Fix.** Render the component through its native proxy, not by opening the page URL. If the component lives outside the project, add its folder to `watchFolders` in `metro.config.js`.
+**Fix.** Render the component through its native proxy, not by opening the page URL. If the component lives outside the project and the Metro server root, add its folder to `watchFolders` in `metro.config.js`.
 
 ## `ERR_USE_DOM_UNKNOWN_HANDLE_METHOD`
 
