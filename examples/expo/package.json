@@ -9,6 +9,7 @@
 		"start": "expo start"
 	},
 	"dependencies": {
+		"@react-native-use-dom/example-app": "workspace:*",
 		"expo": "~57.0.26",
 		"react": "19.2.3",
 		"react-dom": "19.2.3",

@@ -10,7 +10,9 @@ DOM components with `react-native-use-dom`. It shows:
   stylesheet it imports, with an icon from [`public`](./public);
 - a component that fills the space the app gives it and scrolls its own content.
 
-The components are in [`src`](./src), and [`App.tsx`](./App.tsx) renders them. [`use-dom-env.d.ts`](./use-dom-env.d.ts)
+The components and screens are shared by the examples in [`e2e/example-app`](../../e2e/example-app).
+[`index.js`](./index.js) registers its `App`. The package's
+[`use-dom-env.d.ts`](../../e2e/example-app/use-dom-env.d.ts)
 references `react-native-use-dom/css`, which lets TypeScript accept the stylesheet import. A page loads the files of
 `public` by URLs relative to it, from the dev server in development and from the app in a release build.
 

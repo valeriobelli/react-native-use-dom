@@ -1,12 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { Button, Linking, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import type { DomRefHandle } from 'react-native-use-dom'
 
-import type { GreetingHandle } from './src/Greeting'
-import Greeting from './src/Greeting'
-import Lines from './src/Lines'
-import Note from './src/Note'
+import type { GreetingHandle } from './Greeting'
+import Greeting from './Greeting'
+import Lines from './Lines'
+import Note from './Note'
 
 const greetingDom = { backgroundColor: '#f2f2f7' }
 const NAMES = ['React Native', 'Metro'] as const
@@ -56,37 +55,34 @@ function useDemo() {
 	return { first, name, noteDom, onClick, rename, reset, status }
 }
 
-export default function App() {
+export default function Demo() {
 	const { first, status, name, onClick, noteDom, reset, rename } = useDemo()
 	const handleReset = useCallback(() => {
 		void reset()
 	}, [reset])
 
 	return (
-		<SafeAreaProvider>
-			<SafeAreaView style={styles.screen}>
-				<Text style={styles.title}>react-native-use-dom</Text>
-				<View testID="note">
-					<Note text="This note is a DOM component, sized to its text." dom={noteDom} />
-				</View>
-				<View testID="first-greeting" style={styles.greeting}>
-					<Greeting ref={first} name={name} onClick={onClick.first} dom={greetingDom} />
-				</View>
-				<View testID="second-greeting" style={styles.greeting}>
-					<Greeting name="a second instance" onClick={onClick.second} dom={greetingDom} />
-				</View>
-				<Text testID="status" style={styles.status}>
-					{status}
-				</Text>
-				<View style={styles.buttons}>
-					<Button title="Reset the first" onPress={handleReset} />
-					<Button title={`Rename to ${name === NAMES[0] ? NAMES[1] : NAMES[0]}`} onPress={rename} />
-				</View>
-				<View testID="lines" style={styles.lines}>
-					<Lines count={40} />
-				</View>
-			</SafeAreaView>
-		</SafeAreaProvider>
+		<View style={styles.screen}>
+			<View testID="note">
+				<Note text="This note is a DOM component, sized to its text." dom={noteDom} />
+			</View>
+			<View testID="first-greeting" style={styles.greeting}>
+				<Greeting ref={first} name={name} onClick={onClick.first} dom={greetingDom} />
+			</View>
+			<View testID="second-greeting" style={styles.greeting}>
+				<Greeting name="a second instance" onClick={onClick.second} dom={greetingDom} />
+			</View>
+			<Text testID="status" style={styles.status}>
+				{status}
+			</Text>
+			<View style={styles.buttons}>
+				<Button title="Reset the first" onPress={handleReset} />
+				<Button title={`Rename to ${name === NAMES[0] ? NAMES[1] : NAMES[0]}`} onPress={rename} />
+			</View>
+			<View testID="lines" style={styles.lines}>
+				<Lines count={40} />
+			</View>
+		</View>
 	)
 }
 
@@ -96,5 +92,4 @@ const styles = StyleSheet.create({
 	lines: { flex: 1 },
 	screen: { flex: 1 },
 	status: { padding: 16 },
-	title: { fontSize: 20, fontWeight: '600', padding: 16 },
 })

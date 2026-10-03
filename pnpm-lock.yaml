@@ -247,8 +247,39 @@ importers:
         specifier: ^2.9.1
         version: 2.9.1
 
+  e2e/example-app:
+    dependencies:
+      '@babel/runtime':
+        specifier: 7.29.7
+        version: 7.29.7
+      react:
+        specifier: '*'
+        version: 19.3.0
+      react-native:
+        specifier: '*'
+        version: 0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@7.0.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
+      react-native-safe-area-context:
+        specifier: '*'
+        version: 5.10.1(react-native@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@7.0.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+      react-native-use-dom:
+        specifier: workspace:*
+        version: link:../../packages/react-native-use-dom
+    devDependencies:
+      '@react-native/typescript-config':
+        specifier: 0.87.1
+        version: 0.87.1
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
   examples/bare:
     dependencies:
+      '@react-native-use-dom/example-app':
+        specifier: workspace:*
+        version: link:../../e2e/example-app
       react:
         specifier: 19.3.0
         version: 19.3.0
@@ -310,6 +341,9 @@ importers:
 
   examples/expo:
     dependencies:
+      '@react-native-use-dom/example-app':
+        specifier: workspace:*
+        version: link:../../e2e/example-app
       expo:
         specifier: ~57.0.26
         version: 57.0.26(@babel/core@7.29.7(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@7.0.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1)(typescript@7.0.2)

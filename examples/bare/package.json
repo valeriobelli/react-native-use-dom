@@ -8,6 +8,7 @@
 		"start": "react-native start"
 	},
 	"dependencies": {
+		"@react-native-use-dom/example-app": "workspace:*",
 		"react": "19.3.0",
 		"react-dom": "19.3.0",
 		"react-native": "0.87.1",

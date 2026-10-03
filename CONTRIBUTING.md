@@ -56,7 +56,7 @@ pnpm e2e:expo --device <simulator udid or emulator serial>
 ```
 
 On Android, run `adb reverse tcp:8081 tcp:8081` first. The Fast Refresh flow edits and restores
-`src/Greeting.tsx` in both examples, so don't edit it while the flows run.
+`e2e/example-app/src/Greeting.tsx`, the greeting every example renders, so don't edit it while the flows run.
 
 The baselines are keyed by platform and screen size: they were taken on an iPhone 16 Pro (iOS 18) and a
 1080x2400 Android emulator. On another device, or after changing what a DOM component looks like, write new ones

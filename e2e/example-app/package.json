@@ -1,0 +1,24 @@
+{
+	"name": "@react-native-use-dom/example-app",
+	"version": "0.0.0",
+	"private": true,
+	"main": "index.tsx",
+	"types": "index.tsx",
+	"dependencies": {
+		"@babel/runtime": "7.29.7"
+	},
+	"devDependencies": {
+		"@react-native/typescript-config": "0.87.1",
+		"@types/react": "19.3.0",
+		"typescript": "7.0.2"
+	},
+	"peerDependencies": {
+		"react": "*",
+		"react-native": "*",
+		"react-native-safe-area-context": "*",
+		"react-native-use-dom": "workspace:*"
+	},
+	"engines": {
+		"node": ">=22.12.0"
+	}
+}
