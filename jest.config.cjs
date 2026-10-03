@@ -4,6 +4,7 @@ module.exports = {
 	projects: [
 		'<rootDir>/packages/react-native-use-dom/jest.node.cjs',
 		'<rootDir>/packages/react-native-use-dom/jest.jsdom.cjs',
+		'<rootDir>/jest.repo.cjs',
 	],
 	rootDir: '.',
 }
