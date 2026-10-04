@@ -65,6 +65,15 @@ jobs:
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID"
 
+      - name: Diagnose the Argent tools server
+        continue-on-error: true
+        run: |
+          which -a node
+          node --version
+          (ARGENT_PORT=0 node node_modules/@swmansion/argent/dist/tool-server.cjs start > tool-server-direct.log 2>&1 &)
+          sleep 40
+          cat tool-server-direct.log
+          ps aux | grep -i -E "node|simulator" | grep -v grep | cut -c1-200
       - name: Start the Argent tools server
         # The flow runner spawns the server itself, but gives it only 15 seconds to answer, which a cold
         # macOS runner can exceed. Starting it first, and waiting for it, takes that out of the flows.
@@ -122,4 +131,5 @@ jobs:
             xcodebuild-release.log
             xcodebuild-debug.log
             ~/.argent/tool-server.log
+            tool-server-direct.log
           if-no-files-found: warn
