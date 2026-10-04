@@ -113,8 +113,8 @@ test('the template manifest becomes the example manifest', () => {
 			react: '19.2.3',
 			'react-dom': '19.2.3',
 			'react-native': '0.86.3',
-			'react-native-nitro-modules': '0.37.1',
-			'react-native-safe-area-context': '^5.10.1',
+			'react-native-nitro-modules': 'catalog:',
+			'react-native-safe-area-context': 'catalog:',
 			'react-native-use-dom': 'workspace:*',
 		},
 		devDependencies: {

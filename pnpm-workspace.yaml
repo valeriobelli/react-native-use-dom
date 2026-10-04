@@ -3,6 +3,12 @@ packages:
   - examples/*
   - e2e/*
 
+# The versions the library and the examples share, so that a bump is one edit. The bare examples
+# reference them from `package.json` as `catalog:`, and the generator writes them that way.
+catalog:
+  react-native-nitro-modules: 0.37.1
+  react-native-safe-area-context: ^5.10.1
+
 # Browser-data packages publish almost daily, so an unpinned install trips the workspace's
 # minimum-release-age policy on every refresh. Pinned to the newest builds that clear it.
 overrides:

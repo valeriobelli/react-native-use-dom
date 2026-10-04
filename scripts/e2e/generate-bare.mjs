@@ -21,14 +21,11 @@ import {
 	TSCONFIG,
 } from './generate-bare.files.mjs'
 
-/** The version of `react-native-nitro-modules` every example pins, which the library requires. */
-const NITRO_MODULES_VERSION = '0.37.1'
-
 /**
- * The version range of `react-native-safe-area-context` the examples use. Its 5.x supports React
- * Native 0.75 and later.
+ * The version of the packages every example shares, which `pnpm-workspace.yaml` holds in its default
+ * catalog. The generator writes the reference, never the version.
  */
-const SAFE_AREA_CONTEXT_VERSION = '^5.10.1'
+const CATALOG = 'catalog:'
 
 /**
  * The bare cells the generator leaves alone until their own issue adds them: it neither creates
@@ -134,8 +131,8 @@ export function wireManifest(template, cell) {
 			[EXAMPLE_APP]: 'workspace:*',
 			'react-dom': dependencies.react,
 			'react-native': cell.reactNative,
-			'react-native-nitro-modules': NITRO_MODULES_VERSION,
-			'react-native-safe-area-context': SAFE_AREA_CONTEXT_VERSION,
+			'react-native-nitro-modules': CATALOG,
+			'react-native-safe-area-context': CATALOG,
 			'react-native-use-dom': 'workspace:*',
 		}),
 		devDependencies: sortKeys({
