@@ -72,6 +72,9 @@ jobs:
             pnpm exec argent server status
             find /tmp /home/runner/.android /home/runner/.config -path '*avd/running*' -name '*.ini' -exec sh -c 'echo "== $1"; cat "$1"' _ {} \; 2>/dev/null || true
             ps -eo args | grep qemu-system | grep -v grep | cut -c1-600 || true
+            tr '\0' '\n' < /proc/$(pgrep -f qemu-system | head -1)/environ | grep -E '^(XDG|ANDROID|HOME|USER|TMPDIR)' || true
+            timeout 60 find / -xdev -name 'pid_*.ini' -not -path '/proc/*' 2>/dev/null || true
+            ls -laR /tmp/xdg-runtime 2>&1 | head -30 || true
             adb install -r examples/bare-0.87/android/app/build/outputs/apk/release/app-release.apk
             pnpm e2e bare-0.87 release --device emulator-5554 --output e2e-output || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
             nohup pnpm --dir examples/bare-0.87 start > metro.log 2>&1 &
