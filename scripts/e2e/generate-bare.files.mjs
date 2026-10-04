@@ -11,7 +11,15 @@ export const EXAMPLE_APP = '@react-native-use-dom/example-app'
  * What the template brings for its own `App.tsx`, tests and tooling, which the examples don't
  * use: the root of the repository lints, formats and tests everything.
  */
-export const TEMPLATE_PATHS = ['.eslintrc.js', '.prettierrc.js', 'App.tsx', 'Gemfile', '__tests__', 'jest.config.js']
+export const TEMPLATE_PATHS = [
+	'.bundle',
+	'.eslintrc.js',
+	'.prettierrc.js',
+	'App.tsx',
+	'Gemfile',
+	'__tests__',
+	'jest.config.js',
+]
 
 /** The scripts of the template's `package.json` that run its tests and tooling. */
 export const TEMPLATE_SCRIPTS = new Set(['lint', 'test'])
