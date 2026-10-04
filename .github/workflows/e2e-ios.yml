@@ -3,6 +3,11 @@ name: E2E iOS
 on:
   workflow_call:
   workflow_dispatch:
+    inputs:
+      update-baselines:
+        description: Write new screenshot baselines on this runner and upload them, instead of comparing
+        type: boolean
+        default: false
   # Temporary: runs this workflow on the pull request that adds it. Remove it when every pull request
   # runs the end-to-end tests.
   pull_request:
@@ -83,7 +88,9 @@ jobs:
       - name: Install the Release build
         run: xcrun simctl install "$UDID" examples/bare-0.87/build/Build/Products/Release-iphonesimulator/BareExample.app
       - name: Run the release flows
-        run: pnpm e2e bare-0.87 release --device "$UDID" --output e2e-output
+        env:
+          UPDATE_BASELINES: ${{ inputs.update-baselines && '--update-baselines' || '' }}
+        run: pnpm e2e bare-0.87 release --device "$UDID" --output e2e-output $UPDATE_BASELINES
 
       - name: Build Debug
         working-directory: examples/bare-0.87
@@ -110,7 +117,16 @@ jobs:
       - name: Install the Debug build
         run: xcrun simctl install "$UDID" examples/bare-0.87/build/Build/Products/Debug-iphonesimulator/BareExample.app
       - name: Run the dev flows
-        run: pnpm e2e bare-0.87 dev --device "$UDID" --output e2e-output
+        env:
+          UPDATE_BASELINES: ${{ inputs.update-baselines && '--update-baselines' || '' }}
+        run: pnpm e2e bare-0.87 dev --device "$UDID" --output e2e-output $UPDATE_BASELINES
+
+      - name: Upload the new baselines
+        if: inputs.update-baselines && !cancelled()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-ios-bare-0.87-baselines
+          path: .argent/flows/bare-0.87/*/__baselines__
 
       - name: Upload the logs and flow output
         if: failure()
