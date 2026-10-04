@@ -73,7 +73,7 @@ jobs:
             find /tmp /home/runner/.android /home/runner/.config -path '*avd/running*' -name '*.ini' -exec sh -c 'echo "== $1"; cat "$1"' _ {} \; 2>/dev/null || true
             ps -eo args | grep qemu-system | grep -v grep | cut -c1-600 || true
             adb install -r examples/bare-0.87/android/app/build/outputs/apk/release/app-release.apk
-            pnpm e2e bare-0.87 release --device emulator-5554 --output e2e-output
+            pnpm e2e bare-0.87 release --device emulator-5554 --output e2e-output || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
             nohup pnpm --dir examples/bare-0.87 start > metro.log 2>&1 &
             for i in $(seq 60); do curl -sf http://localhost:8081/status | grep -q running && break; sleep 2; done; curl -sf http://localhost:8081/status | grep -q running
             adb reverse tcp:8081 tcp:8081
@@ -88,6 +88,8 @@ jobs:
           path: |
             e2e-output
             logcat.txt
+            screen.png
+            ui.xml
             metro.log
             ~/.argent/tool-server.log
           if-no-files-found: warn
