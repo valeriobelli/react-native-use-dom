@@ -114,6 +114,9 @@ jobs:
           done
           echo "Metro did not answer on port 8081." >&2
           exit 1
+      - name: Warm up the bundle
+        # The first bundle takes longer than a flow waits for the app to render, so Metro builds it now.
+        run: curl -sf --max-time 600 -o /dev/null "http://localhost:8081/index.bundle?platform=ios&dev=true&minify=false"
       - name: Install the Debug build
         run: xcrun simctl install "$UDID" examples/bare-0.87/build/Build/Products/Debug-iphonesimulator/BareExample.app
       - name: Run the dev flows
