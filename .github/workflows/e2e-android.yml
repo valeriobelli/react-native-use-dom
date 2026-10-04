@@ -70,8 +70,8 @@ jobs:
             nohup adb logcat -v time > logcat.txt 2>&1 &
             pnpm exec argent server start --detach
             pnpm exec argent server status
-            find / -path '*avd/running*' -name '*.ini' -exec sh -c 'echo "== $1"; cat "$1"' _ {} \; 2>/dev/null
-            ps -eo args | grep qemu-system | grep -v grep | cut -c1-600
+            find /tmp /home/runner/.android /home/runner/.config -path '*avd/running*' -name '*.ini' -exec sh -c 'echo "== $1"; cat "$1"' _ {} \; 2>/dev/null || true
+            ps -eo args | grep qemu-system | grep -v grep | cut -c1-600 || true
             adb install -r examples/bare-0.87/android/app/build/outputs/apk/release/app-release.apk
             pnpm e2e bare-0.87 release --device emulator-5554 --output e2e-output
             nohup pnpm --dir examples/bare-0.87 start > metro.log 2>&1 &
