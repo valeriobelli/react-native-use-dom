@@ -1,0 +1,110 @@
+name: E2E iOS
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  # Temporary: runs this workflow on the pull request that adds it. Remove it when every pull request
+  # runs the end-to-end tests.
+  pull_request:
+    paths: ['.github/workflows/e2e-ios.yml']
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bare-0-87:
+    name: bare-0.87 on xcode-27
+    runs-on: xcode-27
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          cache: false
+          require-lockfile: true
+      - run: pnpm build
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+      - name: Install the pods
+        working-directory: examples/bare-0.87/ios
+        run: bundle exec pod install
+      - name: Print the Xcode version
+        run: xcodebuild -version
+
+      - name: Build Release
+        working-directory: examples/bare-0.87
+        run: |
+          xcodebuild \
+            -workspace ios/BareExample.xcworkspace \
+            -scheme BareExample \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            | tee "$GITHUB_WORKSPACE/xcodebuild-release.log"
+
+      - name: Create and boot the simulator
+        run: |
+          xcrun simctl list runtimes
+          RUNTIME=$(xcrun simctl list runtimes --json | jq -r '.runtimes[] | select(.platform == "iOS" and .version == "27.0" and .isAvailable) | .identifier' | head -n 1)
+          if [ -z "$RUNTIME" ]; then
+            echo "The iOS 27.0 runtime is not installed on this runner." >&2
+            exit 1
+          fi
+          UDID=$(xcrun simctl create e2e "iPhone 17" "$RUNTIME")
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID"
+
+      - name: Install the Release build
+        run: xcrun simctl install "$UDID" examples/bare-0.87/build/Build/Products/Release-iphonesimulator/BareExample.app
+      - name: Run the release flows
+        run: pnpm e2e bare-0.87 release --device "$UDID" --output e2e-output
+
+      - name: Build Debug
+        working-directory: examples/bare-0.87
+        run: |
+          xcodebuild \
+            -workspace ios/BareExample.xcworkspace \
+            -scheme BareExample \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            | tee "$GITHUB_WORKSPACE/xcodebuild-debug.log"
+      - name: Start Metro
+        run: |
+          pnpm --dir examples/bare-0.87 start > metro.log 2>&1 &
+          for _ in $(seq 1 60); do
+            if curl -sf http://localhost:8081/status; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Metro did not answer on port 8081." >&2
+          exit 1
+      - name: Install the Debug build
+        run: xcrun simctl install "$UDID" examples/bare-0.87/build/Build/Products/Debug-iphonesimulator/BareExample.app
+      - name: Run the dev flows
+        run: pnpm e2e bare-0.87 dev --device "$UDID" --output e2e-output
+
+      - name: Upload the logs and flow output
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-ios-bare-0.87
+          path: |
+            e2e-output
+            metro.log
+            xcodebuild-release.log
+            xcodebuild-debug.log
+          if-no-files-found: warn
