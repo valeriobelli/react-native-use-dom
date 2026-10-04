@@ -93,8 +93,8 @@ version has one committed app in `examples/<id>`. The UI lives once, in `e2e/exa
   `@react-native/*` versions changed;
 - a bare folder with no cell is deleted, except `bare-0.81`.
 
-The versions of `react-native-nitro-modules` and `react-native-safe-area-context` live once, in the default
-`catalog` of `pnpm-workspace.yaml`, and the bare examples reference them as `catalog:`. Bump them there.
+The versions the examples and the library share live once, in the default `catalog` of `pnpm-workspace.yaml`,
+and the generator writes them into the examples as `catalog:`. Bump them there.
 
 A folder is created once per minor and edited in place afterwards. `examples/bare-0.87` is never regenerated.
 Pass `--no-pods` to skip `bundle exec pod install`, as CI does. Commit what it changed, including
