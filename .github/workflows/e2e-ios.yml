@@ -65,6 +65,20 @@ jobs:
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID"
 
+      - name: Start the Argent tools server
+        # The flow runner spawns the server itself, but gives it only 15 seconds to answer, which a cold
+        # macOS runner can exceed. Starting it first, and waiting for it, takes that out of the flows.
+        run: |
+          pnpm exec argent server start --detach
+          for _ in $(seq 1 60); do
+            if pnpm exec argent server status; then
+              exit 0
+            fi
+            sleep 2
+          done
+          pnpm exec argent server logs >&2 || true
+          echo "The Argent tools server did not start." >&2
+          exit 1
       - name: Install the Release build
         run: xcrun simctl install "$UDID" examples/bare-0.87/build/Build/Products/Release-iphonesimulator/BareExample.app
       - name: Run the release flows
@@ -107,4 +121,5 @@ jobs:
             metro.log
             xcodebuild-release.log
             xcodebuild-debug.log
+            ~/.argent/tool-server.log
           if-no-files-found: warn
