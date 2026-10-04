@@ -21,6 +21,10 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+    env:
+      # Where the emulator lists the emulators it runs, which Argent's simulator server reads to find
+      # them. Argent's own emulator job sets it too: on a runner it is otherwise unset.
+      XDG_RUNTIME_DIR: /tmp/xdg-runtime
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -44,6 +48,9 @@ jobs:
 
       - run: pnpm build
 
+      - name: Create the runtime directory
+        run: mkdir -p "$XDG_RUNTIME_DIR" && chmod 700 "$XDG_RUNTIME_DIR"
+
       - name: Build the Release and Debug APKs
         working-directory: examples/bare-0.87/android
         run: ./gradlew :app:assembleRelease :app:assembleDebug
@@ -61,6 +68,9 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
             nohup adb logcat -v time > logcat.txt 2>&1 &
+            pnpm exec argent server start --detach
+            pnpm exec argent server status
+            find "$XDG_RUNTIME_DIR" -maxdepth 3
             adb install -r examples/bare-0.87/android/app/build/outputs/apk/release/app-release.apk
             pnpm e2e bare-0.87 release --device emulator-5554 --output e2e-output
             nohup pnpm --dir examples/bare-0.87 start > metro.log 2>&1 &
@@ -78,4 +88,5 @@ jobs:
             e2e-output
             logcat.txt
             metro.log
+            ~/.argent/tool-server.log
           if-no-files-found: warn
