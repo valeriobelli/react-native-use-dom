@@ -24,6 +24,7 @@ exposes are reachable through a `ref`. Release builds embed every page, so compo
 | [`packages/react-native-use-dom`](./packages/react-native-use-dom) | the library: Babel plugin, Metro integration, runtimes, native view |
 | [`examples/bare-0.87`](./examples/bare-0.87)                       | a React Native Community CLI app, without Expo                      |
 | [`examples/expo-57`](./examples/expo-57)                           | an Expo app with a development build                                |
+| [`examples/bare-*`](./examples)                                    | the same app on the other React Native versions the tests cover     |
 | [`docs`](./docs)                                                   | the user guide                                                      |
 
 ## Develop

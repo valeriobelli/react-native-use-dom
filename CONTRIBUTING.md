@@ -79,6 +79,27 @@ again to compare.
 On iOS a flow can't find text inside a WebView, so the flows tap the native views that hold the DOM components
 and check the results in native text and screenshots. On Android they also check the text of the pages.
 
+## Example apps
+
+`e2e/matrix.json` lists the React Native versions the examples cover (`pnpm e2e:matrix` rewrites it), and each
+version has one committed app in `examples/<id>`. The UI lives once, in `e2e/example-app`.
+
+`pnpm e2e:generate:bare` keeps the bare examples in line with the matrix:
+
+- a bare cell with no folder gets one, made by the official
+  [`init` command](https://github.com/react-native-community/cli/blob/main/docs/commands.md#init) at that
+  React Native version, wired to the library and to `e2e/example-app`, with its pods installed on macOS;
+- a folder that pins another `react-native` version than its cell only has its `react-native` and
+  `@react-native/*` versions changed;
+- a bare folder with no cell is deleted, except `bare-0.81`.
+
+The versions the examples and the library share live once, in the default `catalog` of `pnpm-workspace.yaml`,
+and the generator writes them into the examples as `catalog:`. Bump them there.
+
+A folder is created once per minor and edited in place afterwards. `examples/bare-0.87` is never regenerated.
+Pass `--no-pods` to skip `bundle exec pod install`, as CI does. Commit what it changed, including
+`Podfile.lock` and `pnpm-lock.yaml`.
+
 ## Decisions (wiki)
 
 The repository's [wiki](https://github.com/valeriobelli/react-native-use-dom/wiki) holds the library's product and
