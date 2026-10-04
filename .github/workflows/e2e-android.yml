@@ -7,6 +7,11 @@ name: E2E Android
 on:
   workflow_call:
   workflow_dispatch:
+    inputs:
+      update-baselines:
+        description: Write new screenshot baselines on this runner and upload them, instead of comparing
+        type: boolean
+        default: false
   # Temporary: runs the workflow on its own pull request until the e2e workflow calls it (#26).
   pull_request:
     paths:
@@ -59,6 +64,8 @@ jobs:
       # happen in its script. Each line runs in its own shell.
       - name: Run the release and dev flows
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          UPDATE_BASELINES: ${{ inputs.update-baselines && '--update-baselines' || '' }}
         with:
           api-level: 36
           target: google_apis
@@ -74,13 +81,20 @@ jobs:
             pnpm exec argent server status
             ls -laR /tmp/xdg-runtime 2>&1 | head -20 || true
             adb install -r examples/bare-0.87/android/app/build/outputs/apk/release/app-release.apk
-            pnpm e2e bare-0.87 release --device emulator-5554 --output e2e-output || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
+            pnpm e2e bare-0.87 release --device emulator-5554 --output e2e-output $UPDATE_BASELINES || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
             nohup pnpm --dir examples/bare-0.87 start > metro.log 2>&1 &
             for i in $(seq 60); do curl -sf http://localhost:8081/status | grep -q running && break; sleep 2; done; curl -sf http://localhost:8081/status | grep -q running
             adb reverse tcp:8081 tcp:8081
             curl -sf --max-time 600 -o /dev/null "http://localhost:8081/index.bundle?platform=android&dev=true&minify=false"
             adb install -r examples/bare-0.87/android/app/build/outputs/apk/debug/app-debug.apk
-            pnpm e2e bare-0.87 dev --device emulator-5554 --output e2e-output
+            pnpm e2e bare-0.87 dev --device emulator-5554 --output e2e-output $UPDATE_BASELINES
+
+      - name: Upload the new baselines
+        if: ${{ inputs.update-baselines && !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-android-bare-0.87-baselines
+          path: .argent/flows/bare-0.87/*/__baselines__
 
       - name: Upload the Argent output, logcat and Metro log
         if: ${{ failure() }}
