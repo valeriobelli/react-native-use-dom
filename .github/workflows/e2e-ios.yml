@@ -30,6 +30,21 @@ jobs:
           cache: false
           require-lockfile: true
       - run: pnpm build
+      - name: Start the Argent tools server
+        # The flow runner spawns the server itself and gives it 15 seconds to answer. Once the builds and
+        # the simulator run, this runner is too busy for that (`node --version` alone took 35 seconds), so
+        # the server starts first, while it is idle, and the flows reuse it.
+        run: |
+          pnpm exec argent server start --detach
+          for _ in $(seq 1 60); do
+            if pnpm exec argent server status; then
+              exit 0
+            fi
+            sleep 2
+          done
+          pnpm exec argent server logs >&2 || true
+          echo "The Argent tools server did not start." >&2
+          exit 1
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: '3.4'
@@ -65,29 +80,6 @@ jobs:
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID"
 
-      - name: Diagnose the Argent tools server
-        continue-on-error: true
-        run: |
-          which -a node
-          node --version
-          (ARGENT_PORT=0 node node_modules/@swmansion/argent/dist/tool-server.cjs start > tool-server-direct.log 2>&1 &)
-          sleep 40
-          cat tool-server-direct.log
-          ps aux | grep -i -E "node|simulator" | grep -v grep | cut -c1-200
-      - name: Start the Argent tools server
-        # The flow runner spawns the server itself, but gives it only 15 seconds to answer, which a cold
-        # macOS runner can exceed. Starting it first, and waiting for it, takes that out of the flows.
-        run: |
-          pnpm exec argent server start --detach
-          for _ in $(seq 1 60); do
-            if pnpm exec argent server status; then
-              exit 0
-            fi
-            sleep 2
-          done
-          pnpm exec argent server logs >&2 || true
-          echo "The Argent tools server did not start." >&2
-          exit 1
       - name: Install the Release build
         run: xcrun simctl install "$UDID" examples/bare-0.87/build/Build/Products/Release-iphonesimulator/BareExample.app
       - name: Run the release flows
@@ -131,5 +123,4 @@ jobs:
             xcodebuild-release.log
             xcodebuild-debug.log
             ~/.argent/tool-server.log
-            tool-server-direct.log
           if-no-files-found: warn
