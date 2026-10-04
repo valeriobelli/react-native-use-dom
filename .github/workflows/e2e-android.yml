@@ -1,0 +1,81 @@
+name: E2E Android
+
+# Builds examples/bare-0.87 in Release and Debug, boots an emulator and runs the release and dev flows.
+# Sources: https://github.com/ReactiveCircus/android-emulator-runner (KVM step, inputs) and
+# https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md (the runner image).
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  # Temporary: runs the workflow on its own pull request until the e2e workflow calls it (#26).
+  pull_request:
+    paths:
+      - .github/workflows/e2e-android.yml
+
+permissions: {}
+
+jobs:
+  bare-0-87:
+    name: bare-0.87 on Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          cache: false
+          require-lockfile: true
+
+      - run: pnpm build
+
+      - name: Build the Release and Debug APKs
+        working-directory: examples/bare-0.87/android
+        run: ./gradlew :app:assembleRelease :app:assembleDebug
+
+      # The action shuts the emulator down when this step ends, so the installs and both flow runs
+      # happen in its script. Each line runs in its own shell.
+      - name: Run the release and dev flows
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            nohup adb logcat -v time > logcat.txt 2>&1 &
+            adb install -r examples/bare-0.87/android/app/build/outputs/apk/release/app-release.apk
+            pnpm e2e bare-0.87 release --device emulator-5554 --output e2e-output
+            nohup pnpm --dir examples/bare-0.87 start > metro.log 2>&1 &
+            for i in $(seq 60); do curl -sf http://localhost:8081/status | grep -q running && break; sleep 2; done; curl -sf http://localhost:8081/status | grep -q running
+            adb reverse tcp:8081 tcp:8081
+            adb install -r examples/bare-0.87/android/app/build/outputs/apk/debug/app-debug.apk
+            pnpm e2e bare-0.87 dev --device emulator-5554 --output e2e-output
+
+      - name: Upload the Argent output, logcat and Metro log
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-android-bare-0.87
+          path: |
+            e2e-output
+            logcat.txt
+            metro.log
+          if-no-files-found: warn
