@@ -1,0 +1,29 @@
+{
+	"name": "expo-58",
+	"version": "0.0.1",
+	"private": true,
+	"main": "index.ts",
+	"scripts": {
+		"android": "expo run:android",
+		"ios": "expo run:ios",
+		"start": "expo start"
+	},
+	"dependencies": {
+		"@react-native-use-dom/example-app": "workspace:*",
+		"expo": "58.0.2",
+		"react": "19.3.0",
+		"react-dom": "19.3.0",
+		"react-native": "0.88.0-rc.3",
+		"react-native-nitro-modules": "catalog:",
+		"react-native-safe-area-context": "~5.9.1",
+		"react-native-use-dom": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/react": "~19.2.2",
+		"babel-preset-expo": "~58.0.8",
+		"typescript": "~6.0.3"
+	},
+	"engines": {
+		"node": ">=22.12.0"
+	}
+}
