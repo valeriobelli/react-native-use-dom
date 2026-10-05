@@ -1,0 +1,3 @@
+steps:
+  - launch: { ios: dev.reactnativeusedom.bare088, android: dev.reactnativeusedom.bare088 }
+  - run: ../../shared/prop-change

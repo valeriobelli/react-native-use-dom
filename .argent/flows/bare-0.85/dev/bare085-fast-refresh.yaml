@@ -1,0 +1,3 @@
+steps:
+  - launch: { ios: dev.reactnativeusedom.bare085, android: dev.reactnativeusedom.bare085 }
+  - run: ../../shared/fast-refresh
