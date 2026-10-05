@@ -86,6 +86,7 @@ jobs:
             for i in $(seq 60); do curl -sf http://localhost:8081/status | grep -q running && break; sleep 2; done; curl -sf http://localhost:8081/status | grep -q running
             adb reverse tcp:8081 tcp:8081
             curl -sf --max-time 600 -o /dev/null "http://localhost:8081/index.bundle?platform=android&dev=true&minify=false"
+            for c in Note Greeting Lines; do curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" --data-urlencode "dev=true" --data-urlencode "platform=web" --data-urlencode "transform.dom=$GITHUB_WORKSPACE/e2e/example-app/src/$c.tsx"; done
             adb install -r examples/bare-0.87/android/app/build/outputs/apk/debug/app-debug.apk
             pnpm e2e bare-0.87 dev --device emulator-5554 --output e2e-output $UPDATE_BASELINES
 
