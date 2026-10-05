@@ -11,6 +11,9 @@ steps:
       - assert: { visible: { text: This note is a DOM component } }
       - assert: { visible: { text: 'Hello, React Native. Clicked 0 times.' } }
       - assert: { visible: { text: 'Hello, a second instance. Clicked 0 times.' } }
+  # This is the first flow after an install, so the web views are slowest to paint, and a blank screen
+  # is as still as a painted one: waiting for the screen to settle can't tell them apart.
+  - wait: 5000
   - snapshot: { name: note, cropOn: { id: note } }
   - snapshot: { name: first-greeting, cropOn: { id: first-greeting } }
   - snapshot: { name: second-greeting, cropOn: { id: second-greeting } }
