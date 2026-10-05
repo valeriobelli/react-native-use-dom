@@ -4,8 +4,10 @@
 # settle.
 executionPrerequisite: The example app has just launched.
 steps:
-  - await: { visible: { id: first-greeting } }
-  - await: { visible: { id: lines } }
+  # A Debug build loads its JavaScript from Metro as it launches, which takes a runner longer than the
+  # default wait.
+  - await: { visible: { id: first-greeting }, timeout: 30000 }
+  - await: { visible: { id: lines }, timeout: 30000 }
   # The note has no height until its page has measured itself, so it only becomes visible then. That is
   # the one signal iOS flows get that a web view has loaded, and it moves the elements under it.
   - await: { visible: { id: note }, timeout: 30000 }
