@@ -1,0 +1,3 @@
+steps:
+  - launch: { ios: dev.reactnativeusedom.bare087, android: dev.reactnativeusedom.bare087 }
+  - run: ../../shared/errors

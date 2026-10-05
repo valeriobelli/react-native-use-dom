@@ -13,6 +13,7 @@ import path from 'node:path'
  * `.argent/flows/shared/` means adding it here. `ready` is not one of them: the scenarios run it.
  */
 export const RELEASE_SCENARIOS = [
+	'errors',
 	'first-render',
 	'native-action',
 	'navigation-blocked',
