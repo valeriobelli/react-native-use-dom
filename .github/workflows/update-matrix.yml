@@ -1,0 +1,82 @@
+name: Update the e2e matrix
+
+# Reruns the matrix script and the generators once a day, and opens (or updates) one pull request when
+# anything changes, so that new React Native versions enter the e2e matrix through review.
+# `workflow_dispatch` runs only once this file is on the default branch.
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Refresh the matrix and open the pull request
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to push the branch (peter-evans/create-pull-request)
+      pull-requests: write # to open and update the pull request (peter-evans/create-pull-request)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          cache: false
+          require-lockfile: true
+      # The bare generator adds the scene delegate to the new Xcode projects with the `xcodeproj` gem,
+      # which runs on Linux. Pods are not installed: see `--no-pods` below.
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+      # Also writes docs/compatibility.md.
+      - name: Update the matrix and the compatibility page
+        run: pnpm e2e:matrix
+      # The generators run `pnpm install`, which pnpm freezes in CI. A new example changes the
+      # lockfile, so these steps allow the update (https://pnpm.io/cli/install#--frozen-lockfile).
+      - name: Generate the bare examples
+        env:
+          pnpm_config_frozen_lockfile: 'false'
+        run: pnpm e2e:generate:bare --no-pods
+      - name: Generate the Expo examples
+        env:
+          pnpm_config_frozen_lockfile: 'false'
+        run: pnpm e2e:generate:expo
+      - name: Generate the wrapper flows
+        run: pnpm e2e:generate:flows
+      - name: Describe the changes
+        run: |
+          {
+            echo 'Refreshes the e2e matrix from the published React Native and Expo versions, and'
+            echo 'regenerates the examples and the wrapper flows from it.'
+            echo
+            echo '### What changed'
+            echo
+            echo '```'
+            git status --short
+            echo '```'
+            echo
+            echo '### Before merging'
+            echo
+            echo '- [ ] `pod install` run locally in each new `examples/bare-*/ios`, and `Podfile.lock` committed'
+            echo '- [ ] Baselines recorded for each new app (see `CONTRIBUTING.md`)'
+            echo '- [ ] Approve the workflow runs of this PR'
+            echo
+            echo 'The runs of this pull request wait for approval because it was opened with `GITHUB_TOKEN`.'
+          } > "$RUNNER_TEMP/pull-request-body.md"
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: e2e/update-matrix
+          title: 'chore(e2e): update the version matrix'
+          commit-message: |
+            chore(e2e): update the version matrix
+
+            Refresh e2e/matrix.json and docs/compatibility.md, and regenerate the examples
+            and the wrapper flows.
+          body-path: ${{ runner.temp }}/pull-request-body.md
