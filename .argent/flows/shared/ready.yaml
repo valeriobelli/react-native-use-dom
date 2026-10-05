@@ -6,6 +6,9 @@ executionPrerequisite: The example app has just launched.
 steps:
   - await: { visible: { id: first-greeting } }
   - await: { visible: { id: lines } }
+  # The note has no height until its page has measured itself, so it only becomes visible then. That is
+  # the one signal iOS flows get that a web view has loaded, and it moves the elements under it.
+  - await: { visible: { id: note }, timeout: 30000 }
   - when: { platform: android }
     steps:
       - await: { visible: { text: This note is a DOM component }, timeout: 15000 }
