@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Writes `e2e/matrix.json` from the published sources: React Native's support table, the
+ * Writes `e2e/matrix.json`, and the `docs/compatibility.md` page rendered from it, from the published sources: React Native's support table, the
  * `react-native` versions on npm, the `expo` dist-tags and each `expo` version's bundled
  * `react-native` pin. Any fetch or parse failure exits non-zero and writes nothing, so a partial
  * matrix can never reach a pull request.
@@ -10,7 +10,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
-import { buildMatrix } from './matrix.mjs'
+import { buildMatrix, renderCompatibility } from './matrix.mjs'
 import { bundledReactNative, cellOverrides, reactNativeVersions, stringMap } from './sources.mjs'
 
 const REPOSITORY_ROOT = path.resolve(import.meta.dirname, '..', '..')
@@ -64,7 +64,9 @@ try {
 
 	writeFileSync(path.join(REPOSITORY_ROOT, 'e2e/matrix.json'), `${JSON.stringify(matrix, null, '\t')}\n`)
 
-	process.stdout.write(`e2e/matrix.json: ${matrix.cells.map((cell) => cell.id).join(', ')}\n`)
+	writeFileSync(path.join(REPOSITORY_ROOT, 'docs/compatibility.md'), renderCompatibility(matrix))
+
+	process.stdout.write(`e2e/matrix.json and docs/compatibility.md: ${matrix.cells.map((cell) => cell.id).join(', ')}\n`)
 } catch (failure) {
 	const message = failure instanceof Error ? failure.message : String(failure)
 

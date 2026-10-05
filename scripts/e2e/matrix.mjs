@@ -7,6 +7,9 @@
 
 import { parseSupportTable } from './sources.mjs'
 
+// The compatibility page lives in its own file to keep this one small.
+export { renderCompatibility } from './matrix.compatibility.mjs'
+
 /** The support levels the matrix tests, besides a Future minor that has a release candidate. */
 const TESTED_LEVELS = new Set(['End of Cycle', 'Active'])
 

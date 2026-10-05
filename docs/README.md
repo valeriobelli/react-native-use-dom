@@ -18,3 +18,4 @@ It needs no Expo package. It works in bare React Native apps and in Expo apps th
 9. [Limitations](./limitations.md).
 10. [Troubleshooting](./troubleshooting.md).
 11. [Errors](./errors.md): every error code, what it means and how to fix it.
+12. [Compatibility](./compatibility.md): the React Native versions and Expo SDKs that are tested.
