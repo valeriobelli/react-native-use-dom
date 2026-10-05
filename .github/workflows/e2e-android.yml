@@ -78,8 +78,6 @@ jobs:
           script: |
             nohup adb logcat -v time > logcat.txt 2>&1 &
             pnpm exec argent server start --detach
-            pnpm exec argent server status
-            ls -laR /tmp/xdg-runtime 2>&1 | head -20 || true
             adb install -r examples/bare-0.87/android/app/build/outputs/apk/release/app-release.apk
             pnpm e2e bare-0.87 release --device emulator-5554 --output e2e-output $UPDATE_BASELINES || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
             nohup pnpm --dir examples/bare-0.87 start > metro.log 2>&1 &
