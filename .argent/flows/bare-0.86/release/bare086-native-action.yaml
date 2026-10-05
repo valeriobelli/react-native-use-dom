@@ -1,0 +1,3 @@
+steps:
+  - launch: { ios: dev.reactnativeusedom.bare086, android: dev.reactnativeusedom.bare086 }
+  - run: ../../shared/native-action

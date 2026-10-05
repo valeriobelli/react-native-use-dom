@@ -1,0 +1,3 @@
+steps:
+  - launch: { ios: dev.reactnativeusedom.expo58, android: dev.reactnativeusedom.expo58 }
+  - run: ../../shared/first-render
