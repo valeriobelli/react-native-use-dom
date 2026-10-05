@@ -75,10 +75,10 @@ test('a folder that already pins the cell version is left alone', () => {
 	expect(plan).toEqual({ bump: [], create: [], remove: [] })
 })
 
-test('the floor example is never deleted, and is not created until its own change adds it', () => {
+test('the floor example is created like the others, and never deleted', () => {
 	const floor = cell('bare-0.81', '0.81.6', 'floor')
 
-	expect(planGeneration([floor], new Map())).toEqual({ bump: [], create: [], remove: [] })
+	expect(planGeneration([floor], new Map())).toEqual({ bump: [], create: [floor], remove: [] })
 	expect(planGeneration([], new Map([['bare-0.81', '0.81.6']]))).toEqual({ bump: [], create: [], remove: [] })
 	expect(planGeneration([floor], new Map([['bare-0.81', '0.81.5']])).bump).toEqual([floor])
 })
@@ -218,9 +218,6 @@ test('a folder that left the matrix is deleted, except the floor', () => {
 	const options = { addToProject: () => {}, root, runInit: fakeInit }
 
 	generateBare({ ...options, cells: [cell('bare-0.84', '0.84.9'), cell('bare-0.81', '0.81.6', 'floor')] })
-	mkdirSync(path.join(root, 'examples', 'bare-0.81'))
-	writeFileSync(path.join(root, 'examples', 'bare-0.81', 'package.json'), JSON.stringify(templateManifest))
-
 	/** @type {string[]} */
 	const logged = []
 

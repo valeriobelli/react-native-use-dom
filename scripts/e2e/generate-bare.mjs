@@ -28,11 +28,8 @@ import { applySceneLifeCycle } from './generate-bare.scene.mjs'
  */
 const CATALOG = 'catalog:'
 
-/**
- * The bare cells the generator leaves alone until their own issue adds them: it neither creates
- * nor deletes them.
- */
-const DEFERRED_CELLS = new Set(['bare-0.81'])
+/** The bare examples the generator never deletes: the floor of the peer range, even if its cell is dropped. */
+const KEPT_FOLDERS = new Set(['bare-0.81'])
 
 /** The name of a bare example's folder, under `examples/`. */
 const BARE_FOLDER = /^bare-/u
@@ -75,8 +72,8 @@ export function planGeneration(cells, folders) {
 
 	return {
 		bump: bare.filter((cell) => folders.has(cell.id) && folders.get(cell.id) !== cell.reactNative),
-		create: bare.filter((cell) => !folders.has(cell.id) && !DEFERRED_CELLS.has(cell.id)),
-		remove: [...folders.keys()].filter((name) => !ids.has(name) && !DEFERRED_CELLS.has(name)).sort(),
+		create: bare.filter((cell) => !folders.has(cell.id)),
+		remove: [...folders.keys()].filter((name) => !ids.has(name) && !KEPT_FOLDERS.has(name)).sort(),
 	}
 }
 
@@ -285,7 +282,7 @@ export function generateBare({ addToProject, cells, log = () => {}, root, runIni
 		wireFolder(root, cell)
 	}
 
-	for (const cell of cells.filter((candidate) => candidate.kind === 'bare' && !DEFERRED_CELLS.has(candidate.id))) {
+	for (const cell of cells.filter((candidate) => candidate.kind === 'bare')) {
 		if (applySceneLifeCycle({ addToProject, cell, root })) {
 			log(`giving ${cell.folder} the scene life cycle its template lacks`)
 		}
