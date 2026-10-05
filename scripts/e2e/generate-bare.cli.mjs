@@ -30,6 +30,12 @@ try {
 		(JSON.parse(readFileSync(path.join(REPOSITORY_ROOT, 'e2e/matrix.json'), 'utf8')))
 
 	const plan = generateBare({
+		addToProject: (project, target) => {
+			execFileSync('bundle', ['exec', 'ruby', 'scripts/e2e/add-scene-delegate.rb', project, target], {
+				cwd: REPOSITORY_ROOT,
+				stdio: 'inherit',
+			})
+		},
 		cells,
 		log: (message) => {
 			process.stdout.write(`${message}\n`)

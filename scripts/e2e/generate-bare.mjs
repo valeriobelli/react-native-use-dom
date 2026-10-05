@@ -20,6 +20,7 @@ import {
 	TEMPLATE_SCRIPTS,
 	TSCONFIG,
 } from './generate-bare.files.mjs'
+import { applySceneLifeCycle } from './generate-bare.scene.mjs'
 
 /**
  * The version of the packages every example shares, which `pnpm-workspace.yaml` holds in its default
@@ -257,10 +258,11 @@ export function wireFolder(root, cell) {
  * @param {string} options.root the repository root
  * @param {MatrixCell[]} options.cells the cells of the matrix
  * @param {RunInit} options.runInit creates a cell's folder from the official template
+ * @param {import('./generate-bare.scene.mjs').AddToProject} options.addToProject adds a file to an Xcode project
  * @param {(message: string) => void} [options.log]
  * @returns {Plan}
  */
-export function generateBare({ cells, log = () => {}, root, runInit }) {
+export function generateBare({ addToProject, cells, log = () => {}, root, runInit }) {
 	const plan = planGeneration(cells, readBareFolders(root))
 
 	for (const name of plan.remove) {
@@ -281,6 +283,12 @@ export function generateBare({ cells, log = () => {}, root, runInit }) {
 		mkdirSync(path.join(root, 'examples'), { recursive: true })
 		runInit(cell, root)
 		wireFolder(root, cell)
+	}
+
+	for (const cell of cells.filter((candidate) => candidate.kind === 'bare' && !DEFERRED_CELLS.has(candidate.id))) {
+		if (applySceneLifeCycle({ addToProject, cell, root })) {
+			log(`giving ${cell.folder} the scene life cycle its template lacks`)
+		}
 	}
 
 	return plan
