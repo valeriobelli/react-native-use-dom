@@ -4,6 +4,9 @@ executionPrerequisite: The example app has just launched.
 steps:
   - echo: The lines scroll inside their DOM component
   - run: ready
+  # On a slow runner the web view is still blank after the app is ready, and a blank screen is as still
+  # as a painted one, so an idle wait can't tell them apart.
+  - wait: 4000
   - snapshot: { name: lines, cropOn: { id: lines } }
   - swipe: { from: { id: lines }, direction: up }
   - swipe: { from: { id: lines }, direction: up }

@@ -4,6 +4,10 @@
 	font: 14px/2 system-ui;
 	color: #3c3c43;
 	list-style-position: inside;
+	/* A touch that rests on the text for a moment starts a selection, which a flow's swipe then extends
+	   instead of scrolling. The lines are there to be scrolled. */
+	-webkit-user-select: none;
+	user-select: none;
 }
 
 .lines li:nth-child(odd) {

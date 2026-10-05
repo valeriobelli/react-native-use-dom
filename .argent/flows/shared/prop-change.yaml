@@ -4,6 +4,12 @@ steps:
   - echo: A prop change re-renders the DOM component and keeps its state
   - run: ready
   - tap: { id: first-greeting }
+  # The first tap on a slow runner can still be lost, and a flow can't retry an await: tap again
+  # when the answer has not come.
+  - wait: 2500
+  - when: { hidden: { text: The first greeting reported 1 clicks } }
+    steps:
+      - tap: { id: first-greeting }
   - await: { visible: { text: The first greeting reported 1 clicks }, timeout: 15000 }
   - tap: { text: Rename to Metro }
   - await: { visible: { text: Rename to React Native } }
