@@ -1,4 +1,9 @@
 {
+	"bare-0.81": {
+		"ios": {
+			"runner": "macos-26"
+		}
+	},
 	"bare-0.87": {
 		"appName": "BareExample"
 	},
