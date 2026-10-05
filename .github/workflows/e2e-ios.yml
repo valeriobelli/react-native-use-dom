@@ -114,9 +114,18 @@ jobs:
           done
           echo "Metro did not answer on port 8081." >&2
           exit 1
-      - name: Warm up the bundle
+      - name: Warm up the bundles
         # The first bundle takes longer than a flow waits for the app to render, so Metro builds it now.
-        run: curl -sf --max-time 600 -o /dev/null "http://localhost:8081/index.bundle?platform=ios&dev=true&minify=false"
+        # So does the web bundle of each DOM component: a second Metro instance starts on its first
+        # request, and a web view that waits for it shows nothing for longer than the flows wait.
+        run: |
+          curl -sf --max-time 600 -o /dev/null "http://localhost:8081/index.bundle?platform=ios&dev=true&minify=false"
+          for component in Note Greeting Lines; do
+            curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" \
+              --data-urlencode "dev=true" \
+              --data-urlencode "platform=web" \
+              --data-urlencode "transform.dom=$GITHUB_WORKSPACE/e2e/example-app/src/$component.tsx"
+          done
       - name: Install the Debug build
         run: xcrun simctl install "$UDID" examples/bare-0.87/build/Build/Products/Debug-iphonesimulator/BareExample.app
       - name: Run the dev flows
