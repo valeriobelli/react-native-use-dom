@@ -27,11 +27,12 @@ jobs:
         with:
           cache: false
           require-lockfile: true
+      # The example apps import the built library: linted before this, its types resolve to `error`.
+      - run: pnpm build
       - run: pnpm lint
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm build
 
   pr-status:
     # recommended: skip the release pull request as it never has changesets
