@@ -20,6 +20,7 @@ import {
 	TEMPLATE_SCRIPTS,
 	TSCONFIG,
 } from './generate-bare.files.mjs'
+import { applyHermesCommand } from './generate-bare.hermes.mjs'
 import { applySceneLifeCycle } from './generate-bare.scene.mjs'
 
 /**
@@ -285,6 +286,10 @@ export function generateBare({ addToProject, cells, log = () => {}, root, runIni
 	for (const cell of cells.filter((candidate) => candidate.kind === 'bare')) {
 		if (applySceneLifeCycle({ addToProject, cell, root })) {
 			log(`giving ${cell.folder} the scene life cycle its template lacks`)
+		}
+
+		if (applyHermesCommand(root, cell)) {
+			log(`pointing ${cell.folder} at the hermesc that pnpm installed`)
 		}
 	}
 
