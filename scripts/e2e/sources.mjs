@@ -14,7 +14,7 @@ export const SUPPORT_LEVELS = ['Future', 'Active', 'End of Cycle', 'Unsupported'
  *
  * @typedef {object} CellOverrides
  * @property {string} [appName]
- * @property {{ runner?: string }} [ios]
+ * @property {{ runner?: string, xcode?: string }} [ios]
  */
 
 /**
@@ -159,10 +159,10 @@ function cellOverride(id, entry) {
 	}
 
 	if (typeof entry.ios === 'object' && entry.ios !== null) {
-		const runner = stringMap(entry.ios, `the ios override of ${id}`).runner
+		const { runner, xcode } = stringMap(entry.ios, `the ios override of ${id}`)
 
-		if (runner !== undefined) {
-			cell.ios = { runner }
+		if (runner !== undefined || xcode !== undefined) {
+			cell.ios = { ...(runner === undefined ? {} : { runner }), ...(xcode === undefined ? {} : { xcode }) }
 		}
 	}
 
