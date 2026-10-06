@@ -50,6 +50,19 @@ jobs:
         run: pnpm e2e:generate:expo
       - name: Generate the wrapper flows
         run: pnpm e2e:generate:flows
+      # `ruby/setup-ruby` rewrites .bundle/config for the runner (an absolute path and deployment mode):
+      # committed, it would break `bundle install` everywhere else.
+      - name: Discard the Bundler configuration of the runner
+        run: git checkout -- .bundle/config
+      # The release-age policy delays versions that are too new (https://pnpm.io/settings/dependency-resolution).
+      # A refresh that needs an exclusion must not widen it unreviewed: it fails and waits for a later run.
+      - name: Refuse changes to the pnpm workspace settings
+        run: |
+          if ! git diff --quiet -- pnpm-workspace.yaml; then
+            echo '::error file=pnpm-workspace.yaml::The refresh changed the workspace settings (the release-age policy?).'
+            git diff -- pnpm-workspace.yaml
+            exit 1
+          fi
       - name: Describe the changes
         run: |
           {
