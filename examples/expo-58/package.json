@@ -10,7 +10,7 @@
 	},
 	"dependencies": {
 		"@react-native-use-dom/example-app": "workspace:*",
-		"expo": "58.0.2",
+		"expo": "58.0.5",
 		"react": "19.3.0",
 		"react-dom": "19.3.0",
 		"react-native": "0.88.0-rc.3",
@@ -19,7 +19,7 @@
 		"react-native-use-dom": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/react": "~19.2.2",
+		"@types/react": "~19.3.0",
 		"babel-preset-expo": "~58.0.8",
 		"typescript": "~6.0.3"
 	},

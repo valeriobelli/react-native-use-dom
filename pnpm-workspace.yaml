@@ -28,3 +28,26 @@ allowBuilds:
   tree-sitter-javascript: false
   tree-sitter-typescript: false
   unrs-resolver: false
+
+minimumReleaseAgeExclude:
+  - '@expo/cli@58.1.4'
+  - '@expo/config-plugins@58.0.6'
+  - '@expo/config@58.0.3'
+  - '@expo/image-utils@0.12.4'
+  - '@expo/inline-modules@0.2.3'
+  - '@expo/local-build-cache-provider@58.0.3'
+  - '@expo/log-box@58.0.10'
+  - '@expo/metro-config@58.0.9'
+  - '@expo/metro-file-map@58.0.4'
+  - '@expo/prebuild-config@58.0.9'
+  - '@expo/require-utils@58.0.3'
+  - '@expo/router-server@58.0.9'
+  - babel-preset-expo@58.0.10
+  - expo-asset@58.0.12
+  - expo-constants@58.0.10
+  - expo-file-system@58.0.6
+  - expo-font@58.0.7
+  - expo-modules-autolinking@58.0.9
+  - expo-modules-core@58.0.13
+  - expo-modules-jsi@58.0.9
+  - expo@58.0.5
