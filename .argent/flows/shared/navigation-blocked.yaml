@@ -1,5 +1,7 @@
-# A link that leaves the page is not followed in it: the app is told, and opens it itself. On
-# Android the browser then covers the app, so the flow goes back to it before reading its status.
+# A link that leaves the page is not followed in it: the app is told, and opens it itself. The
+# browser then covers the app, so the flow goes back to it before reading its status: with the
+# back button on Android, and with the "back to the app" link of the status bar on iOS (it is not
+# in the accessibility tree, hence the coordinates).
 executionPrerequisite: The example app has just launched.
 steps:
   - echo: Leaving the page is blocked and reported to the app
@@ -10,4 +12,9 @@ steps:
       - wait: 2000
       - tool: button
         args: { button: back }
+  - when: { platform: ios }
+    steps:
+      - wait: 2000
+      - tool: gesture-tap
+        args: { x: 0.1, y: 0.047 }
   - await: { visible: { text: Opened https://reactnative.dev/ outside the DOM component } }
