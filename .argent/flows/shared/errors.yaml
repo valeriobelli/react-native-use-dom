@@ -1,0 +1,59 @@
+# Every runtime error a DOM component can raise reaches the app with its code. Each case is a native
+# button and a native Text: iOS flows can't read inside a web view, so the errors the DOM side raises
+# are reported through native state too.
+executionPrerequisite: The example app has just launched.
+steps:
+  - echo: Each runtime error shows its code in native text
+  - run: ready
+  - tap: { id: open-errors }
+  - await: { visible: { id: error-non-serializable-prop }, timeout: 15000 }
+  - scroll-to: { target: { id: error-non-serializable-prop } }
+  - tap: { id: error-non-serializable-prop }
+  - await:
+      {
+        text: { in: { id: error-non-serializable-prop-result }, equals: ERR_USE_DOM_NON_SERIALIZABLE_PROP },
+        timeout: 15000,
+      }
+  - scroll-to: { target: { id: error-non-serializable-argument } }
+  - tap: { id: error-non-serializable-argument }
+  - await:
+      {
+        text: { in: { id: error-non-serializable-argument-result }, equals: ERR_USE_DOM_NON_SERIALIZABLE_ARGUMENT },
+        timeout: 15000,
+      }
+  - scroll-to: { target: { id: error-non-serializable-result } }
+  - tap: { id: error-non-serializable-result }
+  - await:
+      {
+        text: { in: { id: error-non-serializable-result-result }, equals: ERR_USE_DOM_NON_SERIALIZABLE_RESULT },
+        timeout: 15000,
+      }
+  - scroll-to: { target: { id: error-nested-function-prop } }
+  - tap: { id: error-nested-function-prop }
+  - await:
+      {
+        text: { in: { id: error-nested-function-prop-result }, equals: ERR_USE_DOM_NESTED_FUNCTION_PROP },
+        timeout: 15000,
+      }
+  - scroll-to: { target: { id: error-unknown-action } }
+  - tap: { id: error-unknown-action }
+  - await: { text: { in: { id: error-unknown-action-result }, equals: ERR_USE_DOM_UNKNOWN_ACTION }, timeout: 15000 }
+  - scroll-to: { target: { id: error-unknown-handle-method } }
+  - tap: { id: error-unknown-handle-method }
+  - await:
+      {
+        text: { in: { id: error-unknown-handle-method-result }, equals: ERR_USE_DOM_UNKNOWN_HANDLE_METHOD },
+        timeout: 15000,
+      }
+  - scroll-to: { target: { id: error-bridge-closed } }
+  - tap: { id: error-bridge-closed }
+  - await: { text: { in: { id: error-bridge-closed-result }, equals: ERR_USE_DOM_BRIDGE_CLOSED }, timeout: 15000 }
+  - scroll-to: { target: { id: error-children-unsupported } }
+  - tap: { id: error-children-unsupported }
+  # The button is the last row, so its result can still be below the fold once the button is in view.
+  - scroll-to: { target: { id: error-children-unsupported-result } }
+  - await:
+      {
+        text: { in: { id: error-children-unsupported-result }, equals: ERR_USE_DOM_CHILDREN_UNSUPPORTED },
+        timeout: 15000,
+      }

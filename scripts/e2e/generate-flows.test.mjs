@@ -20,10 +20,11 @@ afterEach(() => {
 	rmSync(root, { force: true, recursive: true })
 })
 
-test('a bare cell gets six release wrappers and one dev wrapper', () => {
+test('a bare cell gets seven release wrappers and one dev wrapper', () => {
 	const files = planCell(bare)
 
 	expect([...files.keys()]).toEqual([
+		'bare-0.87/release/bare087-errors.yaml',
 		'bare-0.87/release/bare087-first-render.yaml',
 		'bare-0.87/release/bare087-native-action.yaml',
 		'bare-0.87/release/bare087-navigation-blocked.yaml',
