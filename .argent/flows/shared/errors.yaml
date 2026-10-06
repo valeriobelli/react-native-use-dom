@@ -50,6 +50,8 @@ steps:
   - await: { text: { in: { id: error-bridge-closed-result }, equals: ERR_USE_DOM_BRIDGE_CLOSED }, timeout: 15000 }
   - scroll-to: { target: { id: error-children-unsupported } }
   - tap: { id: error-children-unsupported }
+  # The button is the last row, so its result can still be below the fold once the button is in view.
+  - scroll-to: { target: { id: error-children-unsupported-result } }
   - await:
       {
         text: { in: { id: error-children-unsupported-result }, equals: ERR_USE_DOM_CHILDREN_UNSUPPORTED },
