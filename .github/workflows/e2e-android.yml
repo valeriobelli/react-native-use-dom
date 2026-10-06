@@ -1,13 +1,26 @@
 name: E2E Android
 
-# Builds examples/bare-0.87 in Release and Debug, boots an emulator and runs the release and dev flows.
+# Runs one job per cell of e2e/matrix.json whose role is the `role` input: builds the cell's example in
+# Release and Debug, boots an emulator and runs the release and dev flows.
 # Sources: https://github.com/ReactiveCircus/android-emulator-runner (KVM step, inputs) and
 # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md (the runner image).
 
 on:
   workflow_call:
+    inputs:
+      role:
+        description: Which cells of e2e/matrix.json to run, by their role
+        type: string
+        default: blocking
   workflow_dispatch:
     inputs:
+      role:
+        description: Which cells of e2e/matrix.json to run, by their role
+        type: choice
+        options:
+          - blocking
+          - floor
+        default: blocking
       update-baselines:
         description: Write new screenshot baselines on this runner and upload them, instead of comparing
         type: boolean
@@ -20,13 +33,41 @@ on:
 permissions: {}
 
 jobs:
-  bare-0-87:
-    name: bare-0.87 on Android
+  # Reads the cells with the requested role from the matrix file, so that no version or app is named here.
+  cells:
+    name: Read the matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      cells: ${{ steps.read.outputs.cells }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: read
+        env:
+          ROLE: ${{ inputs.role || 'blocking' }}
+        run: |
+          cells=$(jq -c --arg role "$ROLE" '[.cells[] | select(.role == $role)]' e2e/matrix.json)
+          echo "$cells" | jq .
+          echo "cells=$cells" >> "$GITHUB_OUTPUT"
+
+  android:
+    name: ${{ matrix.cell.id }} on Android
+    needs: cells
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        cell: ${{ fromJSON(needs.cells.outputs.cells) }}
     env:
+      CELL_ID: ${{ matrix.cell.id }}
+      CELL_FOLDER: ${{ matrix.cell.folder }}
       # Where the emulator lists the emulators it runs, which Argent's simulator server reads to find
       # them. Argent's own emulator job sets it too: on a runner it is otherwise unset.
       XDG_RUNTIME_DIR: /tmp/xdg-runtime
@@ -48,7 +89,7 @@ jobs:
 
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         with:
-          cache: false
+          cache: true
           require-lockfile: true
 
       - run: pnpm build
@@ -56,8 +97,23 @@ jobs:
       - name: Create the runtime directory
         run: mkdir -p "$XDG_RUNTIME_DIR" && chmod 700 "$XDG_RUNTIME_DIR"
 
+      # The Expo examples have no android folder: it is generated, which also gives the cache key below
+      # its Gradle files.
+      - name: Generate the native project
+        if: ${{ matrix.cell.kind == 'expo' }}
+        working-directory: ${{ matrix.cell.folder }}
+        run: pnpm exec expo prebuild --clean --platform android
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ matrix.cell.id }}-${{ hashFiles(format('{0}/android/**/*.gradle*', matrix.cell.folder), 'pnpm-lock.yaml') }}
+          restore-keys: gradle-${{ matrix.cell.id }}-
+
       - name: Build the Release and Debug APKs
-        working-directory: examples/bare-0.87/android
+        working-directory: ${{ matrix.cell.folder }}/android
         run: ./gradlew :app:assembleRelease :app:assembleDebug
 
       # The action shuts the emulator down when this step ends, so the installs and both flow runs
@@ -78,28 +134,28 @@ jobs:
           script: |
             nohup adb logcat -v time > logcat.txt 2>&1 &
             pnpm exec argent server start --detach
-            adb install -r examples/bare-0.87/android/app/build/outputs/apk/release/app-release.apk
-            pnpm e2e bare-0.87 release --device emulator-5554 --output e2e-output $UPDATE_BASELINES || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
-            nohup pnpm --dir examples/bare-0.87 start > metro.log 2>&1 &
+            adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
+            pnpm e2e "$CELL_ID" release --device emulator-5554 --output e2e-output $UPDATE_BASELINES || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
+            nohup pnpm --dir "$CELL_FOLDER" start > metro.log 2>&1 &
             for i in $(seq 60); do curl -sf http://localhost:8081/status | grep -q running && break; sleep 2; done; curl -sf http://localhost:8081/status | grep -q running
             adb reverse tcp:8081 tcp:8081
             curl -sf --max-time 600 -o /dev/null "http://localhost:8081/index.bundle?platform=android&dev=true&minify=false"
             for c in Note Greeting Lines; do curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" --data-urlencode "dev=true" --data-urlencode "platform=web" --data-urlencode "transform.dom=$GITHUB_WORKSPACE/e2e/example-app/src/$c.tsx"; done
-            adb install -r examples/bare-0.87/android/app/build/outputs/apk/debug/app-debug.apk
-            pnpm e2e bare-0.87 dev --device emulator-5554 --output e2e-output $UPDATE_BASELINES
+            adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/debug/app-debug.apk"
+            pnpm e2e "$CELL_ID" dev --device emulator-5554 --output e2e-output $UPDATE_BASELINES
 
       - name: Upload the new baselines
         if: ${{ inputs.update-baselines && !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: e2e-android-bare-0.87-baselines
-          path: .argent/flows/bare-0.87/*/__baselines__
+          name: e2e-android-${{ matrix.cell.id }}-baselines
+          path: .argent/flows/${{ matrix.cell.id }}/*/__baselines__
 
       - name: Upload the Argent output, logcat and Metro log
         if: ${{ failure() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: e2e-android-bare-0.87
+          name: e2e-android-${{ matrix.cell.id }}
           path: |
             e2e-output
             logcat.txt
