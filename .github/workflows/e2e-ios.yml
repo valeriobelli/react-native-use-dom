@@ -18,15 +18,15 @@ on:
         description: Write new screenshot baselines on this runner and upload them, instead of comparing
         type: boolean
         default: false
-  # Temporary: runs this workflow on the pull request that adds it. Remove it when every pull request
-  # runs the end-to-end tests.
-  pull_request:
-    paths: ['.github/workflows/e2e-ios.yml']
 
 permissions: {}
 
+# A called workflow gets the caller's `github` context, so `github.workflow` alone would give it the
+# group of the E2E workflow that calls it, and of the other workflows E2E calls: the platform and the
+# role keep the groups apart.
+# https://docs.github.com/en/actions/reference/workflows-and-actions/reusable-workflows
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-ios-${{ inputs.role }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -46,7 +46,6 @@ jobs:
       - name: Select the cells
         id: cells
         env:
-          # A pull request has no inputs, and runs the cells that block merges.
           ROLE: ${{ inputs.role || 'blocking' }}
         run: |
           case "$ROLE" in

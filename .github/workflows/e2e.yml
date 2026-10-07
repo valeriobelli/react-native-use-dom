@@ -1,0 +1,86 @@
+name: E2E
+
+# Runs the cells of e2e/matrix.json that block merges on iOS and Android, and reports them as one check,
+# `e2e-result`, which branch protection requires: the job names change with the matrix, its name doesn't.
+# The floor cell runs on the nightly schedule, or when a manual run asks for it.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Every night at 03:00 UTC, on the default branch.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      include-floor:
+        description: Also run the floor cell of the matrix
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    name: iOS
+    if: github.event_name != 'schedule'
+    # A called workflow can only lower the permissions its caller grants.
+    permissions:
+      contents: read
+    uses: $/.github/workflows/e2e-ios.yml
+    with:
+      role: blocking
+
+  android:
+    name: Android
+    if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+    uses: $/.github/workflows/e2e-android.yml
+    with:
+      role: blocking
+
+  floor-ios:
+    name: iOS floor
+    if: github.event_name == 'schedule' || inputs.include-floor
+    permissions:
+      contents: read
+    uses: $/.github/workflows/e2e-ios.yml
+    with:
+      role: floor
+
+  floor-android:
+    name: Android floor
+    if: github.event_name == 'schedule' || inputs.include-floor
+    permissions:
+      contents: read
+    uses: $/.github/workflows/e2e-android.yml
+    with:
+      role: floor
+
+  e2e-result:
+    name: e2e-result
+    needs: [ios, android]
+    # Runs even when a cell fails or a job is cancelled. GitHub reports a skipped job as a success, so
+    # this job fails unless both platforms succeeded: skipped and cancelled count as failures.
+    # The nightly run has only the floor cells, which never block a merge.
+    if: always() && github.event_name != 'schedule'
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Check the results
+        env:
+          IOS: ${{ needs.ios.result }}
+          ANDROID: ${{ needs.android.result }}
+        run: |
+          echo "iOS: $IOS"
+          echo "Android: $ANDROID"
+          if [ "$IOS" != success ] || [ "$ANDROID" != success ]; then
+            echo "Every blocking cell must pass on iOS and Android." >&2
+            exit 1
+          fi

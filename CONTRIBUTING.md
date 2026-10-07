@@ -79,6 +79,16 @@ again to compare.
 On iOS a flow can't find text inside a WebView, so the flows tap the native views that hold the DOM components
 and check the results in native text and screenshots. On Android they also check the text of the pages.
 
+### In CI
+
+The [E2E workflow](./.github/workflows/e2e.yml) runs every cell of `e2e/matrix.json` whose role is `blocking` on
+iOS and Android, on each pull request and push to `main`. Its `e2e-result` job passes only when all of them pass,
+and it is the status check that branch protection requires on `main`. The other job names follow the matrix, so
+adding or removing a cell needs no change to branch protection.
+
+The floor cell (role `floor`) runs every night, or by hand from Actions → E2E → Run workflow with
+**include-floor** checked. Its failure marks that run red and blocks nothing.
+
 ## Example apps
 
 `e2e/matrix.json` lists the React Native versions the examples cover (`pnpm e2e:matrix` rewrites it), and each

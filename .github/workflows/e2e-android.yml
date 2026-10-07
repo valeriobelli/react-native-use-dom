@@ -25,10 +25,6 @@ on:
         description: Write new screenshot baselines on this runner and upload them, instead of comparing
         type: boolean
         default: false
-  # Temporary: runs the workflow on its own pull request until the e2e workflow calls it (#26).
-  pull_request:
-    paths:
-      - .github/workflows/e2e-android.yml
 
 permissions: {}
 
