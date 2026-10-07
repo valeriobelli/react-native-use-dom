@@ -118,6 +118,7 @@ jobs:
 
       # The action shuts the emulator down when this step ends, so the installs and both flow runs
       # happen in its script. Each line runs in its own shell.
+      # Expo serves the app's entry from the workspace root, so its bundle path starts with the app's folder.
       - name: Run the release and dev flows
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         env:
@@ -139,7 +140,7 @@ jobs:
             nohup pnpm --dir "$CELL_FOLDER" start > metro.log 2>&1 &
             for i in $(seq 60); do curl -sf http://localhost:8081/status | grep -q running && break; sleep 2; done; curl -sf http://localhost:8081/status | grep -q running
             adb reverse tcp:8081 tcp:8081
-            curl -sf --max-time 600 -o /dev/null "http://localhost:8081/index.bundle?platform=android&dev=true&minify=false"
+            root=$(case "$CELL_ID" in expo-*) echo "$CELL_FOLDER/" ;; esac); curl -sf --max-time 600 -o /dev/null "http://localhost:8081/${root}index.bundle?platform=android&dev=true&minify=false"
             for c in Note Greeting Lines; do curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" --data-urlencode "dev=true" --data-urlencode "platform=web" --data-urlencode "transform.dom=$GITHUB_WORKSPACE/e2e/example-app/src/$c.tsx"; done
             adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/debug/app-debug.apk"
             pnpm e2e "$CELL_ID" dev --device emulator-5554 --output e2e-output $UPDATE_BASELINES
