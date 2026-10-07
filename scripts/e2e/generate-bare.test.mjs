@@ -170,6 +170,7 @@ test('a new folder is wired to the shared example app', () => {
 	generateBare({
 		addToProject: () => {},
 		cells: [created],
+		hermesCompilerOf: () => null,
 		root,
 		runInit: fakeInit,
 	})
@@ -187,7 +188,7 @@ test('a new folder is wired to the shared example app', () => {
 })
 
 test('a second run changes nothing, and a patch release only changes package.json', () => {
-	const options = { addToProject: () => {}, root, runInit: fakeInit }
+	const options = { addToProject: () => {}, hermesCompilerOf: () => null, root, runInit: fakeInit }
 	const first = cell('bare-0.86', '0.86.3')
 	const second = cell('bare-0.87', '0.87.1')
 
@@ -215,7 +216,7 @@ test('a second run changes nothing, and a patch release only changes package.jso
 })
 
 test('a folder that left the matrix is deleted, except the floor', () => {
-	const options = { addToProject: () => {}, root, runInit: fakeInit }
+	const options = { addToProject: () => {}, hermesCompilerOf: () => null, root, runInit: fakeInit }
 
 	generateBare({ ...options, cells: [cell('bare-0.84', '0.84.9'), cell('bare-0.81', '0.81.6', 'floor')] })
 	/** @type {string[]} */

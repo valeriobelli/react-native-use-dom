@@ -37,6 +37,18 @@ try {
 			})
 		},
 		cells,
+		hermesCompilerOf: (cell) => {
+			const version = execFileSync(
+				'npm',
+				['view', `react-native@${cell.reactNative}`, 'dependencies.hermes-compiler'],
+				{
+					cwd: REPOSITORY_ROOT,
+					encoding: 'utf8',
+				},
+			).trim()
+
+			return version === '' ? null : version
+		},
 		log: (message) => {
 			process.stdout.write(`${message}\n`)
 		},
