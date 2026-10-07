@@ -2,8 +2,9 @@
 # browser then covers the app, so the flow goes back to it before reading its status: with the
 # back button on Android, and with the "back to the app" link of the status bar on iOS (it is not
 # in the accessibility tree, hence the coordinates). That link exists only once Safari is in front,
-# which a cold Safari on a runner takes longer than a fixed wait to be, so the flow waits for the
-# address bar of Safari first.
+# and a cold Safari on a runner can take a few seconds. The flow cannot await anything meanwhile:
+# iOS suspends the app once Safari covers it, and Argent reads the tree of the app it launched, so
+# every read times out. It waits instead.
 executionPrerequisite: The example app has just launched.
 steps:
   - echo: Leaving the page is blocked and reported to the app
@@ -16,7 +17,7 @@ steps:
         args: { button: back }
   - when: { platform: ios }
     steps:
-      - await: { visible: { id: TabBarItemTitle }, timeout: 30000 }
+      - wait: 6000
       - tool: gesture-tap
         args: { x: 0.1, y: 0.047 }
   - await: { visible: { text: Opened https://reactnative.dev/ outside the DOM component } }
