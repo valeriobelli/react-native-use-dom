@@ -59,10 +59,6 @@ apply plugin: "org.jetbrains.kotlin.android"
 apply from: "../nitrogen/generated/android/ReactNativeUseDom+autolinking.gradle"
 apply from: "./fix-prefab.gradle"
 
-if (isNewArchitectureEnabled()) {
-  apply plugin: "com.facebook.react"
-}
-
 android {
   namespace "com.margelo.nitro.usedom"
 
@@ -138,16 +134,6 @@ android {
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_1_8
     targetCompatibility JavaVersion.VERSION_1_8
-  }
-
-  sourceSets {
-    main {
-      if (isNewArchitectureEnabled()) {
-        java.srcDirs += [
-          "${project.buildDir}/generated/source/codegen/java"
-        ]
-      }
-    }
   }
 }
 
