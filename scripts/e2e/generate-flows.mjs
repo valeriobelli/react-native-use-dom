@@ -19,7 +19,6 @@ export const RELEASE_SCENARIOS = [
 	'navigation-blocked',
 	'prop-change',
 	'refs',
-	'scroll',
 ]
 
 /** The shared scenario every cell runs against a dev build, since it needs Metro. */

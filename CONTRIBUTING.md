@@ -44,17 +44,17 @@ the two differ.
 
 [`.argent/flows`](./.argent/flows) holds [Argent](https://github.com/software-mansion/argent) flows that drive
 each example app on a simulator or emulator. They cover the first render, native actions, prop changes, refs, a
-blocked navigation, scrolling and Fast Refresh, and compare screenshots of the DOM components with the baselines in
+blocked navigation and Fast Refresh, and compare screenshots of the DOM components with the baselines in
 `__baselines__`.
 
 Each example app has its own directory, `.argent/flows/<app>`, named after the example (`bare-0.87`, `expo-57`).
 It splits the flows by the build they need. Every flow is a small wrapper, `<slug>-<scenario>.yaml`, that launches
 the app and runs the scenario in `.argent/flows/shared`.
 
-| Directory                      | Scenarios                                                                     | Build                               |
-| ------------------------------ | ----------------------------------------------------------------------------- | ----------------------------------- |
-| `.argent/flows/<app>/release/` | first-render, prop-change, refs, scroll, native-action and navigation-blocked | A Release build, with no dev server |
-| `.argent/flows/<app>/dev/`     | fast-refresh                                                                  | A Debug build, with the dev server  |
+| Directory                      | Scenarios                                                             | Build                               |
+| ------------------------------ | --------------------------------------------------------------------- | ----------------------------------- |
+| `.argent/flows/<app>/release/` | first-render, prop-change, refs, native-action and navigation-blocked | A Release build, with no dev server |
+| `.argent/flows/<app>/dev/`     | fast-refresh                                                          | A Debug build, with the dev server  |
 
 The Debug build loads from the example's own dev server, on port 8081, so run one example at a time: start its
 dev server and install its app as its README says. Then, from the repository root, run one directory:
