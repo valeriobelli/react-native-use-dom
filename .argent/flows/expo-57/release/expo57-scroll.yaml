@@ -1,3 +1,0 @@
-steps:
-  - launch: { ios: dev.reactnativeusedom.expo57, android: dev.reactnativeusedom.expo57 }
-  - run: ../../shared/scroll
