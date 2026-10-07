@@ -138,6 +138,7 @@ test('the generator patches the existing folders that lack a scene delegate and 
 	generateBare({
 		addToProject: () => {},
 		cells: [old, current],
+		hermesCompilerOf: () => null,
 		log: (message) => {
 			logged.push(message)
 		},

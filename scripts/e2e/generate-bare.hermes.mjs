@@ -1,42 +1,49 @@
 /**
- * The Release build of a bare example needs to be told where `hermesc` is: a pnpm workspace installs
- * `hermes-compiler` next to react-native, not where the template's Gradle plugin looks for it.
+ * The Release build of a bare example compiles its bundle with `hermesc`, which React Native's Gradle
+ * plugin looks for in the app's own `node_modules/hermes-compiler`. A pnpm workspace installs
+ * `hermes-compiler` next to react-native instead, so each example names it as a dependency: pnpm then
+ * links it where the plugin looks, and the template's Gradle files stay as they are.
  */
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
-/** The line the template leaves commented out, which the next one replaces. */
-const HERMES_COMMAND_TEMPLATE = '    // hermesCommand = "$rootDir/my-custom-hermesc/bin/hermesc"\n'
-
-/** Tells where `hermesc` is, which a pnpm workspace does not put where React Native looks for it. */
-const HERMES_COMMAND = `${HERMES_COMMAND_TEMPLATE}    //   pnpm installs hermes-compiler next to react-native rather than in the app's node_modules,
-    //   where React Native looks for it.
-    hermesCommand = new File(["node", "--print", "require.resolve('hermes-compiler/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParent() + "/hermesc/%OS-BIN%/hermesc"
-`
+/** The package that holds `hermesc`. */
+const HERMES_COMPILER = 'hermes-compiler'
 
 /**
- * Points the Release build of a cell at the `hermesc` that pnpm installed. Without it the bundle
- * task fails with "Couldn't determine Hermesc location".
+ * Pins the `hermes-compiler` an example's `package.json` names to the one its React Native depends on.
  *
  * @param {string} root the repository root
  * @param {import('./matrix.mjs').MatrixCell} cell
+ * @param {string | null} version the `hermes-compiler` version of the cell's React Native, or `null`
+ * when that version ships `hermesc` itself and depends on no such package
  * @returns {boolean} whether the file changed
  */
-export function applyHermesCommand(root, cell) {
-	const file = path.join(root, cell.folder, 'android', 'app', 'build.gradle')
+export function pinHermesCompiler(root, cell, version) {
+	const file = path.join(root, cell.folder, 'package.json')
 
 	if (!existsSync(file)) {
 		return false
 	}
 
-	const gradle = readFileSync(file, 'utf8')
+	const manifest =
+		/** @type {{ devDependencies?: Record<string, string> }} */
+		(JSON.parse(readFileSync(file, 'utf8')))
 
-	if (gradle.includes('hermesCommand = new File') || !gradle.includes(HERMES_COMMAND_TEMPLATE)) {
+	const { [HERMES_COMPILER]: current, ...others } = manifest.devDependencies ?? {}
+
+	if (current === (version ?? undefined)) {
 		return false
 	}
 
-	writeFileSync(file, gradle.replace(HERMES_COMMAND_TEMPLATE, HERMES_COMMAND))
+	const devDependencies = Object.fromEntries(
+		Object.entries(version === null ? others : { ...others, [HERMES_COMPILER]: version }).sort(([left], [right]) =>
+			left.localeCompare(right, 'en'),
+		),
+	)
+
+	writeFileSync(file, `${JSON.stringify({ ...manifest, devDependencies }, null, '\t')}\n`)
 
 	return true
 }

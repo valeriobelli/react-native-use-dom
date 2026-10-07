@@ -29,6 +29,7 @@
 		"@react-native/metro-config": "0.87.1",
 		"@react-native/typescript-config": "0.87.1",
 		"@types/react": "19.3.0",
+		"hermes-compiler": "250829098.0.17",
 		"typescript": "7.0.2"
 	},
 	"engines": {

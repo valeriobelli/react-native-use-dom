@@ -4,26 +4,53 @@ import path from 'node:path'
 
 import { expect, test } from '@jest/globals'
 
-import { applyHermesCommand } from './generate-bare.hermes.mjs'
+import { pinHermesCompiler } from './generate-bare.hermes.mjs'
 
-test('applyHermesCommand points the Release build at the hermesc pnpm installed, once', () => {
+const target = /** @type {import('./matrix.mjs').MatrixCell} */ (
+	/** @type {unknown} */ ({ folder: 'examples/bare-0.99' })
+)
+
+/**
+ * @param {(root: string, read: () => { devDependencies: Record<string, string> }) => void} check
+ */
+function withExample(check) {
 	const root = mkdtempSync(path.join(tmpdir(), 'hermes-'))
-	const app = path.join(root, 'examples', 'bare-0.99', 'android', 'app')
 
 	try {
-		mkdirSync(app, { recursive: true })
+		mkdirSync(path.join(root, target.folder), { recursive: true })
 
 		writeFileSync(
-			path.join(app, 'build.gradle'),
-			'react {\n    // hermesCommand = "$rootDir/my-custom-hermesc/bin/hermesc"\n}\n',
+			path.join(root, target.folder, 'package.json'),
+			JSON.stringify({ devDependencies: { '@react-native/babel-preset': '0.99.0' } }),
 		)
 
-		const target = { folder: 'examples/bare-0.99' }
-
-		expect(applyHermesCommand(root, target)).toBe(true)
-		expect(readFileSync(path.join(app, 'build.gradle'), 'utf8')).toContain('    hermesCommand = new File(')
-		expect(applyHermesCommand(root, target)).toBe(false)
+		check(root, () => JSON.parse(readFileSync(path.join(root, target.folder, 'package.json'), 'utf8')))
 	} finally {
 		rmSync(root, { force: true, recursive: true })
 	}
+}
+
+test('pinHermesCompiler names the version react-native depends on, once, and keeps the keys sorted', () => {
+	withExample((root, read) => {
+		expect(pinHermesCompiler(root, target, '250829098.0.17')).toBe(true)
+
+		expect(read().devDependencies).toEqual({
+			'@react-native/babel-preset': '0.99.0',
+			'hermes-compiler': '250829098.0.17',
+		})
+		expect(Object.keys(read().devDependencies)).toEqual(['@react-native/babel-preset', 'hermes-compiler'])
+		expect(pinHermesCompiler(root, target, '250829098.0.17')).toBe(false)
+		expect(pinHermesCompiler(root, target, '260318099.0.4')).toBe(true)
+		expect(read().devDependencies['hermes-compiler']).toBe('260318099.0.4')
+	})
+})
+
+test('pinHermesCompiler removes the package when the react-native version ships hermesc itself', () => {
+	withExample((root, read) => {
+		pinHermesCompiler(root, target, '250829098.0.17')
+
+		expect(pinHermesCompiler(root, target, null)).toBe(true)
+		expect(read().devDependencies).toEqual({ '@react-native/babel-preset': '0.99.0' })
+		expect(pinHermesCompiler(root, target, null)).toBe(false)
+	})
 })
