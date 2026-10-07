@@ -206,11 +206,12 @@ jobs:
         # So does the web bundle of each DOM component: a second Metro instance starts on its first
         # request, and a web view that waits for it shows nothing for longer than the flows wait.
         # Expo serves the app's entry from the workspace root, so its bundle path starts with the
-        # app's folder.
+        # app's folder. A Debug app asks for a lazy bundle, and Metro builds a separate graph for
+        # each value of `lazy`, so the warm-up asks for one too.
         run: |
           root=""
           if [ "$CELL_KIND" = expo ]; then root="$CELL_FOLDER/"; fi
-          curl -sf --max-time 600 -o /dev/null "http://localhost:8081/${root}index.bundle?platform=ios&dev=true&minify=false"
+          curl -sf --max-time 600 -o /dev/null "http://localhost:8081/${root}index.bundle?platform=ios&dev=true&lazy=true&minify=false"
           for component in Note Greeting Lines; do
             curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" \
               --data-urlencode "dev=true" \
@@ -231,6 +232,12 @@ jobs:
           name: e2e-ios-${{ matrix.cell.id }}-baselines
           path: .argent/flows/${{ matrix.cell.id }}/*/__baselines__
 
+      - name: Capture the screen
+        # What the simulator shows when a flow fails: a flow's error names the step, not the screen.
+        if: failure() && env.UDID
+        run: |
+          mkdir -p e2e-output
+          xcrun simctl io "$UDID" screenshot e2e-output/screen-on-failure.png || true
       - name: Upload the logs and flow output
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
