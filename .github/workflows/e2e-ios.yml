@@ -205,8 +205,12 @@ jobs:
         # The first bundle takes longer than a flow waits for the app to render, so Metro builds it now.
         # So does the web bundle of each DOM component: a second Metro instance starts on its first
         # request, and a web view that waits for it shows nothing for longer than the flows wait.
+        # Expo serves the app's entry from the workspace root, so its bundle path starts with the
+        # app's folder.
         run: |
-          curl -sf --max-time 600 -o /dev/null "http://localhost:8081/index.bundle?platform=ios&dev=true&minify=false"
+          root=""
+          if [ "$CELL_KIND" = expo ]; then root="$CELL_FOLDER/"; fi
+          curl -sf --max-time 600 -o /dev/null "http://localhost:8081/${root}index.bundle?platform=ios&dev=true&minify=false"
           for component in Note Greeting Lines; do
             curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" \
               --data-urlencode "dev=true" \
