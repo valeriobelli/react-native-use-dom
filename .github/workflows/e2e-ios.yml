@@ -82,6 +82,11 @@ jobs:
       CELL_APP: ${{ matrix.cell.appName }}
       CELL_KIND: ${{ matrix.cell.kind }}
       CELL_XCODE: ${{ matrix.cell.ios.xcode }}
+    defaults:
+      run:
+        # Unlike the default shell, `bash` sets `pipefail`, so a build that fails behind `| tee` fails its
+        # step: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepsshell
+        shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -205,13 +210,13 @@ jobs:
         # The first bundle takes longer than a flow waits for the app to render, so Metro builds it now.
         # So does the web bundle of each DOM component: a second Metro instance starts on its first
         # request, and a web view that waits for it shows nothing for longer than the flows wait.
-        # Expo serves the app's entry from the workspace root, so its bundle path starts with the
-        # app's folder. A Debug app asks for a lazy bundle, and Metro builds a separate graph for
-        # each value of `lazy`, so the warm-up asks for one too.
+        # Metro builds a separate graph for each entry and set of transform options, so the warm-up
+        # asks for the bundle the Debug app asks for: a lazy one, and on Expo the virtual entry, which
+        # the dev server rewrites with the Hermes transform options the app's bundle is built with.
         run: |
-          root=""
-          if [ "$CELL_KIND" = expo ]; then root="$CELL_FOLDER/"; fi
-          curl -sf --max-time 600 -o /dev/null "http://localhost:8081/${root}index.bundle?platform=ios&dev=true&lazy=true&minify=false"
+          entry=index
+          if [ "$CELL_KIND" = expo ]; then entry=.expo/.virtual-metro-entry; fi
+          curl -sf --max-time 600 -o /dev/null "http://localhost:8081/$entry.bundle?platform=ios&dev=true&lazy=true&minify=false"
           for component in Note Greeting Lines; do
             curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" \
               --data-urlencode "dev=true" \
