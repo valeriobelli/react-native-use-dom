@@ -5,8 +5,8 @@
 executionPrerequisite: The example app has just launched.
 steps:
   # A Debug build loads its JavaScript from Metro as it launches, which takes a runner longer than the
-  # default wait.
-  - await: { visible: { id: first-greeting }, timeout: 30000 }
+  # default wait: on expo-56's macos-26 runner, more than 30 seconds.
+  - await: { visible: { id: first-greeting }, timeout: 60000 }
   - await: { visible: { id: lines }, timeout: 30000 }
   # The note has no height until its page has measured itself, so it only becomes visible then. That is
   # the one signal iOS flows get that a web view has loaded, and it moves the elements under it. On a busy
