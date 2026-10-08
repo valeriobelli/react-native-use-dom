@@ -114,15 +114,19 @@ jobs:
         # The flow runner spawns the server itself and gives it 15 seconds to answer. Once the builds and
         # the simulator run, this runner is too busy for that (`node --version` alone took 35 seconds), so
         # the server starts first, while it is idle, and the flows reuse it.
+        # `--detach` gives the server the same 15 seconds and kills it after them, which a macos-26 runner
+        # has exceeded even here. In the foreground the CLI records the server at once and waits for it
+        # without a limit, so it runs in the background and the loop waits for it to answer.
+        # `server status` exits 0 even when the server does not answer: its JSON says whether it runs.
         run: |
-          pnpm exec argent server start --detach
+          nohup pnpm exec argent server start > "$RUNNER_TEMP/argent-server.log" 2>&1 &
           for _ in $(seq 1 60); do
-            if pnpm exec argent server status; then
+            if pnpm exec argent server status --json | grep -q '"running": true'; then
               exit 0
             fi
             sleep 2
           done
-          pnpm exec argent server logs >&2 || true
+          cat "$RUNNER_TEMP/argent-server.log" >&2 || true
           echo "The Argent tools server did not start." >&2
           exit 1
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
