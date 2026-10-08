@@ -39,9 +39,22 @@ const SHARED_DIRECTORY = 'shared'
  * @returns {string}
  */
 export function wrapper(cell, scenario) {
-	return `steps:
+	const launch = `steps:
   - launch: { ios: ${cell.bundleId}, android: ${cell.bundleId} }
   - run: ../../shared/${scenario}
+`
+
+	if (scenario !== 'navigation-blocked') {
+		return launch
+	}
+
+	// On iOS the scenario leaves the app behind the browser, and only a flow that knows the bundle id
+	// can bring it back: `launch-app` puts a running app in front without terminating it.
+	return `${launch}  - when: { platform: ios }
+    steps:
+      - tool: launch-app
+        args: { bundleId: ${cell.bundleId} }
+  - run: ../../shared/navigation-reported
 `
 }
 

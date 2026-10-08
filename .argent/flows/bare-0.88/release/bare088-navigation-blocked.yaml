@@ -1,3 +1,8 @@
 steps:
   - launch: { ios: dev.reactnativeusedom.bare088, android: dev.reactnativeusedom.bare088 }
   - run: ../../shared/navigation-blocked
+  - when: { platform: ios }
+    steps:
+      - tool: launch-app
+        args: { bundleId: dev.reactnativeusedom.bare088 }
+  - run: ../../shared/navigation-reported

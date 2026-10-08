@@ -1,0 +1,4 @@
+# The second half of `navigation-blocked`: the app reports the link it opened outside the page.
+executionPrerequisite: The example app is back in front after navigation-blocked opened the browser.
+steps:
+  - await: { visible: { text: Opened https://reactnative.dev/ outside the DOM component } }

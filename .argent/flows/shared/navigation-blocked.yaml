@@ -1,9 +1,9 @@
 # A link that leaves the page is not followed in it: the app is told, and opens it itself. The
-# browser then covers the app, so the flow goes back to it before reading its status: with the
-# back button on Android, and with the "back to the app" link of the status bar on iOS (it is not
-# in the accessibility tree, hence the coordinates). That link exists only once Safari is in front,
-# and a cold Safari on a runner can take a few seconds. The flow cannot await anything meanwhile:
-# iOS suspends the app once Safari covers it, and Argent reads the tree of the app it launched, so
+# browser then covers the app. On Android the flow goes back to it with the back button. On iOS a
+# flow cannot name the app, so the wrapper brings it back with `launch-app` and then runs
+# `navigation-reported`. The browser has to be in front by then, or it covers the app again, and a
+# cold Safari on a runner can take a few seconds. The flow cannot await anything meanwhile: iOS
+# suspends the app once Safari covers it, and Argent reads the tree of the app it launched, so
 # every read times out. It waits instead.
 executionPrerequisite: The example app has just launched.
 steps:
@@ -18,6 +18,3 @@ steps:
   - when: { platform: ios }
     steps:
       - wait: 6000
-      - tool: gesture-tap
-        args: { x: 0.1, y: 0.047 }
-  - await: { visible: { text: Opened https://reactnative.dev/ outside the DOM component } }
