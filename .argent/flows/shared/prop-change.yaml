@@ -17,7 +17,8 @@ steps:
   - when: { platform: android }
     steps:
       - await: { visible: { text: 'Hello, Metro. Clicked 1 times.' } }
-  - await: { idle: true }
+  # A busy runner can take more than the default 7.5 seconds to answer a read of the screen.
+  - await: { idle: true, timeout: 30000 }
   - snapshot: { name: first-greeting-renamed, cropOn: { id: first-greeting } }
   - tap: { id: first-greeting }
   - wait: 6000

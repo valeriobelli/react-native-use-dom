@@ -25,7 +25,8 @@ steps:
     steps:
       - await: { visible: { text: 'Pressed 2 times.' }, timeout: 15000 }
   - wait: 3000
-  - await: { idle: true, stableFor: 500 }
+  # A busy runner can take more than the default 7.5 seconds to answer a read of the screen.
+  - await: { idle: true, stableFor: 500, timeout: 30000 }
   - snapshot: { name: first-greeting-refreshed, cropOn: { id: first-greeting } }
   - tap: { id: first-greeting }
   - wait: 6000
