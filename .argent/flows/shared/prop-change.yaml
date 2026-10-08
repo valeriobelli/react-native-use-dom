@@ -5,8 +5,9 @@ steps:
   - run: ready
   - tap: { id: first-greeting }
   # A slow runner can lose a tap on a web view, and a flow can't retry an await: each tap on one is
-  # repeated when its answer has not come.
-  - wait: 2500
+  # repeated when its answer has not come. A Debug build has answered after more than 2.5 seconds, and
+  # a second tap then counted twice.
+  - wait: 6000
   - when: { hidden: { text: The first greeting reported 1 clicks } }
     steps:
       - tap: { id: first-greeting }
@@ -19,7 +20,7 @@ steps:
   - await: { idle: true }
   - snapshot: { name: first-greeting-renamed, cropOn: { id: first-greeting } }
   - tap: { id: first-greeting }
-  - wait: 2500
+  - wait: 6000
   - when: { hidden: { text: The first greeting reported 2 clicks } }
     steps:
       - tap: { id: first-greeting }
