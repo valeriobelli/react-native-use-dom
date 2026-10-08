@@ -6,14 +6,18 @@ steps:
   - script: { path: ../../scripts/restore-greeting.mjs }
   - run: ready
   - tap: { id: first-greeting }
-  # The first tap on a slow runner can still be lost, and a flow can't retry an await: tap again
-  # when the answer has not come.
+  # A slow runner can lose a tap on a web view, and a flow can't retry an await: each tap on one is
+  # repeated when its answer has not come.
   - wait: 2500
   - when: { hidden: { text: The first greeting reported 1 clicks } }
     steps:
       - tap: { id: first-greeting }
   - await: { visible: { text: The first greeting reported 1 clicks }, timeout: 15000 }
   - tap: { id: first-greeting }
+  - wait: 2500
+  - when: { hidden: { text: The first greeting reported 2 clicks } }
+    steps:
+      - tap: { id: first-greeting }
   - await: { visible: { text: The first greeting reported 2 clicks }, timeout: 15000 }
   - script: { path: ../../scripts/edit-greeting.mjs }
   - when: { platform: android }
@@ -23,5 +27,9 @@ steps:
   - await: { idle: true, stableFor: 500 }
   - snapshot: { name: first-greeting-refreshed, cropOn: { id: first-greeting } }
   - tap: { id: first-greeting }
+  - wait: 2500
+  - when: { hidden: { text: The first greeting reported 3 clicks } }
+    steps:
+      - tap: { id: first-greeting }
   - await: { visible: { text: The first greeting reported 3 clicks } }
   - script: { path: ../../scripts/restore-greeting.mjs }

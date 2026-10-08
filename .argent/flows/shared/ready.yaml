@@ -9,8 +9,9 @@ steps:
   - await: { visible: { id: first-greeting }, timeout: 30000 }
   - await: { visible: { id: lines }, timeout: 30000 }
   # The note has no height until its page has measured itself, so it only becomes visible then. That is
-  # the one signal iOS flows get that a web view has loaded, and it moves the elements under it.
-  - await: { visible: { id: note }, timeout: 30000 }
+  # the one signal iOS flows get that a web view has loaded, and it moves the elements under it. On a busy
+  # runner the note has stayed without a height for more than 30 seconds.
+  - await: { visible: { id: note }, timeout: 60000 }
   - when: { platform: android }
     steps:
       - await: { visible: { text: This note is a DOM component }, timeout: 15000 }
