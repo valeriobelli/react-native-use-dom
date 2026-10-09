@@ -180,6 +180,19 @@ jobs:
           echo "UDID=$UDID" >> "$GITHUB_ENV"
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID"
+          # A new simulator is still busy after it reports booted. Argent sets up each launch with
+          # `simctl spawn … launchctl` and gives the call 10 seconds; right after a boot it has run out
+          # of them twice and failed the first flow. The flows start once such a call answers in 5.
+          for _ in $(seq 1 60); do
+            start=$SECONDS
+            xcrun simctl spawn "$UDID" launchctl list > /dev/null || true
+            if [ $((SECONDS - start)) -lt 5 ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "The simulator still takes 5 seconds or more to answer \`simctl spawn\`." >&2
+          exit 1
 
       - name: Install the Release build
         run: xcrun simctl install "$UDID" "$CELL_FOLDER/build/Build/Products/Release-iphonesimulator/$CELL_APP.app"
