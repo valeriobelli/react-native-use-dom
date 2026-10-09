@@ -119,14 +119,13 @@ jobs:
         # without a limit, so it runs in the background and the loop waits for it to answer.
         # `server status` exits 0 even when the server does not answer: its JSON says whether it runs.
         run: |
-          nohup pnpm exec argent server start > "$RUNNER_TEMP/argent-server.log" 2>&1 &
+          nohup pnpm exec argent server start > /dev/null 2>&1 &
           for _ in $(seq 1 60); do
             if pnpm exec argent server status --json | grep -q '"running": true'; then
               exit 0
             fi
             sleep 2
           done
-          cat "$RUNNER_TEMP/argent-server.log" >&2 || true
           echo "The Argent tools server did not start." >&2
           exit 1
       - name: Create and boot the simulator
@@ -142,7 +141,7 @@ jobs:
           fi
           UDID=$(xcrun simctl create e2e "iPhone 17" "$RUNTIME")
           echo "UDID=$UDID" >> "$GITHUB_ENV"
-          nohup xcrun simctl boot "$UDID" > "$RUNNER_TEMP/simctl-boot.log" 2>&1 &
+          nohup xcrun simctl boot "$UDID" > /dev/null 2>&1 &
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: '3.4'
@@ -198,9 +197,6 @@ jobs:
           done
           echo "The simulator still takes 5 seconds or more to answer \`simctl spawn\`." >&2
           exit 1
-      - name: Record the load of the runner
-        # A flow that fails on a busy runner names the step, not what kept the runner busy.
-        run: nohup top -l 0 -s 10 -o cpu -n 12 -stats pid,command,cpu,mem,state > runner-load.log 2>&1 &
 
       - name: Install the Release build
         run: xcrun simctl install "$UDID" "$CELL_FOLDER/build/Build/Products/Release-iphonesimulator/$CELL_APP.app"
@@ -262,12 +258,6 @@ jobs:
           name: e2e-ios-${{ matrix.cell.id }}-baselines
           path: .argent/flows/${{ matrix.cell.id }}/*/__baselines__
 
-      - name: Capture the screen
-        # What the simulator shows when a flow fails: a flow's error names the step, not the screen.
-        if: failure() && env.UDID
-        run: |
-          mkdir -p e2e-output
-          xcrun simctl io "$UDID" screenshot e2e-output/screen-on-failure.png || true
       - name: Upload the logs and flow output
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -276,8 +266,6 @@ jobs:
           path: |
             e2e-output
             metro.log
-            runner-load.log
-            ${{ runner.temp }}/simctl-boot.log
             xcodebuild-release.log
             xcodebuild-debug.log
             ~/.argent/tool-server.log
