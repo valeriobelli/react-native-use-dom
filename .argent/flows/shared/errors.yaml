@@ -8,6 +8,10 @@ executionPrerequisite: The example app has just launched.
 steps:
   - echo: Each runtime error shows its code in native text
   - run: ready
+  # On expo-56's macos-26 runner the app has stopped answering for seconds after the first screen
+  # settled. A tap reads the screen within 3 seconds and fails, while an await reads it again until
+  # its timeout, so the tap only comes once the app answers.
+  - await: { visible: { id: open-errors }, timeout: 30000 }
   - tap: { id: open-errors }
   - await: { visible: { id: error-non-serializable-prop }, timeout: 15000 }
   # The screen mounts the web views of its cases as it opens. Like the first screen (see ready), a busy
