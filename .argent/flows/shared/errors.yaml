@@ -10,6 +10,11 @@ steps:
   - run: ready
   - tap: { id: open-errors }
   - await: { visible: { id: error-non-serializable-prop }, timeout: 15000 }
+  # The screen mounts the web views of its cases as it opens. Like the first screen (see ready), a busy
+  # runner has lost a first tap and its repeat 2.5 seconds later while they loaded, so nothing is
+  # tapped before the screen settles.
+  - await: { idle: true, stableFor: 1000, timeout: 30000 }
+  - wait: 5000
   - scroll-to: { target: { id: error-non-serializable-prop } }
   - tap: { id: error-non-serializable-prop }
   - wait: 2500
