@@ -41,6 +41,20 @@ test('a bare cell gets six release wrappers and one dev wrapper', () => {
 	)
 })
 
+test('the navigation-blocked wrapper brings its own app back on iOS before reading the report', () => {
+	expect(planCell(bare).get('bare-0.87/release/bare087-navigation-blocked.yaml')).toBe(
+		`steps:
+  - launch: { ios: dev.reactnativeusedom.bare087, android: dev.reactnativeusedom.bare087 }
+  - run: ../../shared/navigation-blocked
+  - when: { platform: ios }
+    steps:
+      - tool: launch-app
+        args: { bundleId: dev.reactnativeusedom.bare087 }
+  - run: ../../shared/navigation-reported
+`,
+	)
+})
+
 test('an Expo cell gets its own bundle id and slug', () => {
 	const files = planCell(expo)
 

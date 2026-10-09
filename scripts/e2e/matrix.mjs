@@ -37,7 +37,8 @@ const BUNDLE_ID_PREFIX = 'dev.reactnativeusedom.'
  * @property {string | null} expo the expo version an Expo cell pins
  * @property {string} folder the example's folder, under `examples/`
  * @property {string} id the cell's id, `bare-0.87` or `expo-57`
- * @property {{ runner: string }} ios the GitHub runner its iOS cell builds on
+ * @property {{ runner: string, xcode?: string }} ios the GitHub runner its iOS cell builds on, and the
+ * Xcode version it selects there when the runner's default cannot build it
  * @property {string} kind `bare` or `expo`
  * @property {string} reactNative the react-native version the cell pins
  * @property {string} role `blocking`, or `floor` for the peer-range floor
@@ -191,7 +192,7 @@ function expoCells(sources, supportOf) {
 			expo: expoVersion,
 			folder: `examples/${id}`,
 			id,
-			ios: { runner: iosRunner(id, Number(sdk) <= LAST_SCENELESS_SDK, sources.overrides) },
+			ios: iosCell(id, Number(sdk) <= LAST_SCENELESS_SDK, sources.overrides),
 			kind: 'expo',
 			reactNative,
 			role: 'blocking',
@@ -224,7 +225,7 @@ function bareCell(minor, support, reactNative, overrides) {
 		expo: null,
 		folder: `examples/${id}`,
 		id,
-		ios: { runner: iosRunner(id, false, overrides) },
+		ios: iosCell(id, false, overrides),
 		kind: 'bare',
 		reactNative,
 		role: 'blocking',
@@ -234,18 +235,22 @@ function bareCell(minor, support, reactNative, overrides) {
 }
 
 /**
- * The runner an iOS cell uses: Xcode 27, unless the cell cannot adopt the UIKit scene life cycle
- * and therefore builds with Xcode 26. Overrides win over both.
+ * How an iOS cell builds: the runner, Xcode 27 unless the cell cannot adopt the UIKit scene life
+ * cycle and therefore builds with Xcode 26, and the Xcode version to select on it. The version is
+ * only present for a cell whose runner's default Xcode cannot build it. Overrides win over both.
  *
  * @param {string} id
  * @param {boolean} sceneless
  * @param {Record<string, import('./sources.mjs').CellOverrides>} overrides
- * @returns {string}
+ * @returns {{ runner: string, xcode?: string }}
  */
-function iosRunner(id, sceneless, overrides) {
-	const override = overrides[id]?.ios?.runner
+function iosCell(id, sceneless, overrides) {
+	const override = overrides[id]?.ios
 
-	return override ?? (sceneless ? 'macos-26' : 'xcode-27')
+	return {
+		runner: override?.runner ?? (sceneless ? 'macos-26' : 'xcode-27'),
+		...(override?.xcode === undefined ? {} : { xcode: override.xcode }),
+	}
 }
 
 /**

@@ -2,8 +2,18 @@ name: E2E iOS
 
 on:
   workflow_call:
+    inputs:
+      role:
+        description: 'The cells to run: `blocking` for the ones that gate merges, `floor` for the peer-range floor'
+        type: string
+        default: blocking
   workflow_dispatch:
     inputs:
+      role:
+        description: 'The cells to run: `blocking` for the ones that gate merges, `floor` for the peer-range floor'
+        type: choice
+        options: [blocking, floor]
+        default: blocking
       update-baselines:
         description: Write new screenshot baselines on this runner and upload them, instead of comparing
         type: boolean
@@ -20,84 +30,187 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  bare-0-87:
-    name: bare-0.87 on xcode-27
-    runs-on: xcode-27
-    timeout-minutes: 60
+  cells:
+    name: Read the cells of the matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
+    outputs:
+      cells: ${{ steps.cells.outputs.cells }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          sparse-checkout: e2e/matrix.json
+      - name: Select the cells
+        id: cells
+        env:
+          # A pull request has no inputs, and runs the cells that block merges.
+          ROLE: ${{ inputs.role || 'blocking' }}
+        run: |
+          case "$ROLE" in
+            blocking | floor) ;;
+            *)
+              echo "The role must be blocking or floor, got \"$ROLE\"." >&2
+              exit 1
+              ;;
+          esac
+          CELLS=$(jq -c --arg role "$ROLE" '[.cells[] | select(.role == $role)]' e2e/matrix.json)
+          if [ "$(jq 'length' <<< "$CELLS")" -eq 0 ]; then
+            echo "e2e/matrix.json has no cell with the role $ROLE." >&2
+            exit 1
+          fi
+          echo "cells=$CELLS" >> "$GITHUB_OUTPUT"
+          jq -r '.[].id' <<< "$CELLS"
+
+  test:
+    name: ${{ matrix.cell.id }} on ${{ matrix.cell.ios.runner }}
+    needs: cells
+    runs-on: ${{ matrix.cell.ios.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        cell: ${{ fromJSON(needs.cells.outputs.cells) }}
+    env:
+      # Everything the steps read from the cell goes through the environment, never into a script.
+      CELL_ID: ${{ matrix.cell.id }}
+      CELL_FOLDER: ${{ matrix.cell.folder }}
+      CELL_APP: ${{ matrix.cell.appName }}
+      CELL_KIND: ${{ matrix.cell.kind }}
+      CELL_XCODE: ${{ matrix.cell.ios.xcode }}
+    defaults:
+      run:
+        # Unlike the default shell, `bash` sets `pipefail`, so a build that fails behind `| tee` fails its
+        # step: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepsshell
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select the Xcode version
+        # Only a cell that names one: the others build with the runner's default Xcode. The paths come from
+        # https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md
+        if: matrix.cell.ios.xcode
+        run: |
+          XCODE_APP="/Applications/Xcode_${CELL_XCODE}.app"
+          if [ ! -d "$XCODE_APP" ]; then
+            echo "$XCODE_APP is not installed on this runner." >&2
+            ls -d /Applications/Xcode*.app >&2
+            exit 1
+          fi
+          sudo xcode-select --switch "$XCODE_APP"
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         with:
-          cache: false
+          # Keyed on the hash of `pnpm-lock.yaml`. The action installs the dependencies itself, so the store
+          # has to come back before it runs, which a separate cache step cannot do.
+          cache: true
           require-lockfile: true
       - run: pnpm build
       - name: Start the Argent tools server
         # The flow runner spawns the server itself and gives it 15 seconds to answer. Once the builds and
         # the simulator run, this runner is too busy for that (`node --version` alone took 35 seconds), so
         # the server starts first, while it is idle, and the flows reuse it.
+        # `--detach` gives the server the same 15 seconds and kills it after them, which a macos-26 runner
+        # has exceeded even here. In the foreground the CLI records the server at once and waits for it
+        # without a limit, so it runs in the background and the loop waits for it to answer.
+        # `server status` exits 0 even when the server does not answer: its JSON says whether it runs.
         run: |
-          pnpm exec argent server start --detach
+          nohup pnpm exec argent server start > /dev/null 2>&1 &
           for _ in $(seq 1 60); do
-            if pnpm exec argent server status; then
+            if pnpm exec argent server status --json | grep -q '"running": true'; then
               exit 0
             fi
             sleep 2
           done
-          pnpm exec argent server logs >&2 || true
           echo "The Argent tools server did not start." >&2
           exit 1
+      - name: Create and boot the simulator
+        # A new simulator takes minutes to boot and then minutes more of its own work before flows run
+        # reliably on it. It boots now, in the background, so that work runs while the app builds.
+        run: |
+          xcrun simctl list runtimes
+          # The newest iOS runtime the runner has: iOS 27.0 on xcode-27, the newest iOS 26 on macos-26.
+          RUNTIME=$(xcrun simctl list runtimes --json | jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | sort_by(.version | split(".") | map(tonumber)) | last | .identifier')
+          if [ -z "$RUNTIME" ] || [ "$RUNTIME" = null ]; then
+            echo "No iOS runtime is installed on this runner." >&2
+            exit 1
+          fi
+          UDID=$(xcrun simctl create e2e "iPhone 17" "$RUNTIME")
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          nohup xcrun simctl boot "$UDID" > /dev/null 2>&1 &
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: '3.4'
           bundler-cache: true
-      - name: Install the pods
-        working-directory: examples/bare-0.87/ios
-        run: bundle exec pod install
+      - name: Generate the native project
+        # An Expo example has no `ios` folder: Expo generates it. `--no-install` leaves the pods to the step
+        # below, which installs them with the bundled CocoaPods and after the cache restores `ios/Pods`.
+        if: matrix.cell.kind == 'expo'
+        working-directory: ${{ matrix.cell.folder }}
+        run: pnpm exec expo prebuild --clean --platform ios --no-install
       - name: Print the Xcode version
-        run: xcodebuild -version
+        id: xcode
+        run: |
+          xcodebuild -version
+          echo "version=$(xcodebuild -version | tr '\n' ' ' | tr -c 'A-Za-z0-9._-' '-')" >> "$GITHUB_OUTPUT"
+      - name: Cache the pods
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ matrix.cell.folder }}/ios/Pods
+          # An Expo example has no committed `Podfile.lock`, so its key falls back to the lockfile of the
+          # workspace, which pins the versions the generated `Podfile` resolves.
+          key: pods-${{ matrix.cell.id }}-${{ steps.xcode.outputs.version }}-${{ hashFiles(format('{0}/ios/Podfile.lock', matrix.cell.folder)) || hashFiles('pnpm-lock.yaml') }}
+      - name: Install the pods
+        working-directory: ${{ matrix.cell.folder }}/ios
+        run: bundle exec pod install
 
       - name: Build Release
-        working-directory: examples/bare-0.87
+        working-directory: ${{ matrix.cell.folder }}
         run: |
           xcodebuild \
-            -workspace ios/BareExample.xcworkspace \
-            -scheme BareExample \
+            -workspace "ios/$CELL_APP.xcworkspace" \
+            -scheme "$CELL_APP" \
             -configuration Release \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build \
             | tee "$GITHUB_WORKSPACE/xcodebuild-release.log"
 
-      - name: Create and boot the simulator
+      - name: Wait for the simulator
+        # It booted while the app built. Once booted it is still busy for minutes: Argent sets up each
+        # launch with `simctl spawn … launchctl` and gives the call 10 seconds, which a first flow right
+        # after a boot has run out of. The flows start once such a call answers in 5.
         run: |
-          xcrun simctl list runtimes
-          RUNTIME=$(xcrun simctl list runtimes --json | jq -r '.runtimes[] | select(.platform == "iOS" and .version == "27.0" and .isAvailable) | .identifier' | head -n 1)
-          if [ -z "$RUNTIME" ]; then
-            echo "The iOS 27.0 runtime is not installed on this runner." >&2
-            exit 1
-          fi
-          UDID=$(xcrun simctl create e2e "iPhone 17" "$RUNTIME")
-          echo "UDID=$UDID" >> "$GITHUB_ENV"
-          xcrun simctl boot "$UDID"
-          xcrun simctl bootstatus "$UDID"
+          # `-b` boots it again if the boot in the background failed.
+          xcrun simctl bootstatus "$UDID" -b
+          for _ in $(seq 1 60); do
+            start=$SECONDS
+            xcrun simctl spawn "$UDID" launchctl list > /dev/null || true
+            if [ $((SECONDS - start)) -lt 5 ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "The simulator still takes 5 seconds or more to answer \`simctl spawn\`." >&2
+          exit 1
 
       - name: Install the Release build
-        run: xcrun simctl install "$UDID" examples/bare-0.87/build/Build/Products/Release-iphonesimulator/BareExample.app
+        run: xcrun simctl install "$UDID" "$CELL_FOLDER/build/Build/Products/Release-iphonesimulator/$CELL_APP.app"
       - name: Run the release flows
         env:
           UPDATE_BASELINES: ${{ inputs.update-baselines && '--update-baselines' || '' }}
-        run: pnpm e2e bare-0.87 release --device "$UDID" --output e2e-output $UPDATE_BASELINES
+        run: pnpm e2e "$CELL_ID" release --device "$UDID" --output e2e-output $UPDATE_BASELINES
 
       - name: Build Debug
-        working-directory: examples/bare-0.87
+        working-directory: ${{ matrix.cell.folder }}
         run: |
           xcodebuild \
-            -workspace ios/BareExample.xcworkspace \
-            -scheme BareExample \
+            -workspace "ios/$CELL_APP.xcworkspace" \
+            -scheme "$CELL_APP" \
             -configuration Debug \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
@@ -105,7 +218,7 @@ jobs:
             | tee "$GITHUB_WORKSPACE/xcodebuild-debug.log"
       - name: Start Metro
         run: |
-          pnpm --dir examples/bare-0.87 start > metro.log 2>&1 &
+          pnpm --dir "$CELL_FOLDER" start > metro.log 2>&1 &
           for _ in $(seq 1 60); do
             if curl -sf http://localhost:8081/status; then
               exit 0
@@ -118,8 +231,13 @@ jobs:
         # The first bundle takes longer than a flow waits for the app to render, so Metro builds it now.
         # So does the web bundle of each DOM component: a second Metro instance starts on its first
         # request, and a web view that waits for it shows nothing for longer than the flows wait.
+        # Metro builds a separate graph for each entry and set of transform options, so the warm-up
+        # asks for the bundle the Debug app asks for: a lazy one, and on Expo the virtual entry, which
+        # the dev server rewrites with the Hermes transform options the app's bundle is built with.
         run: |
-          curl -sf --max-time 600 -o /dev/null "http://localhost:8081/index.bundle?platform=ios&dev=true&minify=false"
+          entry=index
+          if [ "$CELL_KIND" = expo ]; then entry=.expo/.virtual-metro-entry; fi
+          curl -sf --max-time 600 -o /dev/null "http://localhost:8081/$entry.bundle?platform=ios&dev=true&lazy=true&minify=false"
           for component in Note Greeting Lines; do
             curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" \
               --data-urlencode "dev=true" \
@@ -127,24 +245,24 @@ jobs:
               --data-urlencode "transform.dom=$GITHUB_WORKSPACE/e2e/example-app/src/$component.tsx"
           done
       - name: Install the Debug build
-        run: xcrun simctl install "$UDID" examples/bare-0.87/build/Build/Products/Debug-iphonesimulator/BareExample.app
+        run: xcrun simctl install "$UDID" "$CELL_FOLDER/build/Build/Products/Debug-iphonesimulator/$CELL_APP.app"
       - name: Run the dev flows
         env:
           UPDATE_BASELINES: ${{ inputs.update-baselines && '--update-baselines' || '' }}
-        run: pnpm e2e bare-0.87 dev --device "$UDID" --output e2e-output $UPDATE_BASELINES
+        run: pnpm e2e "$CELL_ID" dev --device "$UDID" --output e2e-output $UPDATE_BASELINES
 
       - name: Upload the new baselines
         if: inputs.update-baselines && !cancelled()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: e2e-ios-bare-0.87-baselines
-          path: .argent/flows/bare-0.87/*/__baselines__
+          name: e2e-ios-${{ matrix.cell.id }}-baselines
+          path: .argent/flows/${{ matrix.cell.id }}/*/__baselines__
 
       - name: Upload the logs and flow output
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: e2e-ios-bare-0.87
+          name: e2e-ios-${{ matrix.cell.id }}
           path: |
             e2e-output
             metro.log

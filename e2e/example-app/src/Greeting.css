@@ -4,4 +4,9 @@
 	inset: 0;
 	width: 100%;
 	font: 16px system-ui;
+	/* A tap that a slow runner holds too long must not select the text or open a callout, which
+	   would cover the other greeting. */
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	user-select: none;
 }

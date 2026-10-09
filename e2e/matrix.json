@@ -112,7 +112,8 @@
 			"folder": "examples/bare-0.81",
 			"id": "bare-0.81",
 			"ios": {
-				"runner": "macos-26"
+				"runner": "macos-26",
+				"xcode": "26.3"
 			},
 			"kind": "bare",
 			"reactNative": "0.81.6",

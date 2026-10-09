@@ -24,7 +24,7 @@ const expoTags = JSON.parse(readFileSync(path.join(FIXTURES, 'expo-dist-tags.jso
 const bundledRn = JSON.parse(readFileSync(path.join(FIXTURES, 'bundled-native-modules.json'), 'utf8'))
 
 const overrides = {
-	'bare-0.81': { ios: { runner: 'macos-26' } },
+	'bare-0.81': { ios: { runner: 'macos-26', xcode: '26.3' } },
 	'bare-0.87': { appName: 'BareExample' },
 	'expo-57': { appName: 'ReactNativeUseDomExpoExample' },
 }
@@ -136,7 +136,7 @@ test('the matrix covers the supported window and the floor', () => {
 				expo: null,
 				folder: 'examples/bare-0.81',
 				id: 'bare-0.81',
-				ios: { runner: 'macos-26' },
+				ios: { runner: 'macos-26', xcode: '26.3' },
 				kind: 'bare',
 				reactNative: '0.81.6',
 				role: 'floor',
@@ -194,5 +194,20 @@ test('the source readers reject shapes they do not recognize', () => {
 	expect(() => reactNativeVersions({ tags: {} })).toThrow('holds no versions object')
 	expect(() => cellOverrides({ 'expo-56': { appName: 'Example', ios: { runner: 'macos-26' } } })).not.toThrow()
 	expect(() => cellOverrides({ 'expo-56': { ios: { runner: 26 } } })).toThrow('which is not a string')
+	expect(() => cellOverrides({ 'expo-56': { ios: { xcode: 26 } } })).toThrow('which is not a string')
 	expect(() => cellOverrides({ 'expo-56': 'macos-26' })).toThrow('is not an object')
+})
+
+test('only an override gives a cell an Xcode version', () => {
+	expect(cellOverrides({ 'bare-0.81': { ios: { runner: 'macos-26', xcode: '26.3' } } })).toEqual({
+		'bare-0.81': { ios: { runner: 'macos-26', xcode: '26.3' } },
+	})
+
+	expect(cellOverrides({ 'bare-0.81': { ios: { xcode: '26.3' } } })).toEqual({
+		'bare-0.81': { ios: { xcode: '26.3' } },
+	})
+
+	const { cells } = buildFixtureMatrix()
+
+	expect(cells.filter((cell) => cell.ios.xcode !== undefined).map((cell) => cell.id)).toEqual(['bare-0.81'])
 })

@@ -5,19 +5,22 @@
 executionPrerequisite: The example app has just launched.
 steps:
   # A Debug build loads its JavaScript from Metro as it launches, which takes a runner longer than the
-  # default wait.
-  - await: { visible: { id: first-greeting }, timeout: 30000 }
+  # default wait: on expo-56's macos-26 runner, more than 30 seconds.
+  - await: { visible: { id: first-greeting }, timeout: 60000 }
   - await: { visible: { id: lines }, timeout: 30000 }
   # The note has no height until its page has measured itself, so it only becomes visible then. That is
-  # the one signal iOS flows get that a web view has loaded, and it moves the elements under it.
-  - await: { visible: { id: note }, timeout: 30000 }
+  # the one signal iOS flows get that a web view has loaded, and it moves the elements under it. On a busy
+  # runner the note has stayed without a height for more than 30 seconds.
+  - await: { visible: { id: note }, timeout: 60000 }
   - when: { platform: android }
     steps:
       - await: { visible: { text: This note is a DOM component }, timeout: 15000 }
       - await: { visible: { text: 'Hello, React Native.' }, timeout: 15000 }
       - await: { visible: { text: 'Hello, a second instance.' }, timeout: 15000 }
       - await: { visible: { text: Line 1 of the page }, timeout: 15000 }
-  - await: { idle: true, stableFor: 1000 }
+  # While the web views load, a busy runner takes seconds to answer each read of the screen, and the
+  # default 7.5 seconds have ended with too few reads to tell whether it still moves.
+  - await: { idle: true, stableFor: 1000, timeout: 30000 }
   # The WebView starts accepting touches a moment after its first paint on iOS 27; a tap
   # dispatched before that is lost. Settle briefly so the flows' first tap always lands.
   - wait: 5000

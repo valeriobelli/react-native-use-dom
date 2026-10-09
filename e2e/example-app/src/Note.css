@@ -5,6 +5,10 @@
 	font: 14px/1.5 system-ui;
 	color: #3c3c43;
 	text-decoration: none;
+	/* A tap that a slow runner holds too long must not open the link's preview instead of the link. */
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	user-select: none;
 }
 
 .note .link {

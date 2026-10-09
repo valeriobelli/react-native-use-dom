@@ -4,20 +4,37 @@ steps:
   - echo: A ref resets the first greeting and leaves the second alone
   - run: ready
   - tap: { id: first-greeting }
-  # The first tap on a slow runner can still be lost, and a flow can't retry an await: tap again
-  # when the answer has not come.
-  - wait: 2500
+  # A slow runner can lose a tap on a web view, and a flow can't retry an await: each tap on one is
+  # repeated when its answer has not come. A Debug build has answered after more than 2.5 seconds, and
+  # a second tap then counted twice.
+  - wait: 6000
   - when: { hidden: { text: The first greeting reported 1 clicks } }
     steps:
       - tap: { id: first-greeting }
   - await: { visible: { text: The first greeting reported 1 clicks }, timeout: 15000 }
   - tap: { id: first-greeting }
+  - wait: 6000
+  - when: { hidden: { text: The first greeting reported 2 clicks } }
+    steps:
+      - tap: { id: first-greeting }
   - await: { visible: { text: The first greeting reported 2 clicks }, timeout: 15000 }
   - tap: { id: second-greeting }
+  - wait: 6000
+  - when: { hidden: { text: The second greeting reported 1 clicks } }
+    steps:
+      - tap: { id: second-greeting }
   - await: { visible: { text: The second greeting reported 1 clicks }, timeout: 15000 }
   - tap: { text: Reset the first }
   - await: { visible: { text: Reset the first greeting after 2 clicks }, timeout: 15000 }
   - tap: { id: second-greeting }
+  - wait: 6000
+  - when: { hidden: { text: The second greeting reported 2 clicks } }
+    steps:
+      - tap: { id: second-greeting }
   - await: { visible: { text: The second greeting reported 2 clicks }, timeout: 15000 }
   - tap: { id: first-greeting }
+  - wait: 6000
+  - when: { hidden: { text: The first greeting reported 1 clicks } }
+    steps:
+      - tap: { id: first-greeting }
   - await: { visible: { text: The first greeting reported 1 clicks }, timeout: 15000 }
