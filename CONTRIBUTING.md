@@ -74,7 +74,16 @@ The baselines live next to the wrappers, in `.argent/flows/<app>/<release|dev>/_
 every kind of build has its own. They are keyed by platform and screen size: they were taken on an iPhone 16 Pro
 (iOS 18) and a 1080x2400 Android emulator, from a Debug build. On another device, with a Release build, or after
 changing what a DOM component looks like, write new ones with `--update-baselines`, check them, and run the flows
-again to compare.
+again to compare:
+
+```sh
+pnpm e2e bare-0.87 release --device <simulator udid or emulator serial> --update-baselines
+```
+
+To record them on the CI devices instead, run **E2E iOS** or **E2E Android** from Actions → Run workflow, on
+your branch, with **update-baselines** checked. Each cell then uploads its new baselines as an artifact,
+`e2e-<ios|android>-<app>-baselines`: download it, copy its files into `.argent/flows/<app>`, check them and
+commit them.
 
 On iOS a flow can't find text inside a WebView, so the flows tap the native views that hold the DOM components
 and check the results in native text and screenshots. On Android they also check the text of the pages.
@@ -109,6 +118,23 @@ and the generator writes them into the examples as `catalog:`. Bump them there.
 A folder is created once per minor and edited in place afterwards. `examples/bare-0.87` is never regenerated.
 Pass `--no-pods` to skip `bundle exec pod install`, as CI does. Commit what it changed, including
 `Podfile.lock` and `pnpm-lock.yaml`.
+
+`pnpm e2e:generate:expo` does the same for the Expo cells: it creates a missing folder with
+`create-expo-app`, pins an existing one to its cell's `expo` version and deletes the Expo folders with no cell.
+`pnpm e2e:generate:flows` then writes the wrapper flows of every cell under `.argent/flows/<app>` and deletes
+those of the apps that left the matrix.
+
+### The matrix-update pull requests
+
+The [Update the e2e matrix workflow](./.github/workflows/update-matrix.yml) runs these four commands every day,
+and opens or updates the **chore(e2e): update the version matrix** pull request when anything changed. Before
+merging it:
+
+1. run `bundle exec pod install` in each new `examples/bare-*/ios`, since CI generates without pods, and commit
+   `Podfile.lock`;
+2. record the baselines of each new app, as [End-to-end tests](#end-to-end-tests) explains;
+3. approve its workflow runs. It is opened with the workflow's `GITHUB_TOKEN`, so its runs wait for
+   approval: someone with write access selects **Approve workflows to run** on the pull request.
 
 ## Decisions (wiki)
 
