@@ -55,7 +55,7 @@
 				"runner": "xcode-27"
 			},
 			"kind": "bare",
-			"reactNative": "0.88.0-rc.3",
+			"reactNative": "0.88.0-rc.4",
 			"role": "blocking",
 			"slug": "bare088",
 			"support": "Future"
@@ -78,7 +78,7 @@
 		{
 			"appName": "ReactNativeUseDomExpoExample",
 			"bundleId": "dev.reactnativeusedom.expo57",
-			"expo": "57.0.26",
+			"expo": "57.0.27",
 			"folder": "examples/expo-57",
 			"id": "expo-57",
 			"ios": {
@@ -93,7 +93,7 @@
 		{
 			"appName": "ExpoExample58",
 			"bundleId": "dev.reactnativeusedom.expo58",
-			"expo": "58.0.2",
+			"expo": "58.0.6",
 			"folder": "examples/expo-58",
 			"id": "expo-58",
 			"ios": {
@@ -122,5 +122,5 @@
 			"support": "Unsupported"
 		}
 	],
-	"generatedAt": "2026-10-03"
+	"generatedAt": "2026-10-09"
 }
