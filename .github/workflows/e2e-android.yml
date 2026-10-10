@@ -25,10 +25,6 @@ on:
         description: Write new screenshot baselines on this runner and upload them, instead of comparing
         type: boolean
         default: false
-  # Temporary: runs the workflow on its own pull request until the e2e workflow calls it (#26).
-  pull_request:
-    paths:
-      - .github/workflows/e2e-android.yml
 
 permissions: {}
 
@@ -132,7 +128,11 @@ jobs:
           # -grpc makes the emulator write the file (avd/running/pid_*.ini) that Argent's simulator server
           # reads to find it: without the flag the emulator lists nothing there.
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -grpc 8554
+          # A busy runner can make System UI miss its start deadline, and the "isn't responding" dialog then
+          # covers the app for every flow. With hide_error_dialogs Android kills the process instead of
+          # asking: an app that stops answering still fails its flow.
           script: |
+            adb shell settings put global hide_error_dialogs 1
             nohup adb logcat -v time > logcat.txt 2>&1 &
             pnpm exec argent server start --detach
             adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
