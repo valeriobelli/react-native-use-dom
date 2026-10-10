@@ -1,5 +1,8 @@
 # react-native-use-dom
 
+[![E2E](https://github.com/valeriobelli/react-native-use-dom/actions/workflows/e2e.yml/badge.svg?branch=main)](https://github.com/valeriobelli/react-native-use-dom/actions/workflows/e2e.yml)
+· [Tested React Native versions](./docs/compatibility.md)
+
 Render React DOM components inside React Native with the `'use dom'` directive, without Expo.
 
 A module marked `'use dom'` runs in a native web view on iOS and Android, and native code renders it like any
