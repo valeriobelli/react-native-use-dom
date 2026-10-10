@@ -390,7 +390,7 @@
 					"-DRCT_REMOVE_LEGACY_ARCH=1",
 				);
 				PODFILE_DIR = "$(SRCROOT)";
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.88.0-rc.3_@babel+core@7.29.7_supports-color@8.1.1__@react-native-communi_4a741738eec9921c238893170879a608/node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.88.0-rc.4_@babel+core@7.29.7_supports-color@8.1.1__@react-native-communi_571dc053e785fabbc1d54f15e37712f7/node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				USE_HERMES = true;
@@ -464,7 +464,7 @@
 					"-DRCT_REMOVE_LEGACY_ARCH=1",
 				);
 				PODFILE_DIR = "$(SRCROOT)";
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.88.0-rc.3_@babel+core@7.29.7_supports-color@8.1.1__@react-native-communi_4a741738eec9921c238893170879a608/node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.88.0-rc.4_@babel+core@7.29.7_supports-color@8.1.1__@react-native-communi_571dc053e785fabbc1d54f15e37712f7/node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;
