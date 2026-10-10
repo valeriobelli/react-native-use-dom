@@ -15,8 +15,8 @@ Dependencies' install scripts are disabled in this workspace, so the git hooks a
 
 ## Git hooks
 
-- **pre-commit** checks the staged files with `oxlint` and `oxfmt --check`, and audits
-  `.github` with `zizmor` when a file there is staged.
+- **pre-commit** runs `oxlint` on the repository when a script is staged, checks the staged files with
+  `oxfmt --check`, and audits `.github` with `zizmor` when a file there is staged.
 - **commit-msg** checks the message follows [Conventional Commits](https://www.conventionalcommits.org/)
   with commitlint's `@commitlint/config-conventional`.
 

@@ -7,7 +7,9 @@ pre-commit:
   jobs:
     - name: lint
       glob: '**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}'
-      run: pnpm exec oxlint {staged_files}
+      # The whole repository, as `pnpm lint` does: given only some files, oxlint's type-aware rules
+      # can't resolve the types of `node:` imports in `scripts/` and report errors `pnpm lint` doesn't.
+      run: pnpm exec oxlint
     - name: format
       run: pnpm exec oxfmt --check --no-error-on-unmatched-pattern {staged_files}
     - name: zizmor
