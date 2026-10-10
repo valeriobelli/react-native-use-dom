@@ -6,9 +6,12 @@ import { expect, test } from '@jest/globals'
 
 import { pinHermesCompiler } from './generate-bare.hermes.mjs'
 
-const target = /** @type {import('./matrix.mjs').MatrixCell} */ (
-	/** @type {unknown} */ ({ folder: 'examples/bare-0.99' })
-)
+const target =
+	/** @type {import('./matrix.mjs').MatrixCell} */
+	(
+		/** @type {unknown} */
+		({ folder: 'examples/bare-0.99' })
+	)
 
 /**
  * @param {(root: string, read: () => { devDependencies: Record<string, string> }) => void} check
