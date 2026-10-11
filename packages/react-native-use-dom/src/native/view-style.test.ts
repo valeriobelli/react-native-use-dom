@@ -23,6 +23,11 @@ describe('fillParentStyle', () => {
 		})
 	})
 
+	it('reads a size of 0 as a size', () => {
+		expect(fillParentStyle({ height: 0 })).toEqual({ flexGrow: 1, maxHeight: 0 })
+		expect(fillParentStyle({ flexGrow: 0 })).toBeNull()
+	})
+
 	it('keeps filling the width of a row when dom.style sets only a height', () => {
 		// flexGrow, not flex: the basis stays the height, and in a row the view grows to the free width.
 		const fill = fillParentStyle({ height: 120 })

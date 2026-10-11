@@ -22,6 +22,7 @@ const FLEX_KEYS = ['flex', 'flexBasis', 'flexGrow'] as const
 export function fillParentStyle(style: StyleProp<ViewStyle>): ViewStyle | null {
 	const flat = StyleSheet.flatten(style)
 
+	// Compared with undefined, not by truthiness: 0 is a size, and `height: 0` must not fill the parent.
 	if (FLEX_KEYS.some((key) => flat?.[key] !== undefined)) {
 		return null
 	}
