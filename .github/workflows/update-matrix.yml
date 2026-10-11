@@ -3,6 +3,7 @@ name: Update the e2e matrix
 # Reruns the matrix script and the generators once a day, and opens (or updates) one pull request when
 # anything changes, so that new React Native versions enter the e2e matrix through review.
 # `workflow_dispatch` runs only once this file is on the default branch.
+# The changes go from job to job as a patch. Only the last job can write, and it runs no package code.
 on:
   schedule:
     - cron: '0 5 * * *'
@@ -15,12 +16,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  update:
-    name: Refresh the matrix and open the pull request
+  refresh:
+    name: Refresh the matrix and the examples
     runs-on: ubuntu-latest
     permissions:
-      contents: write # to push the branch (peter-evans/create-pull-request)
-      pull-requests: write # to open and update the pull request (peter-evans/create-pull-request)
+      contents: read
+    outputs:
+      stale-pods: ${{ steps.stale-pods.outputs.folders }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -63,7 +65,87 @@ jobs:
             git diff -- pnpm-workspace.yaml
             exit 1
           fi
+      # A bumped bare example keeps the `Podfile.lock` of its old version, which `pod install` refuses
+      # in E2E iOS. The pods job updates it on macOS, which runs only when one is stale.
+      - name: Find the bare examples with stale pods
+        id: stale-pods
+        run: echo "folders=$(pnpm --silent e2e:pods:bare --list)" >> "$GITHUB_OUTPUT"
+      - name: Save the changes
+        run: |
+          git add --all
+          git diff --cached --binary > "$RUNNER_TEMP/changes.patch"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: changes
+          path: ${{ runner.temp }}/changes.patch
+          if-no-files-found: error
+
+  pods:
+    name: Update the pods of the bumped bare examples
+    needs: refresh
+    if: needs.refresh.outputs.stale-pods != '[]'
+    runs-on: macos-26
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: changes
+          path: ${{ runner.temp }}
+      # Before pnpm installs: the Podfile resolves React Native from `node_modules`, at the bumped version.
+      - name: Apply the changes
+        run: git apply --index "$RUNNER_TEMP/changes.patch"
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          cache: false
+          require-lockfile: true
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+      - name: Update the pods
+        run: pnpm e2e:pods:bare
+      - name: Discard the Bundler configuration of the runner
+        run: git checkout -- .bundle/config
+      - name: Save the changes
+        run: |
+          git add --all
+          git diff --cached --binary > "$RUNNER_TEMP/changes.patch"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: changes-with-pods
+          path: ${{ runner.temp }}/changes.patch
+          if-no-files-found: error
+
+  pull-request:
+    name: Open the pull request
+    needs: [refresh, pods]
+    # The pods job is skipped when no pods are stale, and a skipped job would skip this one too.
+    if: always() && needs.refresh.result == 'success' && contains(fromJSON('["success", "skipped"]'), needs.pods.result)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to push the branch (peter-evans/create-pull-request)
+      pull-requests: write # to open and update the pull request (peter-evans/create-pull-request)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ needs.pods.result == 'success' && 'changes-with-pods' || 'changes' }}
+          path: ${{ runner.temp }}
+      # `git apply` refuses an empty patch, which is what a day without changes produces.
+      - name: Apply the changes
+        run: |
+          if [ -s "$RUNNER_TEMP/changes.patch" ]; then
+            git apply --index "$RUNNER_TEMP/changes.patch"
+          fi
       - name: Describe the changes
+        env:
+          STALE_PODS: ${{ needs.refresh.outputs.stale-pods }}
         run: |
           {
             echo 'Refreshes the e2e matrix from the published React Native and Expo versions, and'
@@ -74,6 +156,10 @@ jobs:
             echo '```'
             git status --short
             echo '```'
+            if [ "$STALE_PODS" != '[]' ]; then
+              echo
+              echo "The local pods of $(jq -r 'join(", ")' <<< "$STALE_PODS") were updated on macOS for the new React Native version."
+            fi
             echo
             echo '### Before merging'
             echo

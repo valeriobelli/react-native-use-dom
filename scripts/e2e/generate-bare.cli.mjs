@@ -3,8 +3,8 @@
 /**
  * Creates `examples/<id>` for every bare cell of `e2e/matrix.json` that has no folder yet, pins the
  * folders that exist to the cell's React Native version, deletes the bare folders that left the
- * matrix, and installs the workspace. `--no-pods` skips `bundle exec pod install`, which otherwise
- * runs in each new `ios/` folder on macOS.
+ * matrix, and installs the workspace. On macOS it then installs the pods of each new `ios/` folder,
+ * and updates those of each bumped one with `bare-pods.cli.mjs`; `--no-pods` skips both.
  */
 
 import { execFileSync } from 'node:child_process'
@@ -94,6 +94,9 @@ try {
 			execFileSync('bundle', ['install'], { cwd: folder, stdio: 'inherit' })
 			execFileSync('bundle', ['exec', 'pod', 'install'], { cwd: path.join(folder, 'ios'), stdio: 'inherit' })
 		}
+
+		// A bumped folder keeps the lock of its old version, which `pod install` refuses.
+		execFileSync('node', ['scripts/e2e/bare-pods.cli.mjs'], { cwd: REPOSITORY_ROOT, stdio: 'inherit' })
 	}
 } catch (failure) {
 	const message = failure instanceof Error ? failure.message : String(failure)
