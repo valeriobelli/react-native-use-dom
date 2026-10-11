@@ -23,6 +23,23 @@ describe('fillParentStyle', () => {
 		})
 	})
 
+	it('caps the growth at the smaller of height and maxHeight', () => {
+		expect(fillParentStyle({ style: { height: 120, maxHeight: 200 } })).toEqual({
+			flexGrow: 1,
+			maxHeight: 120,
+		})
+
+		expect(fillParentStyle({ style: { height: 120, maxHeight: 100 } })).toEqual({
+			flexGrow: 1,
+			maxHeight: 100,
+		})
+
+		expect(fillParentStyle({ style: { height: 120, maxHeight: '50%' } })).toEqual({
+			flexGrow: 1,
+			maxHeight: '50%',
+		})
+	})
+
 	it('reads a size of 0 as a size', () => {
 		expect(fillParentStyle({ style: { height: 0 } })).toEqual({ flexGrow: 1, maxHeight: 0 })
 		expect(fillParentStyle({ style: { flexGrow: 0 } })).toBeNull()

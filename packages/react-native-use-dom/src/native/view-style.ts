@@ -12,7 +12,9 @@ const FLEX_KEYS = ['flex', 'flexBasis', 'flexGrow'] as const
 /**
  * A size in `dom.style` must win, as docs/sizing.md says. `flex: 1` means `flexBasis: 0`, which
  * overrides a `height` in a column, so a view with a `height` grows from its height instead and stops
- * at it: in a column the height wins, and in a row the view still fills the width.
+ * at it: in a column the height wins, and in a row the view still fills the width. The cap goes after
+ * `dom.style`, so that a larger `maxHeight` there can't lift it; percentages can't be compared, so then
+ * the caller's `maxHeight` is the cap.
  */
 export function fillParentStyle({ style }: { style: StyleProp<ViewStyle> }): ViewStyle | null {
 	const flat = StyleSheet.flatten(style)
@@ -22,7 +24,15 @@ export function fillParentStyle({ style }: { style: StyleProp<ViewStyle> }): Vie
 		return null
 	}
 
-	return flat?.height === undefined ? FILL_PARENT : { flexGrow: 1, maxHeight: flat.height }
+	if (flat?.height === undefined) {
+		return FILL_PARENT
+	}
+
+	const { height, maxHeight } = flat
+	const cap =
+		typeof height === 'number' && typeof maxHeight === 'number' ? Math.min(height, maxHeight) : (maxHeight ?? height)
+
+	return { flexGrow: 1, maxHeight: cap }
 }
 
 export function useViewStyles({
@@ -42,8 +52,8 @@ export function useViewStyles({
 	const style = useMemo(
 		() => [
 			{ backgroundColor: dom.backgroundColor ?? 'white' },
-			dom.matchContents ? null : fillParentStyle({ style: dom.style }),
 			dom.style,
+			dom.matchContents ? null : fillParentStyle({ style: dom.style }),
 			debugStyle,
 		],
 		[dom.backgroundColor, dom.matchContents, dom.style, debugStyle],
