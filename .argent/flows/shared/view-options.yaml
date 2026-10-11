@@ -1,7 +1,4 @@
-# Each `dom` option the demo screen doesn't cover, one DOM component each: `onLoad` reports the first
-# paint, a transparent `backgroundColor` shows the native colour under it, `scrollEnabled: false` keeps the
-# content still under a swipe, and a `style` height fixes the view at 120 points. iOS flows can't read inside a
-# web view, so there the screenshots are the proof; Android also checks the text.
+# iOS flows can't read inside a web view, so there the screenshots are the proof; Android also checks the text.
 executionPrerequisite: The example app has just launched.
 steps:
   - echo: The view options screen shows each option

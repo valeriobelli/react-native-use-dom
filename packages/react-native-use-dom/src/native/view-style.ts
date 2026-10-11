@@ -5,19 +5,14 @@ import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
 import type { DomProps } from './types'
 import { useZeroHeightCheck } from './zero-height'
 
-/** What makes a view fill its parent when nothing else sizes it. */
 export const FILL_PARENT = { flex: 1 } as const
 
-/** The keys with which `dom.style` sets the view's flex itself, so that the view keeps none of its own. */
 const FLEX_KEYS = ['flex', 'flexBasis', 'flexGrow'] as const
 
 /**
- * The fill-parent style of a view whose `dom.style` is `style`, so that a size in `dom.style` wins, as
- * docs/sizing.md says.
- *
- * `flex: 1` means `flexBasis: 0`, which overrides a `height` in a column, so a view with a `height`
- * grows from its height instead and stops at it: in a column the height wins, and in a row the view
- * still fills the width.
+ * A size in `dom.style` must win, as docs/sizing.md says. `flex: 1` means `flexBasis: 0`, which
+ * overrides a `height` in a column, so a view with a `height` grows from its height instead and stops
+ * at it: in a column the height wins, and in a row the view still fills the width.
  */
 export function fillParentStyle(style: StyleProp<ViewStyle>): ViewStyle | null {
 	const flat = StyleSheet.flatten(style)
@@ -30,10 +25,6 @@ export function fillParentStyle(style: StyleProp<ViewStyle>): ViewStyle | null {
 	return flat?.height === undefined ? FILL_PARENT : { flexGrow: 1, maxHeight: flat.height }
 }
 
-/**
- * The styles of the view and of the WebView inside it, and the layout listener that, in development,
- * outlines a view with no height.
- */
 export function useViewStyles(
 	componentName: string,
 	dom: DomProps,

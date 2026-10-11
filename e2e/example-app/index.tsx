@@ -6,10 +6,8 @@ import Demo from './src/Demo'
 import Errors from './src/Errors'
 import ViewOptions from './src/ViewOptions'
 
-/** The screens the example app shows: the demo, the errors and the view options. */
 type Screen = 'demo' | 'errors' | 'viewOptions'
 
-/** The screens the example apps render: the demo, the errors and the view options. */
 export default function App() {
 	const [screen, setScreen] = useState<Screen>('demo')
 

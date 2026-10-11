@@ -8,11 +8,7 @@ const transparentDom = { backgroundColor: 'transparent' }
 const noScrollDom = { scrollEnabled: false }
 const fixedHeightDom = { backgroundColor: '#d1e7ff', style: { height: 120 } }
 
-/**
- * One DOM component per `dom` prop option that the demo screen doesn't cover: `onLoad`, a
- * transparent `backgroundColor`, `scrollEnabled` and a fixed `style` height. Each sits in a native
- * view with a `testID`, so that a flow can crop its screenshots to it.
- */
+/** Each DOM component sits in a native view with a `testID`, so that a flow can crop its screenshots to it. */
 export default function ViewOptions({ onBack }: { onBack: () => void }) {
 	const [status, setStatus] = useState('Waiting for the first paint.')
 	const onLoadDom = useMemo(
