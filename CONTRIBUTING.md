@@ -109,15 +109,20 @@ version has one committed app in `examples/<id>`. The UI lives once, in `e2e/exa
   [`init` command](https://github.com/react-native-community/cli/blob/main/docs/commands.md#init) at that
   React Native version, wired to the library and to `e2e/example-app`, with its pods installed on macOS;
 - a folder that pins another `react-native` version than its cell only has its `react-native` and
-  `@react-native/*` versions changed;
+  `@react-native/*` versions changed, and on macOS the pods that come from `node_modules` updated;
 - a bare folder with no cell is deleted, except `bare-0.81`.
 
 The versions the examples and the library share live once, in the default `catalog` of `pnpm-workspace.yaml`,
 and the generator writes them into the examples as `catalog:`. Bump them there.
 
 A folder is created once per minor and edited in place afterwards. `examples/bare-0.87` is never regenerated.
-Pass `--no-pods` to skip `bundle exec pod install`, as CI does. Commit what it changed, including
-`Podfile.lock` and `pnpm-lock.yaml`.
+Pass `--no-pods` to skip the pods, as CI does. Commit what it changed, including `Podfile.lock` and
+`pnpm-lock.yaml`.
+
+A bumped folder can't keep its `Podfile.lock`: `pod install` refuses a lock whose local podspecs changed
+version. `pnpm e2e:pods:bare` finds each bare example whose lock names another React Native version than its
+`package.json`, and runs `bundle exec pod update --no-repo-update` on the pods the lock lists under
+`EXTERNAL SOURCES`, so the pods from the CDN keep their versions. `--list` only prints those folders.
 
 `pnpm e2e:generate:expo` does the same for the Expo cells: it creates a missing folder with
 `create-expo-app`, pins an existing one to its cell's `expo` version and deletes the Expo folders with no cell.
@@ -127,8 +132,9 @@ those of the apps that left the matrix.
 ### The matrix-update pull requests
 
 The [Update the e2e matrix workflow](./.github/workflows/update-matrix.yml) runs these four commands every day,
-and opens or updates the **chore(e2e): update the version matrix** pull request when anything changed. Before
-merging it:
+and opens or updates the **chore(e2e): update the version matrix** pull request when anything changed. When it
+bumps a bare example, a job on macOS runs `pnpm e2e:pods:bare`, so the pull request carries the updated
+`Podfile.lock`; on other days the workflow runs on Linux only. Before merging it:
 
 1. run `bundle exec pod install` in each new `examples/bare-*/ios`, since CI generates without pods, and commit
    `Podfile.lock`;
