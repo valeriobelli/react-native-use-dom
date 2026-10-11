@@ -5,6 +5,7 @@
  * ones and writes the matrix file.
  */
 
+import { FLOOR_MINOR } from './floor.mjs'
 import { parseSupportTable } from './sources.mjs'
 
 // The compatibility page lives in its own file to keep this one small.
@@ -12,12 +13,6 @@ export { renderCompatibility } from './matrix.compatibility.mjs'
 
 /** The support levels the matrix tests, besides a Future minor that has a release candidate. */
 const TESTED_LEVELS = new Set(['End of Cycle', 'Active'])
-
-/**
- * The oldest React Native version the library's peer range declares. It is always tested, nightly,
- * even once React Native stops listing it as supported.
- */
-const FLOOR_MINOR = '0.81'
 
 /**
  * The last Expo SDK that cannot adopt the UIKit scene life cycle, whose iOS cells therefore build
@@ -130,18 +125,29 @@ export function buildMatrix(sources) {
 
 	const expo = expoCells(sources, supportOf).sort((left, right) => digitsOf(left.id) - digitsOf(right.id))
 
+	return { cells: [...bare, ...expo, ...floorCells(sources, supportOf)], generatedAt: sources.date }
+}
+
+/**
+ * The floor cell, once React Native no longer supports the floor. While the window holds the floor
+ * there is none, since its blocking cell already tests it.
+ *
+ * @param {MatrixSources} sources
+ * @param {Map<string, string>} supportOf the tested minors, each mapped to its support level
+ * @returns {MatrixCell[]}
+ */
+function floorCells(sources, supportOf) {
+	if (supportOf.has(FLOOR_MINOR)) {
+		return []
+	}
+
 	const floorVersion = pickVersion(FLOOR_MINOR, sources.rnVersions, {})
 
 	if (floorVersion === null) {
 		throw new Error(`React Native ${FLOOR_MINOR}, the floor of the peer range, has no published version`)
 	}
 
-	const floor = {
-		...bareCell(FLOOR_MINOR, supportOf.get(FLOOR_MINOR) ?? 'Unsupported', floorVersion, sources.overrides),
-		role: 'floor',
-	}
-
-	return { cells: [...bare, ...expo, floor], generatedAt: sources.date }
+	return [{ ...bareCell(FLOOR_MINOR, 'Unsupported', floorVersion, sources.overrides), role: 'floor' }]
 }
 
 /**

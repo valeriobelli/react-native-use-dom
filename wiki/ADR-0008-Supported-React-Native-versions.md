@@ -1,6 +1,6 @@
 ## Status
 
-Accepted (2026-10-03)
+Accepted (2026-10-03). Its peer range is superseded by [ADR 0009](ADR-0009-Peer-range-starts-at-React-Native-0.85.md).
 
 ## Context
 

@@ -33,7 +33,7 @@ every page, so components load offline. On web, the module is an ordinary React 
 </p>
 
 - Works in bare React Native apps and in Expo development builds.
-- New Architecture, React Native 0.81 or newer, iOS 15.1+, Android API 24+.
+- New Architecture, React Native 0.85 or newer, iOS 15.1+, Android API 24+.
 - Fast Refresh for DOM components, stylesheets, and a `public` folder for images and fonts.
 
 ## Install

@@ -53,6 +53,10 @@ jobs:
   android:
     name: ${{ matrix.cell.id }} on Android
     needs: cells
+    # A matrix with no values fails the run, so the job is skipped instead when the role has no cell,
+    # as the floor has while React Native still supports it.
+    # https://github.com/rust-lang/rust/commit/2632c6139d9b1a7ca7be4da1924e7a78edfa452c
+    if: needs.cells.outputs.cells != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:

@@ -8,7 +8,7 @@ React Native has two architectures, the legacy one and the New Architecture. Sup
 
 ## Decision
 
-The library supports only React Native's New Architecture, on React Native 0.81 and later. Its native view is a Nitro hybrid view.
+The library supports only React Native's New Architecture, on React Native 0.85 and later. Its native view is a Nitro hybrid view.
 
 ## Consequences
 

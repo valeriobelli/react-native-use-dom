@@ -3,6 +3,8 @@
  * is tested, never pass or fail results.
  */
 
+import { FLOOR_MINOR } from './floor.mjs'
+
 /** The React Native releases overview, which holds the support schedule the levels come from. */
 const RELEASES_URL = 'https://reactnative.dev/releases/overview'
 
@@ -51,11 +53,43 @@ export function renderCompatibility(matrix) {
 		'',
 		'## Versions that are not in the table',
 		'',
-		'- React Native versions below 0.81 are not supported.',
-		'- React Native 0.81 to 0.84 are covered only by the nightly floor check, which runs the oldest supported',
-		'  version, 0.81.',
+		`- React Native versions below ${FLOOR_MINOR} are not supported.`,
+		...untestedNote(matrix),
 		'',
 	].join('\n')
+}
+
+/**
+ * The note on the supported minors between the floor and the oldest one the table tests every
+ * change, which only exist once React Native stops supporting the floor.
+ *
+ * @param {{ cells: import('./matrix.mjs').MatrixCell[] }} matrix
+ * @returns {string[]}
+ */
+function untestedNote(matrix) {
+	const floor = minorNumber(FLOOR_MINOR)
+	const oldest = Math.min(
+		...matrix.cells.filter((cell) => cell.role === 'blocking').map((cell) => minorNumber(cell.reactNative)),
+	)
+
+	if (oldest - floor < 2) {
+		return []
+	}
+
+	const untested =
+		oldest - floor === 2 ? `React Native 0.${floor + 1} is` : `React Native 0.${floor + 1} to 0.${oldest - 1} are`
+
+	return [`- ${untested} not tested. The nightly floor check runs the oldest supported version,`, `  ${FLOOR_MINOR}.`]
+}
+
+/**
+ * The minor number of a version, 85 for both `0.85` and `0.85.3`.
+ *
+ * @param {string} version
+ * @returns {number}
+ */
+function minorNumber(version) {
+	return Number(version.split('.')[1])
 }
 
 /**

@@ -15,7 +15,7 @@ Before writing a component, confirm the app is set up. If any of these is missin
 app and restart the dev server with its cache cleared.
 
 1. `react-native-use-dom`, `react-native-nitro-modules` and `react-dom` (same version as `react`) are
-   dependencies. The app uses the New Architecture, React Native 0.81 or newer.
+   dependencies. The app uses the New Architecture, React Native 0.85 or newer.
 2. `babel.config.js` lists `'react-native-use-dom/babel'` in `plugins`.
 3. `metro.config.js` wraps what it exports with `withDom` from `'react-native-use-dom/metro'`, as in
    `module.exports = withDom(config)`.

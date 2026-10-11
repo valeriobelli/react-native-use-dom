@@ -24,7 +24,6 @@ const expoTags = JSON.parse(readFileSync(path.join(FIXTURES, 'expo-dist-tags.jso
 const bundledRn = JSON.parse(readFileSync(path.join(FIXTURES, 'bundled-native-modules.json'), 'utf8'))
 
 const overrides = {
-	'bare-0.81': { ios: { runner: 'macos-26', xcode: '26.3' } },
 	'bare-0.87': { appName: 'BareExample' },
 	'expo-57': { appName: 'ReactNativeUseDomExpoExample' },
 }
@@ -32,11 +31,22 @@ const overrides = {
 /**
  * Builds the matrix from the fixtures, with one source replaced.
  */
-function buildFixtureMatrix({ rnVersions: versions = rnVersions, supportTable: table = supportTable } = {}) {
-	return buildMatrix({ bundledRn, date: '2026-10-03', expoTags, overrides, rnVersions: versions, supportTable: table })
+function buildFixtureMatrix({
+	overrides: cellOverridesOf = overrides,
+	rnVersions: versions = rnVersions,
+	supportTable: table = supportTable,
+} = {}) {
+	return buildMatrix({
+		bundledRn,
+		date: '2026-10-03',
+		expoTags,
+		overrides: cellOverridesOf,
+		rnVersions: versions,
+		supportTable: table,
+	})
 }
 
-test('the matrix covers the supported window and the floor', () => {
+test('the matrix covers the supported window', () => {
 	expect(buildFixtureMatrix()).toEqual({
 		cells: [
 			{
@@ -130,22 +140,43 @@ test('the matrix covers the supported window and the floor', () => {
 				slug: 'expo58',
 				support: 'Future',
 			},
-			{
-				appName: 'BareExample081',
-				bundleId: 'dev.reactnativeusedom.bare081',
-				expo: null,
-				folder: 'examples/bare-0.81',
-				id: 'bare-0.81',
-				ios: { runner: 'macos-26', xcode: '26.3' },
-				kind: 'bare',
-				reactNative: '0.81.6',
-				role: 'floor',
-				slug: 'bare081',
-				support: 'Unsupported',
-			},
 		],
 		generatedAt: '2026-10-03',
 	})
+})
+
+test('the floor gets a nightly cell of its own only once react native stops supporting it', () => {
+	const roles = buildFixtureMatrix().cells.map((cell) => `${cell.id} ${cell.role}`)
+
+	expect(roles).toContain('bare-0.85 blocking')
+	expect(roles).not.toContain('bare-0.85 floor')
+
+	const unsupported = buildFixtureMatrix({
+		supportTable: supportTable.replace('2026-04-06   | End of Cycle', '2026-04-06   | Unsupported '),
+	})
+
+	expect(unsupported.cells.filter((cell) => cell.id === 'bare-0.85')).toEqual([
+		{
+			appName: 'BareExample085',
+			bundleId: 'dev.reactnativeusedom.bare085',
+			expo: null,
+			folder: 'examples/bare-0.85',
+			id: 'bare-0.85',
+			ios: { runner: 'xcode-27' },
+			kind: 'bare',
+			reactNative: '0.85.3',
+			role: 'floor',
+			slug: 'bare085',
+			support: 'Unsupported',
+		},
+	])
+
+	expect(() =>
+		buildFixtureMatrix({
+			rnVersions: rnVersions.filter((version) => !version.startsWith('0.85.')),
+			supportTable: supportTable.replace('2026-04-06   | End of Cycle', '2026-04-06   | Unsupported '),
+		}),
+	).toThrow('React Native 0.85, the floor of the peer range, has no published version')
 })
 
 test('a future minor enters the matrix only once it has a release candidate', () => {
@@ -199,15 +230,21 @@ test('the source readers reject shapes they do not recognize', () => {
 })
 
 test('only an override gives a cell an Xcode version', () => {
-	expect(cellOverrides({ 'bare-0.81': { ios: { runner: 'macos-26', xcode: '26.3' } } })).toEqual({
-		'bare-0.81': { ios: { runner: 'macos-26', xcode: '26.3' } },
+	expect(cellOverrides({ 'bare-0.85': { ios: { runner: 'macos-26', xcode: '26.3' } } })).toEqual({
+		'bare-0.85': { ios: { runner: 'macos-26', xcode: '26.3' } },
 	})
 
-	expect(cellOverrides({ 'bare-0.81': { ios: { xcode: '26.3' } } })).toEqual({
-		'bare-0.81': { ios: { xcode: '26.3' } },
+	expect(cellOverrides({ 'bare-0.85': { ios: { xcode: '26.3' } } })).toEqual({
+		'bare-0.85': { ios: { xcode: '26.3' } },
 	})
 
-	const { cells } = buildFixtureMatrix()
+	expect(buildFixtureMatrix().cells.filter((cell) => cell.ios.xcode !== undefined)).toEqual([])
 
-	expect(cells.filter((cell) => cell.ios.xcode !== undefined).map((cell) => cell.id)).toEqual(['bare-0.81'])
+	const { cells } = buildFixtureMatrix({
+		overrides: { ...overrides, 'bare-0.85': { ios: { runner: 'macos-26', xcode: '26.3' } } },
+	})
+
+	expect(cells.filter((cell) => cell.ios.xcode !== undefined).map((cell) => `${cell.id} ${cell.ios.runner}`)).toEqual([
+		'bare-0.85 macos-26',
+	])
 })

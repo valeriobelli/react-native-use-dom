@@ -27,12 +27,33 @@ test('the page has one row per matrix cell', () => {
 test('the page labels each kind of cell', () => {
 	const page = renderCompatibility(matrix)
 
-	expect(page).toMatch(
-		/\| React Native 0\.81 +\| Unsupported by React Native +\| `examples\/bare-0\.81` +\| nightly +\|/u,
-	)
+	expect(page).toMatch(/\| React Native 0\.85 +\| End of Cycle +\| `examples\/bare-0\.85` +\| every change +\|/u)
 	expect(page).toMatch(/\| Expo SDK 57 \(React Native 0\.86\) +\| Active +\| `examples\/expo-57` +\| every change +\|/u)
 	expect(page).toContain('Future (release candidate)')
 	expect(page).toContain('https://reactnative.dev/releases/overview')
+})
+
+test('the page names the floor, and the versions only the nightly floor check covers', () => {
+	expect(renderCompatibility(matrix)).toContain('- React Native versions below 0.85 are not supported.')
+	expect(renderCompatibility(matrix)).not.toContain('not tested')
+
+	// The window once React Native 0.87 is the oldest version it supports.
+	const later = {
+		cells: [
+			...matrix.cells.filter((cell) => !cell.reactNative.startsWith('0.85.') && !cell.reactNative.startsWith('0.86.')),
+			{ ...matrix.cells[0], role: 'floor', support: 'Unsupported' },
+		],
+	}
+	const page = renderCompatibility(later)
+
+	expect(page).toMatch(
+		/\| React Native 0\.85 +\| Unsupported by React Native +\| `examples\/bare-0\.85` +\| nightly +\|/u,
+	)
+	expect(page).toContain('- React Native 0.86 is not tested.')
+
+	const laterStill = { cells: later.cells.filter((cell) => !cell.reactNative.startsWith('0.87.')) }
+
+	expect(renderCompatibility(laterStill)).toContain('- React Native 0.86 to 0.87 are not tested.')
 })
 
 test('the page rejects a cell it cannot label', () => {

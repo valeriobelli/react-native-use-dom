@@ -9,6 +9,7 @@
 import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
+import { FLOOR_MINOR } from './floor.mjs'
 import {
 	BABEL_CONFIG,
 	EXAMPLE_APP,
@@ -30,7 +31,7 @@ import { applySceneLifeCycle } from './generate-bare.scene.mjs'
 const CATALOG = 'catalog:'
 
 /** The bare examples the generator never deletes: the floor of the peer range, even if its cell is dropped. */
-const KEPT_FOLDERS = new Set(['bare-0.81'])
+const KEPT_FOLDERS = new Set([`bare-${FLOOR_MINOR}`])
 
 /** The name of a bare example's folder, under `examples/`. */
 const BARE_FOLDER = /^bare-/u

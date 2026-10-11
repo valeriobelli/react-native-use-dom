@@ -122,7 +122,7 @@
 		"metro-runtime": ">=0.83.1",
 		"react": ">=19.1.0",
 		"react-dom": ">=19.1.0",
-		"react-native": ">=0.81.0",
+		"react-native": ">=0.85.0",
 		"react-native-nitro-modules": ">=0.37.0"
 	},
 	"react-native-builder-bob": {

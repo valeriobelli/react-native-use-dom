@@ -56,7 +56,9 @@ jobs:
               ;;
           esac
           CELLS=$(jq -c --arg role "$ROLE" '[.cells[] | select(.role == $role)]' e2e/matrix.json)
-          if [ "$(jq 'length' <<< "$CELLS")" -eq 0 ]; then
+          # The floor has no cell of its own while React Native still supports it, so only an empty
+          # blocking set is an error.
+          if [ "$ROLE" = blocking ] && [ "$(jq 'length' <<< "$CELLS")" -eq 0 ]; then
             echo "e2e/matrix.json has no cell with the role $ROLE." >&2
             exit 1
           fi
@@ -66,6 +68,9 @@ jobs:
   test:
     name: ${{ matrix.cell.id }} on ${{ matrix.cell.ios.runner }}
     needs: cells
+    # A matrix with no values fails the run, so the job is skipped instead when the role has no cell.
+    # https://github.com/rust-lang/rust/commit/2632c6139d9b1a7ca7be4da1924e7a78edfa452c
+    if: needs.cells.outputs.cells != '[]'
     runs-on: ${{ matrix.cell.ios.runner }}
     timeout-minutes: 60
     permissions:

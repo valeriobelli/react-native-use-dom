@@ -19,4 +19,5 @@ when to add a decision page and when to update the docs instead.
 - [ADR 0005: Navigation stays in the page](ADR-0005-Navigation-stays-in-the-page.md): navigating to another origin is blocked and reported, and the app decides where links go.
 - [ADR 0006: Release builds embed pages](ADR-0006-Release-builds-embed-pages.md): release builds work without a dev server or a network.
 - [ADR 0007: Errors carry stable codes](ADR-0007-Errors-carry-stable-codes.md): every error the library throws has a documented, stable code.
-- [ADR 0008: Supported React Native versions](ADR-0008-Supported-React-Native-versions.md): End of Cycle through Future, peer range `>=0.81`, one example app per version.
+- [ADR 0008: Supported React Native versions](ADR-0008-Supported-React-Native-versions.md): End of Cycle through Future, one example app per version.
+- [ADR 0009: Peer range starts at React Native 0.85](ADR-0009-Peer-range-starts-at-React-Native-0.85.md): peer range `>=0.85`, the oldest version React Native supports, checked nightly once it no longer is.

@@ -1,6 +1,6 @@
 # Limitations
 
-- **New Architecture only**, on React Native 0.81 and later, iOS 15.1 and later, and Android API 24 and later.
+- **New Architecture only**, on React Native 0.85 and later, iOS 15.1 and later, and Android API 24 and later.
 - **Expo Go is not supported.** Expo apps need a development build, which includes the library's native view.
 - **No React Native inside a DOM component.** A DOM component, and everything it imports, can't import
   `react-native` or a library built on it. The build fails with `ERR_USE_DOM_REACT_NATIVE_IMPORT`. Pass native

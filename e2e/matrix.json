@@ -104,22 +104,6 @@
 			"role": "blocking",
 			"slug": "expo58",
 			"support": "Future"
-		},
-		{
-			"appName": "BareExample081",
-			"bundleId": "dev.reactnativeusedom.bare081",
-			"expo": null,
-			"folder": "examples/bare-0.81",
-			"id": "bare-0.81",
-			"ios": {
-				"runner": "macos-26",
-				"xcode": "26.3"
-			},
-			"kind": "bare",
-			"reactNative": "0.81.6",
-			"role": "floor",
-			"slug": "bare081",
-			"support": "Unsupported"
 		}
 	],
 	"generatedAt": "2026-10-09"
