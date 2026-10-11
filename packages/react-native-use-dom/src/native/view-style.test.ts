@@ -15,8 +15,21 @@ describe('fillParentStyle', () => {
 	})
 
 	it('lets a height in dom.style win, which a flex basis of 0 would override', () => {
-		expect(fillParentStyle({ height: 120 })).toBeNull()
-		expect(fillParentStyle([{ margin: 4 }, [{ height: '50%' }]])).toBeNull()
+		expect(fillParentStyle({ height: 120 })).toEqual({ flexGrow: 1, maxHeight: 120 })
+
+		expect(fillParentStyle([{ margin: 4 }, [{ height: '50%' }]])).toEqual({
+			flexGrow: 1,
+			maxHeight: '50%',
+		})
+	})
+
+	it('keeps filling the width of a row when dom.style sets only a height', () => {
+		// flexGrow, not flex: the basis stays the height, and in a row the view grows to the free width.
+		const fill = fillParentStyle({ height: 120 })
+
+		expect(fill).not.toHaveProperty('flex')
+		expect(fill).not.toHaveProperty('flexBasis')
+		expect(fill).toHaveProperty('flexGrow', 1)
 	})
 
 	it('leaves the flex of the view to dom.style when it sets one', () => {

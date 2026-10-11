@@ -8,20 +8,25 @@ import { useZeroHeightCheck } from './zero-height'
 /** What makes a view fill its parent when nothing else sizes it. */
 export const FILL_PARENT = { flex: 1 } as const
 
-/**
- * The keys that size a view along its parent's default (column) axis. `flex: 1` means `flexBasis: 0`,
- * which a `height` doesn't override, so with any of them the view must not also fill its parent.
- */
-const MAIN_AXIS_SIZE_KEYS = ['height', 'flex', 'flexBasis', 'flexGrow'] as const
+/** The keys with which `dom.style` sets the view's flex itself, so that the view keeps none of its own. */
+const FLEX_KEYS = ['flex', 'flexBasis', 'flexGrow'] as const
 
 /**
- * The fill-parent style of a view whose `dom.style` is `style`: none when that style sizes the view
- * along the main axis itself, so that a size in `dom.style` wins, as docs/sizing.md says.
+ * The fill-parent style of a view whose `dom.style` is `style`, so that a size in `dom.style` wins, as
+ * docs/sizing.md says.
+ *
+ * `flex: 1` means `flexBasis: 0`, which overrides a `height` in a column, so a view with a `height`
+ * grows from its height instead and stops at it: in a column the height wins, and in a row the view
+ * still fills the width.
  */
-export function fillParentStyle(style: StyleProp<ViewStyle>): typeof FILL_PARENT | null {
+export function fillParentStyle(style: StyleProp<ViewStyle>): ViewStyle | null {
 	const flat = StyleSheet.flatten(style)
 
-	return MAIN_AXIS_SIZE_KEYS.some((key) => flat?.[key] !== undefined) ? null : FILL_PARENT
+	if (FLEX_KEYS.some((key) => flat?.[key] !== undefined)) {
+		return null
+	}
+
+	return flat?.height === undefined ? FILL_PARENT : { flexGrow: 1, maxHeight: flat.height }
 }
 
 /**
