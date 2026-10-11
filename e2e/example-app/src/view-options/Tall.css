@@ -1,0 +1,14 @@
+.tall {
+	margin: 0;
+	padding: 0 16px;
+	font: 14px/2 system-ui;
+	color: #3c3c43;
+	list-style-position: inside;
+	/* A swipe that rests on the text starts a selection, which would change what the flow compares. */
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.tall li:nth-child(odd) {
+	background: #f2f2f7;
+}

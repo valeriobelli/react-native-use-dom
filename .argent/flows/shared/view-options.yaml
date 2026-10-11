@@ -1,0 +1,25 @@
+# iOS flows can't read inside a web view, so there the screenshots are the proof; Android also checks the text.
+executionPrerequisite: The example app has just launched.
+steps:
+  - echo: The view options screen shows each option
+  - run: ready
+  # As in the errors flow: on a busy runner the app has stopped answering for seconds after the first
+  # screen settled, and an await reads the screen again until its timeout where a tap fails.
+  - await: { visible: { id: open-view-options }, timeout: 30000 }
+  - tap: { id: open-view-options }
+  - await: { visible: { id: onload-status, text: Loaded }, timeout: 60000 }
+  - when: { platform: android }
+    steps:
+      - await: { visible: { text: 'backgroundColor: transparent.' }, timeout: 15000 }
+      - await: { visible: { text: 'style: { height: 120 }.' }, timeout: 15000 }
+  - await: { idle: true, stableFor: 1000, timeout: 30000 }
+  # A web view that has reported its load has not always painted, and a blank screen is as still as a
+  # painted one: an idle wait can't tell them apart.
+  - wait: 5000
+  - snapshot: { name: transparent, cropOn: { id: transparent } }
+  # The rows must not move: the two screenshots of this view are the same, and the review compares them.
+  - snapshot: { name: no-scroll, cropOn: { id: no-scroll } }
+  - swipe: { from: { id: no-scroll }, direction: up }
+  - await: { idle: true, stableFor: 1000, timeout: 30000 }
+  - snapshot: { name: no-scroll-swiped, cropOn: { id: no-scroll } }
+  - snapshot: { name: fixed-height, cropOn: { id: fixed-height } }

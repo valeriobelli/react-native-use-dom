@@ -8,9 +8,9 @@ import { splitProps } from '../runtime/split-props'
 import { NativeDomBridge } from './host-bridge'
 import { resolveDomSource } from './source'
 import type { DomComponentHandle, DomProps } from './types'
+import { useViewStyles } from './view-style'
 import { loadNativeView } from './web-view'
 import type { RNUseDomWebViewMethods } from './web-view'
-import { useZeroHeightCheck } from './zero-height'
 
 /** What identifies the `'use dom'` module a proxy renders, as the Babel plugin writes it. */
 export interface DomComponentProxyOptions {
@@ -19,8 +19,6 @@ export interface DomComponentProxyOptions {
 	/** Name of the pre-built page inside the app bundle. Written by the Babel plugin on release. */
 	bundleFile?: string
 }
-
-const FILL_PARENT = { flex: 1 } as const
 
 /** Stable default, so a component rendered without a `dom` prop does not see a new object each render. */
 const NO_DOM_PROPS: DomProps = {}
@@ -227,7 +225,7 @@ function DomWebView({
 	viewRef,
 }: DomWebViewProps) {
 	const { RNUseDomWebView, callback } = loadNativeView()
-	const { style, webViewStyle, onLayout } = useViewStyles(componentName, dom, contentHeight)
+	const { style, webViewStyle, onLayout } = useViewStyles({ componentName, contentHeight, dom })
 
 	return (
 		<View
@@ -259,30 +257,6 @@ function DomWebView({
 			/>
 		</View>
 	)
-}
-
-/**
- * The styles of the view and of the WebView inside it, and the layout listener that, in development,
- * outlines a view with no height.
- */
-function useViewStyles(componentName: string, dom: DomProps, contentHeight: number | null) {
-	const { debugStyle, onLayout } = useZeroHeightCheck(componentName, dom.matchContents ?? false)
-	const style = useMemo(
-		() => [
-			{ backgroundColor: dom.backgroundColor ?? 'white' },
-			dom.matchContents ? null : FILL_PARENT,
-			dom.style,
-			debugStyle,
-		],
-		[dom.backgroundColor, dom.matchContents, dom.style, debugStyle],
-	)
-	// Sized inside the view's own style, so that its borders and padding add to the content's size.
-	const webViewStyle = useMemo(
-		() => (dom.matchContents ? { height: contentHeight ?? 0 } : FILL_PARENT),
-		[dom.matchContents, contentHeight],
-	)
-
-	return { onLayout, style, webViewStyle }
 }
 
 /**
