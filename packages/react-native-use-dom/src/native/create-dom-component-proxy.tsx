@@ -225,7 +225,7 @@ function DomWebView({
 	viewRef,
 }: DomWebViewProps) {
 	const { RNUseDomWebView, callback } = loadNativeView()
-	const { style, webViewStyle, onLayout } = useViewStyles(componentName, dom, contentHeight)
+	const { style, webViewStyle, onLayout } = useViewStyles({ componentName, contentHeight, dom })
 
 	return (
 		<View

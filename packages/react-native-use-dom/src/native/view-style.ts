@@ -14,7 +14,7 @@ const FLEX_KEYS = ['flex', 'flexBasis', 'flexGrow'] as const
  * overrides a `height` in a column, so a view with a `height` grows from its height instead and stops
  * at it: in a column the height wins, and in a row the view still fills the width.
  */
-export function fillParentStyle(style: StyleProp<ViewStyle>): ViewStyle | null {
+export function fillParentStyle({ style }: { style: StyleProp<ViewStyle> }): ViewStyle | null {
 	const flat = StyleSheet.flatten(style)
 
 	// Compared with undefined, not by truthiness: 0 is a size, and `height: 0` must not fill the parent.
@@ -25,11 +25,15 @@ export function fillParentStyle(style: StyleProp<ViewStyle>): ViewStyle | null {
 	return flat?.height === undefined ? FILL_PARENT : { flexGrow: 1, maxHeight: flat.height }
 }
 
-export function useViewStyles(
-	componentName: string,
-	dom: DomProps,
-	contentHeight: number | null,
-): {
+export function useViewStyles({
+	componentName,
+	contentHeight,
+	dom,
+}: {
+	componentName: string
+	contentHeight: number | null
+	dom: DomProps
+}): {
 	onLayout: (event: LayoutChangeEvent) => void
 	style: StyleProp<ViewStyle>
 	webViewStyle: ViewStyle
@@ -38,7 +42,7 @@ export function useViewStyles(
 	const style = useMemo(
 		() => [
 			{ backgroundColor: dom.backgroundColor ?? 'white' },
-			dom.matchContents ? null : fillParentStyle(dom.style),
+			dom.matchContents ? null : fillParentStyle({ style: dom.style }),
 			dom.style,
 			debugStyle,
 		],
