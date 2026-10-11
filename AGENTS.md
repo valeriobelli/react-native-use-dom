@@ -34,6 +34,11 @@ zizmor .github
   `src/docs/errors.ts` and run `pnpm docs:errors`.
 - The docs describe behaviour and contracts, not how the library implements them.
 - A DOM bundle can never import `react-native`: keep `src/web` free of it.
+- Outside the TSDoc of public exports, a comment says why a decision was made, never what the code does.
+- A function takes one destructured object parameter, `fn({ a, b })`, not positional ones, even with a single
+  argument.
+- Check values by truthiness, not with `=== undefined` or `!== null`, unless a falsy value such as `0` or `''`
+  is meaningful. Then say so in a comment.
 
 ## Task issues
 
