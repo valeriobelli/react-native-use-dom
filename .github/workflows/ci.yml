@@ -35,8 +35,9 @@ jobs:
       - run: pnpm test
 
   pr-status:
-    # recommended: skip the release pull request as it never has changesets
-    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
+    # Pull requests only: changesets/action/pr-status fails on a push to main. The release pull
+    # request is skipped, as it never has changesets.
+    if: ${{ github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/') }}
     runs-on: ubuntu-slim
     permissions:
       contents: read # to check out repo (actions/checkout)
