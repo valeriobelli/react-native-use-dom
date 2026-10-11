@@ -38,23 +38,30 @@ test('the page names the floor, and the versions only the nightly floor check co
 	expect(renderCompatibility(matrix)).not.toContain('not tested')
 
 	// The window once React Native 0.87 is the oldest version it supports.
-	const later = {
-		cells: [
-			...matrix.cells.filter((cell) => !cell.reactNative.startsWith('0.85.') && !cell.reactNative.startsWith('0.86.')),
-			{ ...matrix.cells[0], role: 'floor', support: 'Unsupported' },
-		],
-	}
-	const page = renderCompatibility(later)
+	const page = renderCompatibility(pastTheFloor({ dropped: ['0.85', '0.86'] }))
 
 	expect(page).toMatch(
 		/\| React Native 0\.85 +\| Unsupported by React Native +\| `examples\/bare-0\.85` +\| nightly +\|/u,
 	)
 	expect(page).toContain('- React Native 0.86 is not tested.')
 
-	const laterStill = { cells: later.cells.filter((cell) => !cell.reactNative.startsWith('0.87.')) }
-
-	expect(renderCompatibility(laterStill)).toContain('- React Native 0.86 to 0.87 are not tested.')
+	expect(renderCompatibility(pastTheFloor({ dropped: ['0.85', '0.86', '0.87'] }))).toContain(
+		'- React Native 0.86 to 0.87 are not tested.',
+	)
 })
+
+/**
+ * The matrix once React Native stops supporting the floor and the minors after it: their cells leave
+ * the window, and the floor comes back as a nightly cell.
+ *
+ * @param {{ dropped: string[] }} options the minors that left the window
+ * @returns {{ cells: import('./matrix.mjs').MatrixCell[] }}
+ */
+function pastTheFloor({ dropped }) {
+	const kept = matrix.cells.filter((cell) => !dropped.includes(cell.reactNative.split('.').slice(0, 2).join('.')))
+
+	return { cells: [...kept, { ...matrix.cells[0], role: 'floor', support: 'Unsupported' }] }
+}
 
 test('the page rejects a cell it cannot label', () => {
 	expect(() => renderCompatibility({ cells: [{ ...matrix.cells[0], support: 'Maybe' }] })).toThrow(
