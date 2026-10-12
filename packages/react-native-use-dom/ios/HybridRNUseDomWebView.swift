@@ -11,12 +11,16 @@ import WebKit
 class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
   private let webView: WKWebView
   private let coordinator: Coordinator
+  private let schemeHandler = OfflineBundleSchemeHandler()
   private var needsLoad = false
   private var needsBridgeScript = true
+  /// Whether this load already reported a failure, so a page that is missing and then fails to load
+  /// is reported once.
+  private var reportedLoadError = false
 
   override init() {
     let configuration = WKWebViewConfiguration()
-    configuration.setURLSchemeHandler(OfflineBundleSchemeHandler(), forURLScheme: OfflineBundleSchemeHandler.scheme)
+    configuration.setURLSchemeHandler(schemeHandler, forURLScheme: OfflineBundleSchemeHandler.scheme)
     configuration.allowsInlineMediaPlayback = true
     coordinator = Coordinator()
     configuration.userContentController.add(coordinator, name: Coordinator.messageHandlerName)
@@ -30,6 +34,10 @@ class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
     webView.scrollView.contentInsetAdjustmentBehavior = .never
     super.init()
 
+    schemeHandler.onPageMissing = { [weak self] url in
+      guard let self else { return }
+      self.onMain { $0.reportMissingPage(url) }
+    }
     coordinator.owner = self
     webView.navigationDelegate = coordinator
     webView.uiDelegate = coordinator
@@ -97,8 +105,24 @@ class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
     URL(string: source).flatMap { Origin(url: $0) }
   }
 
+  /// Reports a page the scheme handler could not find in the bundle, as a missing page. The handler
+  /// answers a 404 for it, but WebKit renders that body instead of asking the navigation delegate.
+  fileprivate func reportMissingPage(_ url: URL) {
+    if reportedLoadError { return }
+    reportedLoadError = true
+    onLoadError(
+      DomLoadErrorPayload(
+        kind: .notfound,
+        status: 404,
+        url: url.absoluteString,
+        description: "The page was not found next to the running bundle."
+      )
+    )
+  }
+
   private func load() {
     needsLoad = false
+    reportedLoadError = false
     guard let url = URL(string: source) else {
       onLoadError(
         DomLoadErrorPayload(kind: .other, status: nil, url: source, description: "\(source) is not a valid URL.")

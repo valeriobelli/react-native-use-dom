@@ -17,6 +17,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.Keep
+import java.io.ByteArrayInputStream
 import androidx.webkit.ScriptHandler
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
@@ -197,8 +198,25 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
       return true
     }
 
-    override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
-      assetLoader.shouldInterceptRequest(request.url)
+    override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+      val response = assetLoader.shouldInterceptRequest(request.url)
+      if (response != null) return response
+      // The asset loader answers nothing for a page that is missing from the app's assets, which would
+      // leave the WebView to fetch the offline URL over the network and report a network failure. A page
+      // under the bundle folder answers 404 instead, as the iOS scheme handler does, so a page that is not
+      // next to the running bundle is reported as missing rather than as unreachable.
+      if (isOfflinePage(request.url)) {
+        return WebResourceResponse(
+          "text/plain",
+          "utf-8",
+          404,
+          "Not Found",
+          mapOf("Cache-Control" to "no-cache"),
+          ByteArrayInputStream("Not found".toByteArray()),
+        )
+      }
+      return null
+    }
 
     override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
       loadFailed = false
@@ -256,6 +274,10 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
     const val OFFLINE_BUNDLE_DIR = "dom.bundle"
     const val BRIDGE_GLOBAL = "ReactNativeWebView"
     const val LISTENER_GLOBAL = "__reactNativeUseDom"
+
+    /** Whether a request is for a page under the offline bundle folder. */
+    fun isOfflinePage(url: Uri): Boolean =
+      url.host == OFFLINE_HOST && url.path?.startsWith("/$OFFLINE_BUNDLE_DIR/") == true
 
     /** The network is what a connectivity failure is about; anything else the WebView reports is not. */
     fun kindForError(errorCode: Int): DomLoadErrorKind =

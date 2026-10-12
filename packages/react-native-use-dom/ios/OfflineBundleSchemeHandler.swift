@@ -14,12 +14,20 @@ final class OfflineBundleSchemeHandler: NSObject, WKURLSchemeHandler {
     .appendingPathComponent(OfflineBundleSchemeHandler.bundleDirectory, isDirectory: true)
     .standardizedFileURL
 
+  /// Called with the URL of a page (an `.html` under the bundle folder) that is not in the bundle, so
+  /// the view can report it. WebKit does not route a `WKURLSchemeHandler`'s response through the
+  /// navigation delegate, so a 404 answered here would otherwise be rendered as the page.
+  var onPageMissing: ((URL) -> Void)?
+
   func webView(_ webView: WKWebView, start task: WKURLSchemeTask) {
     guard let url = task.request.url else {
       task.didFailWithError(URLError(.badURL))
       return
     }
     guard let file = resolve(url), let data = try? Data(contentsOf: file) else {
+      if url.pathExtension == "html" {
+        onPageMissing?(url)
+      }
       respond(task, url: url, status: 404, type: "text/plain; charset=utf-8", body: Data("Not found".utf8))
       return
     }
