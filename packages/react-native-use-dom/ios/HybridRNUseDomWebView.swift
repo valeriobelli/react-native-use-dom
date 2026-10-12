@@ -61,7 +61,7 @@ class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
 
   var onMessage: (_ message: String) -> Void = { _ in }
   var onLoadEnd: () -> Void = {}
-  var onLoadError: (_ reason: String) -> Void = { _ in }
+  var onLoadError: (_ error: DomLoadErrorPayload) -> Void = { _ in }
   var onNavigationBlocked: (_ url: String) -> Void = { _ in }
 
   func afterUpdate() {
@@ -100,7 +100,9 @@ class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
   private func load() {
     needsLoad = false
     guard let url = URL(string: source) else {
-      onLoadError("\(source) is not a valid URL.")
+      onLoadError(
+        DomLoadErrorPayload(kind: .other, status: nil, url: source, description: "\(source) is not a valid URL.")
+      )
       return
     }
     webView.load(URLRequest(url: url))
@@ -208,7 +210,15 @@ private final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, W
     // The page is still shown, since a development server explains its errors in the page.
     if response.isForMainFrame, let http = response.response as? HTTPURLResponse, http.statusCode >= 400 {
       loadFailed = true
-      owner?.onLoadError("Loading \(http.url?.absoluteString ?? "the page") failed with HTTP \(http.statusCode).")
+      let url = http.url?.absoluteString ?? webView.url?.absoluteString ?? ""
+      owner?.onLoadError(
+        DomLoadErrorPayload(
+          kind: http.statusCode == 404 ? .notfound : .http,
+          status: Double(http.statusCode),
+          url: url,
+          description: "The page answered HTTP \(http.statusCode)."
+        )
+      )
     }
     decisionHandler(.allow)
   }
@@ -222,11 +232,11 @@ private final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, W
   }
 
   func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-    report(error)
+    report(error, in: webView)
   }
 
   func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-    report(error)
+    report(error, in: webView)
   }
 
   func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
@@ -244,7 +254,7 @@ private final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, W
     return nil
   }
 
-  private func report(_ error: Error) {
+  private func report(_ error: Error, in webView: WKWebView) {
     let error = error as NSError
     // A load replaced by another, or one this delegate refused, is not a failure of the page. 102 is
     // WebKit's "frame load interrupted", which a refused navigation also raises.
@@ -252,6 +262,15 @@ private final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, W
     let isPolicyChange = error.domain == "WebKitErrorDomain" && error.code == 102
     if isCancellation || isPolicyChange { return }
     loadFailed = true
-    owner?.onLoadError(error.localizedDescription)
+    // A URL loading error is the network; anything else (a malformed page, a WebKit failure) is not.
+    let url = (error.userInfo[NSURLErrorFailingURLStringErrorKey] as? String) ?? webView.url?.absoluteString ?? ""
+    owner?.onLoadError(
+      DomLoadErrorPayload(
+        kind: error.domain == NSURLErrorDomain ? .network : .other,
+        status: nil,
+        url: url,
+        description: error.localizedDescription
+      )
+    )
   }
 }

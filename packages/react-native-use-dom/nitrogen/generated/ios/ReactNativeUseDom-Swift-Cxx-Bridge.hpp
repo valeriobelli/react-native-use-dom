@@ -8,6 +8,10 @@
 #pragma once
 
 // Forward declarations of C++ defined types
+// Forward declaration of `DomLoadErrorKind` to properly resolve imports.
+namespace margelo::nitro::usedom { enum class DomLoadErrorKind; }
+// Forward declaration of `DomLoadErrorPayload` to properly resolve imports.
+namespace margelo::nitro::usedom { struct DomLoadErrorPayload; }
 // Forward declaration of `HybridRNUseDomWebViewSpec` to properly resolve imports.
 namespace margelo::nitro::usedom { class HybridRNUseDomWebViewSpec; }
 
@@ -16,11 +20,14 @@ namespace margelo::nitro::usedom { class HybridRNUseDomWebViewSpec; }
 namespace ReactNativeUseDom { class HybridRNUseDomWebViewSpec_cxx; }
 
 // Include C++ defined types
+#include "DomLoadErrorKind.hpp"
+#include "DomLoadErrorPayload.hpp"
 #include "HybridRNUseDomWebViewSpec.hpp"
 #include <NitroModules/Result.hpp>
 #include <exception>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 /**
@@ -71,6 +78,43 @@ namespace margelo::nitro::usedom::bridge::swift {
   Func_void create_Func_void(void* NON_NULL swiftClosureWrapper) noexcept;
   inline Func_void_Wrapper wrap_Func_void(Func_void value) noexcept {
     return Func_void_Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::optional<double>
+  /**
+   * Specialized version of `std::optional<double>`.
+   */
+  using std__optional_double_ = std::optional<double>;
+  inline std::optional<double> create_std__optional_double_(const double& value) noexcept {
+    return std::optional<double>(value);
+  }
+  inline bool has_value_std__optional_double_(const std::optional<double>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline double get_std__optional_double_(const std::optional<double>& optional) noexcept {
+    return optional.value();
+  }
+  
+  // pragma MARK: std::function<void(const DomLoadErrorPayload& /* error */)>
+  /**
+   * Specialized version of `std::function<void(const DomLoadErrorPayload&)>`.
+   */
+  using Func_void_DomLoadErrorPayload = std::function<void(const DomLoadErrorPayload& /* error */)>;
+  /**
+   * Wrapper class for a `std::function<void(const DomLoadErrorPayload& / * error * /)>`, this can be used from Swift.
+   */
+  class Func_void_DomLoadErrorPayload_Wrapper final {
+  public:
+    explicit Func_void_DomLoadErrorPayload_Wrapper(std::function<void(const DomLoadErrorPayload& /* error */)>&& func): _function(std::make_unique<std::function<void(const DomLoadErrorPayload& /* error */)>>(std::move(func))) {}
+    inline void call(DomLoadErrorPayload error) const noexcept {
+      _function->operator()(error);
+    }
+  private:
+    std::unique_ptr<std::function<void(const DomLoadErrorPayload& /* error */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_DomLoadErrorPayload create_Func_void_DomLoadErrorPayload(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_DomLoadErrorPayload_Wrapper wrap_Func_void_DomLoadErrorPayload(Func_void_DomLoadErrorPayload value) noexcept {
+    return Func_void_DomLoadErrorPayload_Wrapper(std::move(value));
   }
   
   // pragma MARK: std::shared_ptr<HybridRNUseDomWebViewSpec>

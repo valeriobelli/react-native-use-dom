@@ -2,7 +2,7 @@ import type * as Nitro from 'react-native-nitro-modules'
 import type { ReactNativeView, ViewConfig } from 'react-native-nitro-modules'
 
 import { DomError, DomErrorCode } from '../runtime/errors'
-import type { RNUseDomWebViewMethods, RNUseDomWebViewProps } from './specs/RNUseDomWebView.nitro'
+import type { DomLoadErrorPayload, RNUseDomWebViewMethods, RNUseDomWebViewProps } from './specs/RNUseDomWebView.nitro'
 
 /** The native view, and Nitro's wrapper for the functions passed to it. */
 export interface NativeView {
@@ -61,4 +61,4 @@ function isExpoGo(): boolean {
 	return (globalThis as ExpoGlobal).expo?.modules?.ExponentConstants?.appOwnership === 'expo'
 }
 
-export type { RNUseDomWebViewMethods, RNUseDomWebViewProps }
+export type { DomLoadErrorPayload, RNUseDomWebViewMethods, RNUseDomWebViewProps }

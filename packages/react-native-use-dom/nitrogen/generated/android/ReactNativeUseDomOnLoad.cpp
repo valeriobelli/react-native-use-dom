@@ -18,6 +18,7 @@
 #include "JHybridRNUseDomWebViewSpec.hpp"
 #include "JFunc_void_std__string.hpp"
 #include "JFunc_void.hpp"
+#include "JFunc_void_DomLoadErrorPayload.hpp"
 #include "views/JHybridRNUseDomWebViewStateUpdater.hpp"
 #include <NitroModules/DefaultConstructableObject.hpp>
 
@@ -46,6 +47,7 @@ void registerAllNatives() {
   margelo::nitro::usedom::JHybridRNUseDomWebViewSpec::CxxPart::registerNatives();
   margelo::nitro::usedom::JFunc_void_std__string_cxx::registerNatives();
   margelo::nitro::usedom::JFunc_void_cxx::registerNatives();
+  margelo::nitro::usedom::JFunc_void_DomLoadErrorPayload_cxx::registerNatives();
   margelo::nitro::usedom::views::JHybridRNUseDomWebViewStateUpdater::registerNatives();
 
   // Register Nitro Hybrid Objects

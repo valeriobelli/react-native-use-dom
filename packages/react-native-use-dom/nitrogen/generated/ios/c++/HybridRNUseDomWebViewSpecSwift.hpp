@@ -12,10 +12,16 @@
 // Forward declaration of `HybridRNUseDomWebViewSpec_cxx` to properly resolve imports.
 namespace ReactNativeUseDom { class HybridRNUseDomWebViewSpec_cxx; }
 
-
+// Forward declaration of `DomLoadErrorPayload` to properly resolve imports.
+namespace margelo::nitro::usedom { struct DomLoadErrorPayload; }
+// Forward declaration of `DomLoadErrorKind` to properly resolve imports.
+namespace margelo::nitro::usedom { enum class DomLoadErrorKind; }
 
 #include <string>
 #include <functional>
+#include "DomLoadErrorPayload.hpp"
+#include "DomLoadErrorKind.hpp"
+#include <optional>
 
 #include "ReactNativeUseDom-Swift-Cxx-Umbrella.hpp"
 
@@ -103,11 +109,11 @@ namespace margelo::nitro::usedom {
     inline void setOnLoadEnd(const std::function<void()>& onLoadEnd) noexcept override {
       _swiftPart.setOnLoadEnd(onLoadEnd);
     }
-    inline std::function<void(const std::string& /* reason */)> getOnLoadError() noexcept override {
+    inline std::function<void(const DomLoadErrorPayload& /* error */)> getOnLoadError() noexcept override {
       auto __result = _swiftPart.getOnLoadError();
       return __result;
     }
-    inline void setOnLoadError(const std::function<void(const std::string& /* reason */)>& onLoadError) noexcept override {
+    inline void setOnLoadError(const std::function<void(const DomLoadErrorPayload& /* error */)>& onLoadError) noexcept override {
       _swiftPart.setOnLoadError(onLoadError);
     }
     inline std::function<void(const std::string& /* url */)> getOnNavigationBlocked() noexcept override {

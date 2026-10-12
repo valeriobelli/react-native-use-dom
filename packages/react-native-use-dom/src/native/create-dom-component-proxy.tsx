@@ -3,14 +3,14 @@ import type { ComponentType, RefObject, Ref } from 'react'
 import { View } from 'react-native'
 
 import type { ConsoleMessage } from '../runtime/protocol'
-import type { Serializable } from '../runtime/serializable'
 import { splitProps } from '../runtime/split-props'
 import { NativeDomBridge } from './host-bridge'
+import { reportPageLoadError } from './page-load-error'
 import { resolveDomSource } from './source'
-import type { DomComponentHandle, DomProps } from './types'
+import type { DomComponentHandle, DomProps, Serializable } from './types'
 import { useViewStyles } from './view-style'
 import { loadNativeView } from './web-view'
-import type { RNUseDomWebViewMethods } from './web-view'
+import type { DomLoadErrorPayload, RNUseDomWebViewMethods } from './web-view'
 
 /** What identifies the `'use dom'` module a proxy renders, as the Babel plugin writes it. */
 export interface DomComponentProxyOptions {
@@ -248,8 +248,8 @@ function DomWebView({
 				onLoadEnd={callback(() => {
 					dom.onLoad?.()
 				})}
-				onLoadError={callback((reason: string) => {
-					dom.onError?.(new Error(reason))
+				onLoadError={callback((error: DomLoadErrorPayload) => {
+					reportPageLoadError(error, dom.onError)
 				})}
 				onNavigationBlocked={callback((url: string) => {
 					dom.onNavigationBlocked?.(url)

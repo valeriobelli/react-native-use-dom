@@ -62,6 +62,16 @@ export const ERROR_DOCS: { readonly [Code in DomErrorCode]: ErrorDoc } = {
 		what: 'The dev server refuses to build a DOM component page.',
 		why: 'The dev server builds a page only for a component the native view names, and only from a file Metro serves: one in the project, its `watchFolders` or the Metro server root (Expo sets it to the workspace root in a monorepo). That keeps the dev server from bundling arbitrary files on request.',
 	},
+	[DomErrorCode.PageLoadFailed]: {
+		fix: 'Check that the page URL matches a page the build produced, and that the running JavaScript bundle and its `dom.bundle/` folder come from the same build. The failure is reported with the URL and any HTTP status.',
+		what: "A DOM component's page fails to load for a reason other than a missing page, and `dom.onError` receives a `DomLoadError`.",
+		why: 'Release builds serve a page from `<folder>/dom.bundle/` next to the running JavaScript bundle. The load failed there: the page answered an HTTP error, or the request failed on the network.',
+	},
+	[DomErrorCode.PageNotFound]: {
+		fix: "Rebuild with `withDom()` in `metro.config.js` so the page is written to `<folder>/dom.bundle/` next to the running bundle, and ship `dom.bundle/` beside the bundle in an over-the-air update. Don't serve it from the app binary instead.",
+		what: "A DOM component's page is missing next to the running JavaScript bundle, and `dom.onError` receives a `DomLoadError`.",
+		why: "In a release build a page loads from `<folder>/dom.bundle/`, the folder next to the running bundle. Nothing wrote the page there: the build never ran the library's Metro integration, or an update replaced the bundle without the pages built from it.",
+	},
 	[DomErrorCode.ReactNativeImportInDom]: {
 		fix: 'Use DOM elements and web libraries inside the DOM component. For a native capability, pass a function prop from the native side and call it from the DOM component.',
 		what: 'The build of a DOM component fails, naming the module that imports `react-native` or one of its libraries.',
