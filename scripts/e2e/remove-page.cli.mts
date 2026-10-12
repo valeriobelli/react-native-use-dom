@@ -2,16 +2,16 @@
 
 /**
  * Removes the `Missing` page from a built app's `dom.bundle` folder:
- * `node scripts/e2e/remove-page.cli.mjs <dom.bundle directory>`. The `page-not-found` release flow
+ * `node scripts/e2e/remove-page.cli.mts <dom.bundle directory>`. The `page-not-found` release flow
  * then renders that component against a build whose page is not next to the running bundle.
  */
 
-import { removePageByMarker } from './remove-page.mjs'
+import { removePageByMarker } from './remove-page.mts'
 
 const [bundleDirectory] = process.argv.slice(2)
 
 if (bundleDirectory === undefined) {
-	process.stderr.write('usage: node scripts/e2e/remove-page.cli.mjs <dom.bundle directory>\n')
+	process.stderr.write('usage: node scripts/e2e/remove-page.cli.mts <dom.bundle directory>\n')
 	process.exit(2)
 }
 

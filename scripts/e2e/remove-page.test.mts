@@ -4,7 +4,7 @@ import path from 'node:path'
 
 import { expect, test } from '@jest/globals'
 
-import { findPageByMarker, removePageByMarker } from './remove-page.mjs'
+import { findPageByMarker, removePageByMarker } from './remove-page.mts'
 
 const MARKER = 'use-dom-e2e-missing-page'
 

@@ -211,7 +211,7 @@ jobs:
         # before the flows run.
         run: |
           APP=$(xcrun simctl get_app_container "$UDID" "$CELL_BUNDLE_ID" app)
-          node "$GITHUB_WORKSPACE/scripts/e2e/remove-page.cli.mjs" "$APP/dom.bundle"
+          node "$GITHUB_WORKSPACE/scripts/e2e/remove-page.cli.mts" "$APP/dom.bundle"
       - name: Run the release flows
         env:
           UPDATE_BASELINES: ${{ inputs.update-baselines && '--update-baselines' || '' }}
