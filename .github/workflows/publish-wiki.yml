@@ -24,8 +24,23 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # The wiki is disabled until a maintainer enables it and creates one page in its editor,
-      # which is what creates the wiki Git storage this action pushes to.
+      - name: Check wiki storage
+        id: wiki
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GIT_TERMINAL_PROMPT: '0'
+        run: |
+          gh auth setup-git
+          if output=$(git ls-remote "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.wiki.git" 2>&1); then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$output" == *"Repository not found."* ]]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Wiki storage is unavailable. Enable the wiki in repository settings and create its first page in the wiki editor, then rerun this workflow."
+          else
+            printf '%s\n' "$output" >&2
+            exit 1
+          fi
       - uses: Andrew-Chen-Wang/github-wiki-action@1bbb4280446f9630e8e21a18012cbacf3b0f992e # v5.0.6
+        if: steps.wiki.outputs.available == 'true'
         with:
           disable-empty-commits: true

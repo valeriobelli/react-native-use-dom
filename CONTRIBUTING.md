@@ -151,6 +151,9 @@ architecture decisions, one page per decision, and the [`wiki` folder](./wiki) i
 truth: the [Publish wiki workflow](./.github/workflows/publish-wiki.yml) mirrors it to the wiki on every push to
 `main` that changes it. One direction only — edits made in the wiki's editor are overwritten by the next publish.
 
+Publishing is skipped with a warning until a maintainer enables the wiki in the repository settings and creates
+its first page in the wiki editor. This creates the wiki's Git storage; rerun the workflow to publish the pages.
+
 Write a decision page when the change is about what the library is or guarantees, and update
 [docs](./docs/README.md) when it changes user-facing behaviour. Pages reach the wiki through pull requests, like
 any other change.
