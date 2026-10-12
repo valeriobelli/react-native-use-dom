@@ -20,7 +20,6 @@
 	},
 	"files": [
 		"lib",
-		"src",
 		"nitrogen",
 		"nitro.json",
 		"react-native.config.js",
@@ -35,12 +34,8 @@
 		"README.md",
 		"AGENTS.md",
 		"!lib/**/*.test.*",
-		"!lib/docs",
-		"!src/**/__tests__",
-		"!src/**/__fixtures__",
-		"!src/**/*.test.ts",
-		"!src/**/*.test.tsx",
-		"!src/docs"
+		"!lib/**/*.map",
+		"!lib/docs"
 	],
 	"type": "commonjs",
 	"main": "./lib/commonjs/native/index.js",
@@ -133,10 +128,16 @@
 			[
 				"module",
 				{
-					"esm": true
+					"esm": true,
+					"sourceMaps": false
 				}
 			],
-			"commonjs",
+			[
+				"commonjs",
+				{
+					"sourceMaps": false
+				}
+			],
 			[
 				"typescript",
 				{
