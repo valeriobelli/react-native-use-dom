@@ -33,6 +33,9 @@ zizmor .github
 - Every error the library throws is a `DomError` with a `DomErrorCode`. Add a new code to
   `src/docs/errors.ts` and run `pnpm docs:errors`.
 - The docs describe behaviour and contracts, not how the library implements them.
+- A change updates the documentation it touches in the same pull request: `docs/` for user-facing behaviour
+  and contracts, `docs/errors.md` (with `pnpm docs:errors`) for error codes, the wiki for product and
+  architecture decisions, and `CONTRIBUTING.md` for the e2e setup.
 - A DOM bundle can never import `react-native`: keep `src/web` free of it.
 - Outside the TSDoc of public exports, a comment says why a decision was made, never what the code does.
 - A function takes one destructured object parameter, `fn({ a, b })`, not positional ones, even with a single

@@ -282,8 +282,11 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
     /** The network is what a connectivity failure is about; anything else the WebView reports is not. */
     fun kindForError(errorCode: Int): DomLoadErrorKind =
       when (errorCode) {
-        WebViewClient.ERROR_HOST_LOOKUP, WebViewClient.ERROR_CONNECT, WebViewClient.ERROR_TIMEOUT ->
-          DomLoadErrorKind.NETWORK
+        WebViewClient.ERROR_HOST_LOOKUP,
+        WebViewClient.ERROR_CONNECT,
+        WebViewClient.ERROR_TIMEOUT,
+        WebViewClient.ERROR_IO,
+        -> DomLoadErrorKind.NETWORK
         else -> DomLoadErrorKind.OTHER
       }
 

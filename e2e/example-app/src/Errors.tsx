@@ -100,7 +100,12 @@ function PageNotFoundCase() {
 	const onError = useCallback((error: unknown) => {
 		setResult(describeError(error))
 	}, [])
-	const dom = useMemo<DomProps>(() => ({ onError, style: HOST_STYLE }), [onError])
+	// A page that is missing must not also report having loaded: this text would overwrite the code
+	// above, and the flow would fail on it.
+	const onLoad = useCallback(() => {
+		setResult('Loaded the missing page.')
+	}, [])
+	const dom = useMemo<DomProps>(() => ({ onError, onLoad, style: HOST_STYLE }), [onError, onLoad])
 
 	return (
 		<CaseRow code={DomErrorCode.PageNotFound} onPress={show} result={result}>

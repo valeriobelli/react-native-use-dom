@@ -29,7 +29,7 @@ export const DomErrorCode = {
 	NonSerializableProp: 'ERR_USE_DOM_NON_SERIALIZABLE_PROP',
 	/** A native action's return value cannot be represented in the wire format. */
 	NonSerializableResult: 'ERR_USE_DOM_NON_SERIALIZABLE_RESULT',
-	/** A DOM component's page is not next to the running JavaScript bundle. */
+	/** A DOM component's page failed to load for a reason other than a missing page. */
 	PageLoadFailed: 'ERR_USE_DOM_PAGE_LOAD_FAILED',
 	/** A DOM component's page is missing from the folder next to the running JavaScript bundle. */
 	PageNotFound: 'ERR_USE_DOM_PAGE_NOT_FOUND',

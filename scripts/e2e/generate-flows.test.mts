@@ -19,7 +19,7 @@ afterEach(() => {
 	rmSync(root, { force: true, recursive: true })
 })
 
-test('a bare cell gets seven release wrappers and one dev wrapper', () => {
+test('a bare cell gets its shared release wrappers and one dev wrapper', () => {
 	const files = planCell(bare)
 
 	expect([...files.keys()]).toEqual([
@@ -27,6 +27,7 @@ test('a bare cell gets seven release wrappers and one dev wrapper', () => {
 		'bare-0.87/release/bare087-first-render.yaml',
 		'bare-0.87/release/bare087-native-action.yaml',
 		'bare-0.87/release/bare087-navigation-blocked.yaml',
+		'bare-0.87/release/bare087-page-not-found.yaml',
 		'bare-0.87/release/bare087-prop-change.yaml',
 		'bare-0.87/release/bare087-refs.yaml',
 		'bare-0.87/release/bare087-view-options.yaml',
@@ -39,6 +40,17 @@ test('a bare cell gets seven release wrappers and one dev wrapper', () => {
   - run: ../../shared/refs
 `,
 	)
+})
+
+test('every cell runs the page-not-found scenario', () => {
+	expect(planCell(bare).get('bare-0.87/release/bare087-page-not-found.yaml')).toBe(
+		`steps:
+  - launch: { ios: dev.reactnativeusedom.bare087, android: dev.reactnativeusedom.bare087 }
+  - run: ../../shared/page-not-found
+`,
+	)
+
+	expect(planCell(expo).has('expo-57/release/expo57-page-not-found.yaml')).toBe(true)
 })
 
 test('the navigation-blocked wrapper brings its own app back on iOS before reading the report', () => {

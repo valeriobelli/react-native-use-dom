@@ -14,9 +14,9 @@ class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
   private let schemeHandler = OfflineBundleSchemeHandler()
   private var needsLoad = false
   private var needsBridgeScript = true
-  /// Whether this load already reported a failure, so a page that is missing and then fails to load
-  /// is reported once.
-  private var reportedLoadError = false
+  /// Whether the current load already failed. Shared with the coordinator, so a failed load is
+  /// reported once and never also reports having loaded.
+  fileprivate var loadFailed = false
 
   override init() {
     let configuration = WKWebViewConfiguration()
@@ -107,9 +107,12 @@ class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
 
   /// Reports a page the scheme handler could not find in the bundle, as a missing page. The handler
   /// answers a 404 for it, but WebKit renders that body instead of asking the navigation delegate.
+  ///
+  /// Only the component's own page counts: a missing `.html` inside it, such as an iframe's document,
+  /// is not the page failing to load.
   fileprivate func reportMissingPage(_ url: URL) {
-    if reportedLoadError { return }
-    reportedLoadError = true
+    if loadFailed || url.absoluteString != source { return }
+    loadFailed = true
     onLoadError(
       DomLoadErrorPayload(
         kind: .notfound,
@@ -122,8 +125,9 @@ class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
 
   private func load() {
     needsLoad = false
-    reportedLoadError = false
+    loadFailed = false
     guard let url = URL(string: source) else {
+      loadFailed = true
       onLoadError(
         DomLoadErrorPayload(kind: .other, status: nil, url: source, description: "\(source) is not a valid URL.")
       )
@@ -197,8 +201,6 @@ private final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, W
   static let messageHandlerName = "reactNativeUseDom"
 
   weak var owner: HybridRNUseDomWebView?
-  /// Whether the current load already failed, so that it does not also report having loaded.
-  private var loadFailed = false
 
   func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
     guard let owner, message.frameInfo.isMainFrame,
@@ -233,7 +235,7 @@ private final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, W
   ) {
     // The page is still shown, since a development server explains its errors in the page.
     if response.isForMainFrame, let http = response.response as? HTTPURLResponse, http.statusCode >= 400 {
-      loadFailed = true
+      owner?.loadFailed = true
       let url = http.url?.absoluteString ?? webView.url?.absoluteString ?? ""
       owner?.onLoadError(
         DomLoadErrorPayload(
@@ -248,11 +250,11 @@ private final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, W
   }
 
   func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-    loadFailed = false
+    owner?.loadFailed = false
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-    if !loadFailed { owner?.onLoadEnd() }
+    if owner?.loadFailed != true { owner?.onLoadEnd() }
   }
 
   func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
@@ -285,7 +287,7 @@ private final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, W
     let isCancellation = error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled
     let isPolicyChange = error.domain == "WebKitErrorDomain" && error.code == 102
     if isCancellation || isPolicyChange { return }
-    loadFailed = true
+    owner?.loadFailed = true
     // A URL loading error is the network; anything else (a malformed page, a WebKit failure) is not.
     let url = (error.userInfo[NSURLErrorFailingURLStringErrorKey] as? String) ?? webView.url?.absoluteString ?? ""
     owner?.onLoadError(
