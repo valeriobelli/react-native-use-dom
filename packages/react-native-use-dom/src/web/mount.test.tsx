@@ -91,6 +91,14 @@ function Counter({ seed }: { seed: number }) {
 	return <span>{seed}</span>
 }
 
+let renders = 0
+
+function RenderCounter() {
+	renders += 1
+
+	return null
+}
+
 function Noisy() {
 	console.warn('rendering', 1)
 
@@ -204,5 +212,19 @@ describe('mountDomComponent', () => {
 		console.warn = original
 
 		expect(lastOfType('console')).toMatchObject({ args: ['rendering', 1], level: 'warn' })
+	})
+
+	it.each([
+		['renders twice inside StrictMode when asked to', { strict: true }, 2],
+		['renders once without StrictMode by default', {}, 1],
+	])('%s', async (_, options, expected) => {
+		install({ actions: [], instanceId: 'i1', props: {} })
+		renders = 0
+
+		await act(async () => {
+			mountDomComponent(RenderCounter as never, options)
+		})
+
+		expect(renders).toBe(expected)
 	})
 })

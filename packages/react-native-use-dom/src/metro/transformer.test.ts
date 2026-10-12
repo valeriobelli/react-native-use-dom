@@ -103,8 +103,14 @@ describe('entry synthesis', () => {
 
 		expect(src).toContain(`import Component from ${JSON.stringify(COMPONENT)};`)
 		expect(src).toContain(`import { mountDomComponent } from ${JSON.stringify(require.resolve('../web/mount'))};`)
-		expect(src).toContain('mountDomComponent(Component);')
+		expect(src).toContain('mountDomComponent(Component, { strict: true });')
 		expect(plugins).toEqual([])
+	})
+
+	it('mounts without StrictMode in a release bundle', () => {
+		transform(args(entryFilename, { customTransformOptions: { dom: COMPONENT }, dev: false }))
+
+		expect(lastCall().src).toContain('mountDomComponent(Component, { strict: false });')
 	})
 
 	it('passes other modules through unchanged', () => {

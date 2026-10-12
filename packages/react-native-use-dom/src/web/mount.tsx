@@ -22,7 +22,10 @@ export type DomComponent = ComponentType<Record<string, unknown>>
 export interface MountOptions {
 	/** Overrides the element to render into. Defaults to `#root`. */
 	container?: HTMLElement
-	/** Whether to render inside `StrictMode`. Defaults to `true` in development. */
+	/**
+	 * Whether to render inside `StrictMode`. Defaults to `false`. The entry the bundler generates
+	 * passes `true` in development builds.
+	 */
 	strict?: boolean
 }
 
@@ -46,11 +49,7 @@ export function mountDomComponent(Component: DomComponent, options: MountOptions
 		</DomBridgeProvider>
 	)
 
-	// `StrictMode`'s double render is how a DOM component's effects get the same scrutiny native
-	// components already get in development.
-	const strict = options.strict ?? process.env['NODE_ENV'] !== 'production'
-
-	createRoot(container).render(strict ? <StrictMode>{tree}</StrictMode> : tree)
+	createRoot(container).render(options.strict ? <StrictMode>{tree}</StrictMode> : tree)
 }
 
 interface DomRootProps {

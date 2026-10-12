@@ -76,7 +76,10 @@ function synthesizeEntry(args: BabelTransformerArgs, settings: WebTransformerSet
 		...(args.options.dev ? [`import ${JSON.stringify(DEV_CLIENT_MODULE_PATH)};`] : []),
 		`import Component from ${JSON.stringify(componentPath)};`,
 		`import { mountDomComponent } from ${JSON.stringify(MOUNT_MODULE_PATH)};`,
-		'mountDomComponent(Component);',
+		// `StrictMode`'s double render is how a DOM component's effects get the same scrutiny native
+		// components already get in development. The flag is written into the entry, rather than read
+		// from `process.env` in the page, so the published runtime reads no environment variable.
+		`mountDomComponent(Component, { strict: ${JSON.stringify(args.options.dev)} });`,
 		'',
 	].join('\n')
 }
