@@ -97,7 +97,7 @@ adding or removing a cell needs no change to branch protection.
 
 The floor cell (role `floor`) runs every night, or by hand from Actions → E2E → Run workflow with
 **include-floor** checked. Its failure marks that run red and blocks nothing. The matrix has a floor cell only once
-React Native stops supporting the oldest version of the peer range, `FLOOR_MINOR` in `scripts/e2e/floor.mjs`.
+React Native stops supporting the oldest version of the peer range, `FLOOR_MINOR` in `scripts/e2e/floor.mts`.
 Until then that version's blocking cell covers it, and the nightly run has no cell to run.
 
 ## Example apps

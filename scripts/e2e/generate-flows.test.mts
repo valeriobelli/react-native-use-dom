@@ -4,13 +4,12 @@ import path from 'node:path'
 
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
 
-import { DEV_SCENARIO, generateFlows, planCell, RELEASE_SCENARIOS } from './generate-flows.mjs'
+import { DEV_SCENARIO, generateFlows, planCell, RELEASE_SCENARIOS } from './generate-flows.mts'
 
 const bare = { bundleId: 'dev.reactnativeusedom.bare087', id: 'bare-0.87', slug: 'bare087' }
 const expo = { bundleId: 'dev.reactnativeusedom.expo57', id: 'expo-57', slug: 'expo57' }
 
-/** @type {string} */
-let root
+let root: string
 
 beforeEach(() => {
 	root = mkdtempSync(path.join(tmpdir(), 'generate-flows-'))

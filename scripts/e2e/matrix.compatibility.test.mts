@@ -3,12 +3,14 @@ import path from 'node:path'
 
 import { expect, test } from '@jest/globals'
 
-import { renderCompatibility } from './matrix.mjs'
+import { renderCompatibility } from './matrix.mts'
+import type { MatrixCell } from './matrix.mts'
 
 const REPOSITORY_ROOT = path.resolve(__dirname, '..', '..')
 
-/** @type {{ cells: import('./matrix.mjs').MatrixCell[] }} */
-const matrix = JSON.parse(readFileSync(path.join(REPOSITORY_ROOT, 'e2e/matrix.json'), 'utf8'))
+const matrix = JSON.parse(readFileSync(path.join(REPOSITORY_ROOT, 'e2e/matrix.json'), 'utf8')) as {
+	cells: MatrixCell[]
+}
 
 test('docs/compatibility.md is the page rendered from e2e/matrix.json', () => {
 	// Run `pnpm e2e:matrix` to rewrite both files. Never edit the page by hand.
@@ -54,21 +56,20 @@ test('the page names the floor, and the versions only the nightly floor check co
  * The matrix once React Native stops supporting the floor and the minors after it: their cells leave
  * the window, and the floor comes back as a nightly cell.
  *
- * @param {{ dropped: string[] }} options the minors that left the window
- * @returns {{ cells: import('./matrix.mjs').MatrixCell[] }}
+ * @param options `dropped` names the minors that left the window
  */
-function pastTheFloor({ dropped }) {
+function pastTheFloor({ dropped }: { dropped: string[] }): { cells: MatrixCell[] } {
 	const kept = matrix.cells.filter((cell) => !dropped.includes(cell.reactNative.split('.').slice(0, 2).join('.')))
 
-	return { cells: [...kept, { ...matrix.cells[0], role: 'floor', support: 'Unsupported' }] }
+	return { cells: [...kept, { ...matrix.cells[0]!, role: 'floor', support: 'Unsupported' }] }
 }
 
 test('the page rejects a cell it cannot label', () => {
-	expect(() => renderCompatibility({ cells: [{ ...matrix.cells[0], support: 'Maybe' }] })).toThrow(
+	expect(() => renderCompatibility({ cells: [{ ...matrix.cells[0]!, support: 'Maybe' }] })).toThrow(
 		"the bare-0.85 cell has the support level 'Maybe'",
 	)
 
-	expect(() => renderCompatibility({ cells: [{ ...matrix.cells[0], role: 'extra' }] })).toThrow(
+	expect(() => renderCompatibility({ cells: [{ ...matrix.cells[0]!, role: 'extra' }] })).toThrow(
 		"the bare-0.85 cell has the role 'extra'",
 	)
 })

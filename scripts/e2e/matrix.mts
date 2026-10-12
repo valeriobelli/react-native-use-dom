@@ -1,15 +1,16 @@
 /**
  * Builds the e2e matrix: the exact set of example apps the end-to-end tests must cover, derived
  * from the support table and the published versions. Every function here is pure, so the tests
- * feed it saved copies of the sources instead of the network; `matrix.cli.mjs` fetches the real
+ * feed it saved copies of the sources instead of the network; `matrix.cli.mts` fetches the real
  * ones and writes the matrix file.
  */
 
-import { FLOOR_MINOR } from './floor.mjs'
-import { parseSupportTable } from './sources.mjs'
+import { FLOOR_MINOR } from './floor.mts'
+import { parseSupportTable } from './sources.mts'
+import type { CellOverrides } from './sources.mts'
 
 // The compatibility page lives in its own file to keep this one small.
-export { renderCompatibility } from './matrix.compatibility.mjs'
+export { renderCompatibility } from './matrix.compatibility.mts'
 
 /** The support levels the matrix tests, besides a Future minor that has a release candidate. */
 const TESTED_LEVELS = new Set(['End of Cycle', 'Active'])
@@ -25,45 +26,62 @@ const BUNDLE_ID_PREFIX = 'dev.reactnativeusedom.'
 
 /**
  * One cell of the matrix: one example app the tests cover.
- *
- * @typedef {object} MatrixCell
- * @property {string} appName the app's registry name, which the generators use
- * @property {string} bundleId the iOS bundle id and the Android applicationId
- * @property {string | null} expo the expo version an Expo cell pins
- * @property {string} folder the example's folder, under `examples/`
- * @property {string} id the cell's id, `bare-0.87` or `expo-57`
- * @property {{ runner: string, xcode?: string }} ios the GitHub runner its iOS cell builds on, and the
- * Xcode version it selects there when the runner's default cannot build it
- * @property {string} kind `bare` or `expo`
- * @property {string} reactNative the react-native version the cell pins
- * @property {string} role `blocking`, or `floor` for the peer-range floor
- * @property {string} slug the id without dashes and dots, `bare087`
- * @property {string} support the support level the React Native schedule gives the minor
  */
+export interface MatrixCell {
+	/** The app's registry name, which the generators use. */
+	appName: string
+	/** The iOS bundle id and the Android applicationId. */
+	bundleId: string
+	/** The expo version an Expo cell pins. */
+	expo: string | null
+	/** The example's folder, under `examples/`. */
+	folder: string
+	/** The cell's id, `bare-0.87` or `expo-57`. */
+	id: string
+	/**
+	 * The GitHub runner its iOS cell builds on, and the Xcode version it selects there when the
+	 * runner's default cannot build it.
+	 */
+	ios: { runner: string; xcode?: string }
+	/** `bare` or `expo`. */
+	kind: string
+	/** The react-native version the cell pins. */
+	reactNative: string
+	/** `blocking`, or `floor` for the peer-range floor. */
+	role: string
+	/** The id without dashes and dots, `bare087`. */
+	slug: string
+	/** The support level the React Native schedule gives the minor. */
+	support: string
+}
 
 /**
  * The sources the matrix is built from, each fetched by the CLI or loaded from a fixture.
- *
- * @typedef {object} MatrixSources
- * @property {string} supportTable the support table, as fetched from the React Native website
- * @property {string[]} rnVersions every version of `react-native` published on npm
- * @property {Record<string, string>} expoTags the `expo` dist-tags, `sdk-<N>` plus `next`
- * @property {Record<string, string>} bundledRn each `expo` version mapped to the
- * `react-native` version its `bundledNativeModules.json` pins
- * @property {Record<string, import('./sources.mjs').CellOverrides>} overrides
- * @property {string} date the day the matrix is generated, `YYYY-MM-DD`
  */
+export interface MatrixSources {
+	/** Each `expo` version mapped to the `react-native` version its `bundledNativeModules.json` pins. */
+	bundledRn: Record<string, string>
+	/** The day the matrix is generated, `YYYY-MM-DD`. */
+	date: string
+	/** The `expo` dist-tags, `sdk-<N>` plus `next`. */
+	expoTags: Record<string, string>
+	/** The per-cell overrides, read from `e2e/matrix.overrides.json`. */
+	overrides: Record<string, CellOverrides>
+	/** Every version of `react-native` published on npm. */
+	rnVersions: string[]
+	/** The support table, as fetched from the React Native website. */
+	supportTable: string
+}
 
 /**
  * The version the matrix pins for a React Native minor: its highest stable release, or its highest
  * release candidate when the minor is still in the future.
  *
- * @param {string} minor
- * @param {string[]} versions
- * @param {{ future?: boolean }} options
- * @returns {string | null}
+ * @param minor the React Native minor, `0.85`
+ * @param versions every published version of `react-native`
+ * @param options `future` when the minor is still ahead of its stable release
  */
-export function pickVersion(minor, versions, options) {
+export function pickVersion(minor: string, versions: string[], options: { future?: boolean }): string | null {
 	const candidates = versions.flatMap((version) => {
 		// The stable patch of the minor, `3` for `0.85.3`; the candidate number of its release
 		// candidate, `3` for `0.85.0-rc.3`. Nightlies and other prereleases match neither.
@@ -99,17 +117,16 @@ export function pickVersion(minor, versions, options) {
 /**
  * Builds the e2e matrix from the sources it names.
  *
- * @param {MatrixSources} sources
- * @returns {{ cells: MatrixCell[], generatedAt: string }}
+ * @param sources the support table and the published versions
  */
-export function buildMatrix(sources) {
+export function buildMatrix(sources: MatrixSources): { cells: MatrixCell[]; generatedAt: string } {
 	const window = parseSupportTable(sources.supportTable).filter(
 		({ minor, support }) =>
 			TESTED_LEVELS.has(support) ||
 			(support === 'Future' && pickVersion(minor, sources.rnVersions, { future: true }) !== null),
 	)
 
-	const supportOf = new Map(window.map(({ minor, support }) => [minor, support]))
+	const supportOf = new Map(window.map(({ minor, support }): [string, string] => [minor, support]))
 
 	const bare = window
 		.map(({ minor, support }) => {
@@ -132,11 +149,10 @@ export function buildMatrix(sources) {
  * The floor cell, once React Native no longer supports the floor. While the window holds the floor
  * there is none, since its blocking cell already tests it.
  *
- * @param {MatrixSources} sources
- * @param {Map<string, string>} supportOf the tested minors, each mapped to its support level
- * @returns {MatrixCell[]}
+ * @param sources the support table and the published versions
+ * @param supportOf the tested minors, each mapped to its support level
  */
-function floorCells(sources, supportOf) {
+function floorCells(sources: MatrixSources, supportOf: Map<string, string>): MatrixCell[] {
 	if (supportOf.has(FLOOR_MINOR)) {
 		return []
 	}
@@ -155,11 +171,10 @@ function floorCells(sources, supportOf) {
  * `sdk-<N>` tag wins over `next` pointing at the same SDK: `next` only fills the gap until the
  * stable tag exists.
  *
- * @param {MatrixSources} sources
- * @param {Map<string, string>} supportOf the tested minors, each mapped to its support level
- * @returns {MatrixCell[]}
+ * @param sources the support table and the published versions
+ * @param supportOf the tested minors, each mapped to its support level
  */
-function expoCells(sources, supportOf) {
+function expoCells(sources: MatrixSources, supportOf: Map<string, string>): MatrixCell[] {
 	const tags = Object.keys(sources.expoTags)
 		.filter((tag) => /^sdk-\d+$/u.test(tag))
 		.sort((left, right) => left.localeCompare(right, undefined, { numeric: true }))
@@ -168,11 +183,10 @@ function expoCells(sources, supportOf) {
 		tags.push('next')
 	}
 
-	/** @type {Map<string, MatrixCell>} */
-	const cells = new Map()
+	const cells = new Map<string, MatrixCell>()
 
 	for (const tag of tags) {
-		const expoVersion = sources.expoTags[tag]
+		const expoVersion = sources.expoTags[tag]!
 		const reactNative = sources.bundledRn[expoVersion]
 
 		if (reactNative === undefined) {
@@ -185,7 +199,7 @@ function expoCells(sources, supportOf) {
 			continue
 		}
 
-		const sdk = expoVersion.split('.')[0]
+		const sdk = expoVersion.split('.')[0]!
 		const id = `expo-${sdk}`
 
 		if (cells.has(id)) {
@@ -213,13 +227,17 @@ function expoCells(sources, supportOf) {
 /**
  * A bare example cell, at the version picked for its minor.
  *
- * @param {string} minor
- * @param {string} support
- * @param {string} reactNative
- * @param {Record<string, import('./sources.mjs').CellOverrides>} overrides
- * @returns {MatrixCell}
+ * @param minor the React Native minor, `0.85`
+ * @param support the support level the React Native schedule gives the minor
+ * @param reactNative the react-native version the cell pins
+ * @param overrides the per-cell overrides
  */
-function bareCell(minor, support, reactNative, overrides) {
+function bareCell(
+	minor: string,
+	support: string,
+	reactNative: string,
+	overrides: Record<string, CellOverrides>,
+): MatrixCell {
 	const id = `bare-${minor}`
 	const slug = `bare${minor.replaceAll('.', '')}`
 
@@ -245,12 +263,15 @@ function bareCell(minor, support, reactNative, overrides) {
  * cycle and therefore builds with Xcode 26, and the Xcode version to select on it. The version is
  * only present for a cell whose runner's default Xcode cannot build it. Overrides win over both.
  *
- * @param {string} id
- * @param {boolean} sceneless
- * @param {Record<string, import('./sources.mjs').CellOverrides>} overrides
- * @returns {{ runner: string, xcode?: string }}
+ * @param id the cell's id, for the overrides
+ * @param sceneless whether the cell's SDK cannot adopt the UIKit scene life cycle
+ * @param overrides the per-cell overrides
  */
-function iosCell(id, sceneless, overrides) {
+function iosCell(
+	id: string,
+	sceneless: boolean,
+	overrides: Record<string, CellOverrides>,
+): { runner: string; xcode?: string } {
 	const override = overrides[id]?.ios
 
 	return {
@@ -262,19 +283,17 @@ function iosCell(id, sceneless, overrides) {
 /**
  * The minor part of a version, `0.88` for both `0.88.3` and `0.88.0-rc.3`.
  *
- * @param {string} version
- * @returns {string}
+ * @param version a published version of `react-native`
  */
-function minorOf(version) {
+function minorOf(version: string): string {
 	return version.split('.').slice(0, 2).join('.')
 }
 
 /**
  * The number an id sorts by: 87 for `bare-0.87`, 57 for `expo-57`.
  *
- * @param {string} text
- * @returns {number}
+ * @param text a cell's id
  */
-function digitsOf(text) {
+function digitsOf(text: string): number {
 	return Number(text.replaceAll(/[^\d]/gu, ''))
 }

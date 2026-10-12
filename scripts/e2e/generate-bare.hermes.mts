@@ -8,28 +8,28 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
+import type { MatrixCell } from './matrix.mts'
+
 /** The package that holds `hermesc`. */
 const HERMES_COMPILER = 'hermes-compiler'
 
 /**
  * Pins the `hermes-compiler` an example's `package.json` names to the one its React Native depends on.
  *
- * @param {string} root the repository root
- * @param {import('./matrix.mjs').MatrixCell} cell
- * @param {string | null} version the `hermes-compiler` version of the cell's React Native, or `null`
- * when that version ships `hermesc` itself and depends on no such package
- * @returns {boolean} whether the file changed
+ * @param root the repository root
+ * @param cell the cell whose folder is pinned
+ * @param version the `hermes-compiler` version of the cell's React Native, or `null` when that
+ * version ships `hermesc` itself and depends on no such package
+ * @returns whether the file changed
  */
-export function pinHermesCompiler(root, cell, version) {
+export function pinHermesCompiler(root: string, cell: MatrixCell, version: string | null): boolean {
 	const file = path.join(root, cell.folder, 'package.json')
 
 	if (!existsSync(file)) {
 		return false
 	}
 
-	const manifest =
-		/** @type {{ devDependencies?: Record<string, string> }} */
-		(JSON.parse(readFileSync(file, 'utf8')))
+	const manifest = JSON.parse(readFileSync(file, 'utf8')) as { devDependencies?: Record<string, string> }
 
 	const { [HERMES_COMPILER]: current, ...others } = manifest.devDependencies ?? {}
 

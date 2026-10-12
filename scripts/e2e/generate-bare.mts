@@ -3,13 +3,13 @@
  * minor, from the official template for that version, wired to the shared example app, and then
  * edited in place: a patch release only changes the versions in its `package.json`. The decisions
  * about what to create, bump or delete are pure functions, so the tests feed them temporary
- * directories; `generate-bare.cli.mjs` runs the real template and the installs.
+ * directories; `generate-bare.cli.mts` runs the real template and the installs.
  */
 
 import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
-import { FLOOR_MINOR } from './floor.mjs'
+import { FLOOR_MINOR } from './floor.mts'
 import {
 	BABEL_CONFIG,
 	EXAMPLE_APP,
@@ -20,9 +20,11 @@ import {
 	TEMPLATE_PATHS,
 	TEMPLATE_SCRIPTS,
 	TSCONFIG,
-} from './generate-bare.files.mjs'
-import { pinHermesCompiler } from './generate-bare.hermes.mjs'
-import { applySceneLifeCycle } from './generate-bare.scene.mjs'
+} from './generate-bare.files.mts'
+import { pinHermesCompiler } from './generate-bare.hermes.mts'
+import type { AddToProject } from './generate-bare.scene.mts'
+import { applySceneLifeCycle } from './generate-bare.scene.mts'
+import type { MatrixCell } from './matrix.mts'
 
 /**
  * The version of the packages every example shares, which `pnpm-workspace.yaml` holds in its default
@@ -37,38 +39,35 @@ const KEPT_FOLDERS = new Set([`bare-${FLOOR_MINOR}`])
 const BARE_FOLDER = /^bare-/u
 
 /**
- * @typedef {import('./matrix.mjs').MatrixCell} MatrixCell
- */
-
-/**
  * A `package.json`: the sections the generator reads, and whatever else it carries along.
- *
- * @typedef {{
- *   dependencies?: Record<string, string>,
- *   devDependencies?: Record<string, string>,
- *   scripts?: Record<string, string>,
- *   [key: string]: unknown,
- * }} Manifest
  */
+export interface Manifest {
+	dependencies?: Record<string, string>
+	devDependencies?: Record<string, string>
+	scripts?: Record<string, string>
+	[key: string]: unknown
+}
 
 /**
  * What the generator will do to the bare examples.
- *
- * @typedef {object} Plan
- * @property {MatrixCell[]} create the cells whose folder does not exist
- * @property {MatrixCell[]} bump the cells whose folder pins another `react-native` version
- * @property {string[]} remove the bare folders, under `examples/`, that have no cell
  */
+export interface Plan {
+	/** The cells whose folder pins another `react-native` version. */
+	bump: MatrixCell[]
+	/** The cells whose folder does not exist. */
+	create: MatrixCell[]
+	/** The bare folders, under `examples/`, that have no cell. */
+	remove: string[]
+}
 
 /**
  * Decides which bare examples to create, bump or delete.
  *
- * @param {MatrixCell[]} cells the cells of the matrix
- * @param {Map<string, string | null>} folders each existing `examples/bare-*` folder's name mapped to
- * the `react-native` version it pins, or `null` when it pins none
- * @returns {Plan}
+ * @param cells the cells of the matrix
+ * @param folders each existing `examples/bare-*` folder's name mapped to the `react-native` version
+ * it pins, or `null` when it pins none
  */
-export function planGeneration(cells, folders) {
+export function planGeneration(cells: MatrixCell[], folders: Map<string, string | null>): Plan {
 	const bare = cells.filter((cell) => cell.kind === 'bare')
 	const ids = new Set(bare.map((cell) => cell.id))
 
@@ -83,11 +82,10 @@ export function planGeneration(cells, folders) {
  * Pins a `package.json` to another React Native version: `react-native` and every
  * `@react-native/*` package change, and nothing else.
  *
- * @param {Manifest} manifest
- * @param {string} reactNative
- * @returns {Manifest}
+ * @param manifest the template's `package.json`
+ * @param reactNative the version to pin
  */
-export function bumpManifest(manifest, reactNative) {
+export function bumpManifest(manifest: Manifest, reactNative: string): Manifest {
 	return {
 		...manifest,
 		...(manifest.dependencies === undefined ? {} : { dependencies: pinPackages(manifest.dependencies, reactNative) }),
@@ -98,13 +96,12 @@ export function bumpManifest(manifest, reactNative) {
 }
 
 /**
- * @param {Record<string, string>} packages
- * @param {string} reactNative
- * @returns {Record<string, string>}
+ * @param packages a `package.json`'s dependencies
+ * @param reactNative the version to pin `react-native` and `@react-native/*` to
  */
-function pinPackages(packages, reactNative) {
+function pinPackages(packages: Record<string, string>, reactNative: string): Record<string, string> {
 	return Object.fromEntries(
-		Object.entries(packages).map(([name, version]) => [
+		Object.entries(packages).map(([name, version]): [string, string] => [
 			name,
 			name === 'react-native' || name.startsWith('@react-native/') ? reactNative : version,
 		]),
@@ -115,11 +112,10 @@ function pinPackages(packages, reactNative) {
  * Turns the template's `package.json` into the example's: named after the cell, wired to the
  * workspace, and without the template's own tests and tooling.
  *
- * @param {Manifest} template
- * @param {MatrixCell} cell
- * @returns {Manifest}
+ * @param template the template's `package.json`
+ * @param cell the cell the folder renders
  */
-export function wireManifest(template, cell) {
+export function wireManifest(template: Manifest, cell: MatrixCell): Manifest {
 	const dependencies = template.dependencies ?? {}
 	const devDependencies = template.devDependencies ?? {}
 	const scripts = template.scripts ?? {}
@@ -129,7 +125,7 @@ export function wireManifest(template, cell) {
 		dependencies: sortKeys({
 			...withoutTemplatePackages(dependencies),
 			[EXAMPLE_APP]: 'workspace:*',
-			'react-dom': dependencies.react,
+			'react-dom': dependencies['react']!,
 			'react-native': cell.reactNative,
 			'react-native-nitro-modules': CATALOG,
 			'react-native-safe-area-context': CATALOG,
@@ -148,64 +144,60 @@ export function wireManifest(template, cell) {
 }
 
 /**
- * @param {Record<string, string>} packages
- * @returns {Record<string, string>}
+ * @param packages a `package.json`'s dependencies
  */
-function withoutTemplatePackages(packages) {
+function withoutTemplatePackages(packages: Record<string, string>): Record<string, string> {
 	return Object.fromEntries(Object.entries(packages).filter(([name]) => !TEMPLATE_PACKAGES.has(name)))
 }
 
 /**
- * @param {Record<string, string>} record
- * @returns {Record<string, string>}
+ * @param record the keys to sort, by locale
  */
-function sortKeys(record) {
+function sortKeys(record: Record<string, string>): Record<string, string> {
 	return Object.fromEntries(Object.entries(record).sort(([left], [right]) => left.localeCompare(right, 'en')))
 }
 
 /**
  * Writes a JSON file the way the repository formats them.
  *
- * @param {string} file
- * @param {unknown} value
+ * @param file the path to write
+ * @param value what to serialize
  */
-function writeJson(file, value) {
+function writeJson(file: string, value: unknown): void {
 	writeFileSync(file, `${JSON.stringify(value, null, '\t')}\n`)
 }
 
 /**
- * @param {string} file
- * @returns {Manifest}
+ * @param file the path of a `package.json`
  */
-function readManifest(file) {
-	return (
-		/** @type {Manifest} */
-		(JSON.parse(readFileSync(file, 'utf8')))
-	)
+function readManifest(file: string): Manifest {
+	return JSON.parse(readFileSync(file, 'utf8')) as Manifest
 }
 
 /**
  * Reads `react-native` from each `examples/bare-*` folder.
  *
- * @param {string} root the repository root
- * @returns {Map<string, string | null>}
+ * @param root the repository root
  */
-export function readBareFolders(root) {
+export function readBareFolders(root: string): Map<string, string | null> {
 	const examples = path.join(root, 'examples')
 
 	return new Map(
 		readdirSync(examples, { withFileTypes: true })
 			.filter((entry) => BARE_FOLDER.test(entry.name) && entry.isDirectory())
-			.map((entry) => [entry.name, pinnedReactNative(path.join(examples, entry.name, 'package.json'))]),
+			.map((entry): [string, string | null] => [
+				entry.name,
+				pinnedReactNative(path.join(examples, entry.name, 'package.json')),
+			]),
 	)
 }
 
 /**
- * @param {string} manifestFile
- * @returns {string | null} the `react-native` version a `package.json` pins, or `null` when the file
+ * @param manifestFile the path of a `package.json`
+ * @returns the `react-native` version a `package.json` pins, or `null` when the file
  * is missing or pins none
  */
-function pinnedReactNative(manifestFile) {
+function pinnedReactNative(manifestFile: string): string | null {
 	try {
 		return readManifest(manifestFile).dependencies?.['react-native'] ?? null
 	} catch {
@@ -215,17 +207,16 @@ function pinnedReactNative(manifestFile) {
 
 /**
  * Runs the template's `init` for a cell, in a folder that does not exist yet.
- *
- * @typedef {(cell: MatrixCell, root: string) => void} RunInit
  */
+export type RunInit = (cell: MatrixCell, root: string) => void
 
 /**
  * Writes the wiring of a cell's folder, after the template created it.
  *
- * @param {string} root the repository root
- * @param {MatrixCell} cell
+ * @param root the repository root
+ * @param cell the cell the folder renders
  */
-export function wireFolder(root, cell) {
+export function wireFolder(root: string, cell: MatrixCell): void {
 	const folder = path.join(root, cell.folder)
 
 	for (const name of TEMPLATE_PATHS) {
@@ -253,17 +244,26 @@ export function wireFolder(root, cell) {
  * Applies the plan: creates, bumps and deletes the bare examples. Does not install packages or pods,
  * which need the workspace installed first.
  *
- * @param {object} options
- * @param {string} options.root the repository root
- * @param {MatrixCell[]} options.cells the cells of the matrix
- * @param {RunInit} options.runInit creates a cell's folder from the official template
- * @param {import('./generate-bare.scene.mjs').AddToProject} options.addToProject adds a file to an Xcode project
- * @param {(cell: MatrixCell) => string | null} options.hermesCompilerOf the `hermes-compiler` version the cell's
- * React Native depends on, or `null` when it depends on none
- * @param {(message: string) => void} [options.log]
- * @returns {Plan}
+ * @param options `root` is the repository root, `cells` are the cells of the matrix, `runInit`
+ * creates a cell's folder from the official template, `addToProject` adds a file to an Xcode
+ * project, `hermesCompilerOf` reads the `hermes-compiler` version the cell's React Native depends
+ * on (or `null` when it depends on none), and `log` reports the plan
  */
-export function generateBare({ addToProject, cells, hermesCompilerOf, log = () => {}, root, runInit }) {
+export function generateBare({
+	addToProject,
+	cells,
+	hermesCompilerOf,
+	log = () => {},
+	root,
+	runInit,
+}: {
+	addToProject: AddToProject
+	cells: MatrixCell[]
+	hermesCompilerOf: (cell: MatrixCell) => string | null
+	log?: (message: string) => void
+	root: string
+	runInit: RunInit
+}): Plan {
 	const plan = planGeneration(cells, readBareFolders(root))
 
 	for (const name of plan.remove) {

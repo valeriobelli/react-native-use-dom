@@ -8,14 +8,15 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
-import { generateFlows } from './generate-flows.mjs'
+import { generateFlows } from './generate-flows.mts'
+import type { MatrixCell } from './matrix.mts'
 
 const REPOSITORY_ROOT = path.resolve(import.meta.dirname, '..', '..')
 
 try {
-	const { cells } =
-		/** @type {{ cells: import('./matrix.mjs').MatrixCell[] }} */
-		(JSON.parse(readFileSync(path.join(REPOSITORY_ROOT, 'e2e/matrix.json'), 'utf8')))
+	const { cells } = JSON.parse(readFileSync(path.join(REPOSITORY_ROOT, 'e2e/matrix.json'), 'utf8')) as {
+		cells: MatrixCell[]
+	}
 
 	generateFlows({
 		cells,

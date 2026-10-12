@@ -4,15 +4,14 @@ import path from 'node:path'
 
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
 
-import { localPods, lockedReactNative, staleBareFolders, updateStalePods } from './bare-pods.mjs'
+import { localPods, lockedReactNative, staleBareFolders, updateStalePods } from './bare-pods.mts'
 
 /**
  * The parts of a `Podfile.lock` the script reads, in the order CocoaPods writes them.
  *
- * @param {string} reactNative
- * @returns {string}
+ * @param reactNative the React Native version the lock was written for
  */
-function podfileLock(reactNative) {
+function podfileLock(reactNative: string): string {
 	return [
 		'PODS:',
 		'  - boost (1.84.0)',
@@ -51,8 +50,7 @@ function podfileLock(reactNative) {
 	].join('\n')
 }
 
-/** @type {string} */
-let root
+let root: string
 
 beforeEach(() => {
 	root = mkdtempSync(path.join(tmpdir(), 'bare-pods-'))
@@ -64,12 +62,10 @@ afterEach(() => {
 })
 
 /**
- * @param {object} options
- * @param {string} options.name
- * @param {string} options.pinned
- * @param {string} [options.locked] the version of its `Podfile.lock`, which it has none without
+ * @param example `name` is the folder's name, `pinned` is the version its `package.json` pins, and
+ * `locked` is the version of its `Podfile.lock`, which it has none without
  */
-function writeExample({ locked, name, pinned }) {
+function writeExample({ locked, name, pinned }: { locked?: string; name: string; pinned: string }): void {
 	const folder = path.join(root, 'examples', name)
 
 	mkdirSync(path.join(folder, 'ios'), { recursive: true })
@@ -119,8 +115,7 @@ test('only the stale examples have their local pods updated', () => {
 	writeExample({ locked: '0.88.0-rc.3', name: 'bare-0.88', pinned: '0.88.0-rc.4' })
 	writeExample({ locked: '0.87.1', name: 'bare-0.87', pinned: '0.87.1' })
 
-	/** @type {{ folder: string, pods: string[] }[]} */
-	const updates = []
+	const updates: { folder: string; pods: string[] }[] = []
 
 	const updated = updateStalePods({
 		podUpdate: (update) => {

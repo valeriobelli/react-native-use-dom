@@ -1,7 +1,7 @@
 import { expect, test } from '@jest/globals'
 
-import { bumpManifest, wireAppConfig, wireManifest } from './generate-expo.config.mjs'
-import { cell, metadata, templateConfig, templateManifest } from './generate-expo.fixtures.mjs'
+import { bumpManifest, wireAppConfig, wireManifest } from './generate-expo.config.mts'
+import { cell, metadata, templateConfig, templateManifest } from './generate-expo.fixtures.mts'
 
 test('a bump changes expo and nothing else', () => {
 	expect(bumpManifest(templateManifest, '57.0.27')).toEqual({
@@ -32,15 +32,15 @@ test('the template manifest becomes the example manifest', () => {
 	})
 })
 
-/** @param {string} sdk */
-function dependsOn(sdk) {
+/** @param sdk the Expo SDK whose manifest is wired */
+function dependsOn(sdk: string): boolean {
 	const wired = wireManifest(templateManifest, cell(sdk, `${sdk}.0.1`), metadata(sdk, '0.86.3'))
 
 	return Object.keys(wired.devDependencies ?? {}).includes('expo-build-properties')
 }
 
-/** @param {string} sdk */
-function scene(sdk) {
+/** @param sdk the Expo SDK whose app config is wired */
+function scene(sdk: string): boolean {
 	return JSON.stringify(wireAppConfig(templateConfig, cell(sdk, `${sdk}.0.1`))).includes('enableSceneSupport')
 }
 
@@ -74,7 +74,7 @@ test('the scene option is set for SDK 57 only', () => {
 	expect(scene('57')).toBe(true)
 	expect(scene('58')).toBe(false)
 
-	expect(wireAppConfig(templateConfig, cell('57', '57.0.1')).expo.plugins).toEqual([
+	expect(wireAppConfig(templateConfig, cell('57', '57.0.1')).expo['plugins']).toEqual([
 		['expo-build-properties', { ios: { enableSceneSupport: true } }],
 	])
 })

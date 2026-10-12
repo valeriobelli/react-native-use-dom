@@ -7,6 +7,6 @@ module.exports = {
 	rootDir: __dirname,
 	roots: ['<rootDir>/scripts'],
 	testEnvironment: 'node',
-	testMatch: ['**/*.test.mjs'],
+	testMatch: ['**/*.test.mts'],
 	transform: { '^.+\\.m?[jt]sx?$': ['babel-jest', { rootMode: 'upward' }] },
 }

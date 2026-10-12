@@ -11,26 +11,31 @@ export const SUPPORT_LEVELS = ['Future', 'Active', 'End of Cycle', 'Unsupported'
 /**
  * The per-cell overrides, read from `e2e/matrix.overrides.json`: the derived values that differ
  * from the defaults for a cell whose id matches.
- *
- * @typedef {object} CellOverrides
- * @property {string} [appName]
- * @property {{ runner?: string, xcode?: string }} [ios]
  */
+export interface CellOverrides {
+	appName?: string
+	ios?: { runner?: string; xcode?: string }
+}
+
+/** One row of React Native's support table: the minor and the support level it carries. */
+interface SupportTableRow {
+	minor: string
+	support: string
+}
 
 /**
  * Reads the rows of React Native's support table, the markdown file the releases page renders.
  *
- * @param {string} markdown
- * @returns {{ minor: string, support: string }[]}
+ * @param markdown the support table, as fetched from the React Native website
  */
-export function parseSupportTable(markdown) {
+export function parseSupportTable(markdown: string): SupportTableRow[] {
 	const rows = markdown.split('\n').filter((line) => line.startsWith('|'))
 
 	if (rows.length < 2) {
 		throw new Error('the React Native support table has no rows')
 	}
 
-	const header = cellsOf(rows[0])
+	const header = cellsOf(rows[0]!)
 	const versionColumn = header.indexOf('Version')
 	const supportColumn = header.indexOf('Support')
 
@@ -38,8 +43,7 @@ export function parseSupportTable(markdown) {
 		throw new Error('the React Native support table has no Version or Support column')
 	}
 
-	/** @type {{ minor: string, support: string }[]} */
-	const supportTable = []
+	const supportTable: SupportTableRow[] = []
 
 	for (const row of rows.slice(1)) {
 		const cells = cellsOf(row)
@@ -49,13 +53,13 @@ export function parseSupportTable(markdown) {
 			continue
 		}
 
-		const minor = /^(\d+\.\d+)\.x$/u.exec(cells[versionColumn])?.[1]
+		const minor = /^(\d+\.\d+)\.x$/u.exec(cells[versionColumn]!)?.[1]
 
 		if (minor === undefined) {
 			throw new Error(`the support table holds '${cells[versionColumn]}', which is not a React Native minor`)
 		}
 
-		const support = cells[supportColumn]
+		const support = cells[supportColumn]!
 
 		if (!SUPPORT_LEVELS.includes(support)) {
 			throw new Error(`the support table holds '${support}', which is not a known support level`)
@@ -70,11 +74,10 @@ export function parseSupportTable(markdown) {
 /**
  * The published versions of the fetched `react-native` package page.
  *
- * @param {Record<string, unknown>} parsed
- * @returns {string[]}
+ * @param parsed the `react-native` package page
  */
-export function reactNativeVersions(parsed) {
-	const versions = parsed.versions
+export function reactNativeVersions(parsed: Record<string, unknown>): string[] {
+	const versions = parsed['versions']
 
 	if (typeof versions !== 'object' || versions === null) {
 		throw new TypeError('the react-native package page holds no versions object')
@@ -87,13 +90,11 @@ export function reactNativeVersions(parsed) {
  * Reads a map whose every value must be a string, like the `expo` dist-tags and each `expo`
  * package's bundled `react-native` pins.
  *
- * @param {Record<string, unknown>} parsed
- * @param {string} what the map the error message names
- * @returns {Record<string, string>}
+ * @param parsed the map to read
+ * @param what the map the error message names
  */
-export function stringMap(parsed, what) {
-	/** @type {Record<string, string>} */
-	const map = {}
+export function stringMap(parsed: Record<string, unknown>, what: string): Record<string, string> {
+	const map: Record<string, string> = {}
 
 	for (const [name, value] of Object.entries(parsed)) {
 		if (typeof value !== 'string') {
@@ -109,10 +110,9 @@ export function stringMap(parsed, what) {
 /**
  * The `react-native` version an `expo` package pins, which every `expo` package ships.
  *
- * @param {Record<string, unknown>} parsed
- * @returns {string}
+ * @param parsed the `expo` package's `bundledNativeModules.json`
  */
-export function bundledReactNative(parsed) {
+export function bundledReactNative(parsed: Record<string, unknown>): string {
 	const reactNative = parsed['react-native']
 
 	if (typeof reactNative !== 'string') {
@@ -125,19 +125,17 @@ export function bundledReactNative(parsed) {
 /**
  * Reads the overrides, which name the cells whose derived values differ from the defaults.
  *
- * @param {Record<string, unknown>} parsed
- * @returns {Record<string, CellOverrides>}
+ * @param parsed `e2e/matrix.overrides.json`
  */
-export function cellOverrides(parsed) {
-	/** @type {Record<string, CellOverrides>} */
-	const overrides = {}
+export function cellOverrides(parsed: Record<string, unknown>): Record<string, CellOverrides> {
+	const overrides: Record<string, CellOverrides> = {}
 
 	for (const [id, entry] of Object.entries(parsed)) {
 		if (typeof entry !== 'object' || entry === null) {
 			throw new TypeError(`the override for ${id} is not an object`)
 		}
 
-		overrides[id] = cellOverride(id, entry)
+		overrides[id] = cellOverride(id, entry as Record<string, unknown>)
 	}
 
 	return overrides
@@ -146,20 +144,18 @@ export function cellOverrides(parsed) {
 /**
  * Reads one cell's override.
  *
- * @param {string} id
- * @param {Record<string, unknown>} entry
- * @returns {CellOverrides}
+ * @param id the cell's id, for the error messages
+ * @param entry the override as it was parsed
  */
-function cellOverride(id, entry) {
-	/** @type {CellOverrides} */
-	const cell = {}
+function cellOverride(id: string, entry: Record<string, unknown>): CellOverrides {
+	const cell: CellOverrides = {}
 
-	if (typeof entry.appName === 'string') {
-		cell.appName = entry.appName
+	if (typeof entry['appName'] === 'string') {
+		cell.appName = entry['appName']
 	}
 
-	if (typeof entry.ios === 'object' && entry.ios !== null) {
-		const { runner, xcode } = stringMap(entry.ios, `the ios override of ${id}`)
+	if (typeof entry['ios'] === 'object' && entry['ios'] !== null) {
+		const { runner, xcode } = stringMap(entry['ios'] as Record<string, unknown>, `the ios override of ${id}`)
 
 		if (runner !== undefined || xcode !== undefined) {
 			cell.ios = { ...(runner === undefined ? {} : { runner }), ...(xcode === undefined ? {} : { xcode }) }
@@ -172,10 +168,9 @@ function cellOverride(id, entry) {
 /**
  * The cells of a support table row, without the enclosing pipes and with trimmed edges.
  *
- * @param {string} row
- * @returns {string[]}
+ * @param row one line of the support table
  */
-function cellsOf(row) {
+function cellsOf(row: string): string[] {
 	return row
 		.replace(/^\|/u, '')
 		.replace(/\|$/u, '')

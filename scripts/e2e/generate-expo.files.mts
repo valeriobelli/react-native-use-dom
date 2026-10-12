@@ -57,10 +57,9 @@ module.exports = withDom(config)
 /**
  * The README of a generated folder.
  *
- * @param {{ bundleId: string, expo: string, reactNative: string }} cell
- * @returns {string}
+ * @param cell the cell the folder renders
  */
-export function readme(cell) {
+export function readme(cell: { bundleId: string; expo: string; reactNative: string }): string {
 	return `# Expo example, SDK ${cell.expo.split('.')[0]}
 
 An [Expo](https://docs.expo.dev) app on \`expo\` ${cell.expo}, which ships React Native ${cell.reactNative}, rendering the

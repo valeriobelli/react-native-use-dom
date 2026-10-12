@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
-import { readBareFolders } from './generate-bare.mjs'
+import { readBareFolders } from './generate-bare.mts'
 
 /** React Native's own pod, whose version is the React Native version the lock was written for. */
 const REACT_CORE = /^ {2}- React-Core \(([^)]+)\)/mu
@@ -23,11 +23,10 @@ const EXTERNAL_POD = /^ {2}"?([^":\s]+)"?:$/u
 /**
  * Reads the React Native version a `Podfile.lock` was written for.
  *
- * @param {object} options
- * @param {string} options.lock the contents of the `Podfile.lock`
- * @returns {string | null} the version of `React-Core`, or `null` when the lock has none
+ * @param options `lock` holds the contents of the `Podfile.lock`
+ * @returns the version of `React-Core`, or `null` when the lock has none
  */
-export function lockedReactNative({ lock }) {
+export function lockedReactNative({ lock }: { lock: string }): string | null {
 	return REACT_CORE.exec(lock)?.[1] ?? null
 }
 
@@ -35,11 +34,9 @@ export function lockedReactNative({ lock }) {
  * Lists the pods a `Podfile.lock` takes from a local path or podspec: React Native's, which a bump
  * changes, and the libraries', which the workspace links.
  *
- * @param {object} options
- * @param {string} options.lock the contents of the `Podfile.lock`
- * @returns {string[]}
+ * @param options `lock` holds the contents of the `Podfile.lock`
  */
-export function localPods({ lock }) {
+export function localPods({ lock }: { lock: string }): string[] {
 	const lines = lock.split('\n')
 	const start = lines.indexOf('EXTERNAL SOURCES:') + 1
 
@@ -53,29 +50,31 @@ export function localPods({ lock }) {
 	return section.flatMap((line) => {
 		const match = EXTERNAL_POD.exec(line)
 
-		return match ? [match[1]] : []
+		return match ? [match[1]!] : []
 	})
 }
 
 /**
  * A bare example whose pods were installed for another React Native version.
- *
- * @typedef {object} StaleFolder
- * @property {string} folder the folder, relative to the repository root, such as `examples/bare-0.88`
- * @property {string} locked the React Native version of its `Podfile.lock`
- * @property {string} pinned the React Native version of its `package.json`
- * @property {string[]} pods the pods to update
  */
+export interface StaleFolder {
+	/** The folder, relative to the repository root, such as `examples/bare-0.88`. */
+	folder: string
+	/** The React Native version of its `Podfile.lock`. */
+	locked: string
+	/** The React Native version of its `package.json`. */
+	pinned: string
+	/** The pods to update. */
+	pods: string[]
+}
 
 /**
  * Finds the bare examples whose `Podfile.lock` doesn't match the React Native version they pin. A
  * folder without a lock is left out: it is a new example, whose pods need `pod install`.
  *
- * @param {object} options
- * @param {string} options.root the repository root
- * @returns {StaleFolder[]}
+ * @param options `root` is the repository root
  */
-export function staleBareFolders({ root }) {
+export function staleBareFolders({ root }: { root: string }): StaleFolder[] {
 	const folders = [...readBareFolders(root)].sort(([left], [right]) => left.localeCompare(right, 'en'))
 
 	return folders.flatMap(([name, pinned]) => {
@@ -88,11 +87,10 @@ export function staleBareFolders({ root }) {
 }
 
 /**
- * @param {object} options
- * @param {string} options.file
- * @returns {string} the lock, or an empty one when the file is missing, which names no version
+ * @param options `file` is the path of the lock to read
+ * @returns the lock, or an empty one when the file is missing, which names no version
  */
-function readLock({ file }) {
+function readLock({ file }: { file: string }): string {
 	try {
 		return readFileSync(file, 'utf8')
 	} catch {
@@ -103,14 +101,19 @@ function readLock({ file }) {
 /**
  * Updates the local pods of each stale bare example, and returns the folders it updated.
  *
- * @param {object} options
- * @param {string} options.root the repository root
- * @param {(options: { folder: string, pods: string[] }) => void} options.podUpdate runs
- * `pod update --no-repo-update` for the pods, in the example's `ios` folder
- * @param {(message: string) => void} [options.log]
- * @returns {string[]}
+ * @param options `root` is the repository root, `podUpdate` runs
+ * `pod update --no-repo-update` for the pods, in the example's `ios` folder, and `log` reports
+ * the updates
  */
-export function updateStalePods({ log = () => {}, podUpdate, root }) {
+export function updateStalePods({
+	log = () => {},
+	podUpdate,
+	root,
+}: {
+	log?: (message: string) => void
+	podUpdate: (options: { folder: string; pods: string[] }) => void
+	root: string
+}): string[] {
 	const stale = staleBareFolders({ root })
 
 	for (const { folder, locked, pinned, pods } of stale) {

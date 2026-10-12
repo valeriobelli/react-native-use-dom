@@ -4,19 +4,15 @@ import path from 'node:path'
 
 import { expect, test } from '@jest/globals'
 
-import { pinHermesCompiler } from './generate-bare.hermes.mjs'
+import { pinHermesCompiler } from './generate-bare.hermes.mts'
+import type { MatrixCell } from './matrix.mts'
 
-const target =
-	/** @type {import('./matrix.mjs').MatrixCell} */
-	(
-		/** @type {unknown} */
-		({ folder: 'examples/bare-0.99' })
-	)
+const target = { folder: 'examples/bare-0.99' } as unknown as MatrixCell
 
 /**
- * @param {(root: string, read: () => { devDependencies: Record<string, string> }) => void} check
+ * @param check receives the temporary root and a reader of the example's `devDependencies`
  */
-function withExample(check) {
+function withExample(check: (root: string, read: () => { devDependencies: Record<string, string> }) => void): void {
 	const root = mkdtempSync(path.join(tmpdir(), 'hermes-'))
 
 	try {

@@ -4,8 +4,10 @@ import path from 'node:path'
 
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
 
-import { cell, metadata, templateConfig, templateManifest } from './generate-expo.fixtures.mjs'
-import { generateExpo, planGeneration, templateFor } from './generate-expo.mjs'
+import type { ExpoMetadata } from './generate-expo.config.mts'
+import { cell, metadata, templateConfig, templateManifest } from './generate-expo.fixtures.mts'
+import { generateExpo, planGeneration, templateFor } from './generate-expo.mts'
+import type { MatrixCell } from './matrix.mts'
 
 test('a cell without a folder is created, a folder with another version is bumped, a folder without a cell is deleted', () => {
 	const cells = [cell('56', '56.0.23'), cell('57', '57.0.26'), cell('58', '58.0.2')]
@@ -64,9 +66,9 @@ afterEach(() => {
 /**
  * Stands in for `create-expo-app`: a folder with the files the generator touches.
  *
- * @param {import('./matrix.mjs').MatrixCell} created
+ * @param created the cell whose folder is created
  */
-function fakeInit(created) {
+function fakeInit(created: MatrixCell): void {
 	const folder = path.join(root, created.folder)
 
 	mkdirSync(path.join(folder, '.git'), { recursive: true })
@@ -79,8 +81,10 @@ function fakeInit(created) {
 	writeFileSync(path.join(folder, 'app.json'), JSON.stringify(templateConfig))
 }
 
-/** @param {import('./matrix.mjs').MatrixCell} found */
-function readMetadata(found) {
+/**
+ * @param found the cell whose `expo` version the metadata describes
+ */
+function readMetadata(found: MatrixCell): ExpoMetadata {
 	return metadata(found.id.slice(-2), found.reactNative)
 }
 
@@ -137,8 +141,7 @@ test('a folder that left the matrix is deleted', () => {
 	const options = { readMetadata, root, runInit: fakeInit }
 
 	generateExpo({ ...options, cells: [cell('55', '55.0.1'), cell('56', '56.0.23')] })
-	/** @type {string[]} */
-	const logged = []
+	const logged: string[] = []
 
 	generateExpo({
 		...options,
@@ -161,14 +164,13 @@ test('an Expo cell without an expo version is refused', () => {
 /**
  * The content of every file under the root, keyed by its path.
  *
- * @param {string} directory
- * @returns {Map<string, string>}
+ * @param directory the directory to walk
  */
-function snapshot(directory) {
+function snapshot(directory: string): Map<string, string> {
 	return new Map(
 		readdirSync(directory, { recursive: true, withFileTypes: true })
 			.filter((entry) => entry.isFile())
-			.map((entry) => {
+			.map((entry): [string, string] => {
 				const file = path.join(entry.parentPath, entry.name)
 
 				return [path.relative(directory, file), readFileSync(file, 'utf8')]

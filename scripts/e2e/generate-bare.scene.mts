@@ -11,9 +11,8 @@ import path from 'node:path'
 
 /**
  * Adds a file to an Xcode project's target.
- *
- * @typedef {(project: string, target: string) => void} AddToProject
  */
+export type AddToProject = (project: string, target: string) => void
 
 /** The file a template that supports scenes ships, and that the patch adds to the others. */
 export const SCENE_DELEGATE = 'SceneDelegate.swift'
@@ -35,10 +34,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 /**
  * The `SceneDelegate.swift` that starts React Native in the scene's window.
  *
- * @param {string} appName the name the app registers its root component under
- * @returns {string}
+ * @param appName the name the app registers its root component under
  */
-export function sceneDelegate(appName) {
+export function sceneDelegate(appName: string): string {
 	return `import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
@@ -110,10 +108,9 @@ const MANIFEST_BEFORE = '\t<key>UILaunchStoryboardName</key>\n'
 /**
  * Adds the scene manifest to an `Info.plist`, unless it has one.
  *
- * @param {string} plist
- * @returns {string}
+ * @param plist the contents of the `Info.plist`
  */
-export function addSceneManifest(plist) {
+export function addSceneManifest(plist: string): string {
 	if (plist.includes('UIApplicationSceneManifest')) {
 		return plist
 	}
@@ -128,13 +125,19 @@ export function addSceneManifest(plist) {
 /**
  * Gives a bare example the scene life cycle, when its template lacks it.
  *
- * @param {object} options
- * @param {string} options.root the repository root
- * @param {{ appName: string, folder: string }} options.cell
- * @param {AddToProject} options.addToProject adds `SceneDelegate.swift` to the Xcode project's target
- * @returns {boolean} whether the example changed: it does not when the folder has no iOS project yet
+ * @param options `root` is the repository root, `cell` names the folder and the app, and
+ * `addToProject` adds `SceneDelegate.swift` to the Xcode project's target
+ * @returns whether the example changed: it does not when the folder has no iOS project yet
  */
-export function applySceneLifeCycle({ addToProject, cell, root }) {
+export function applySceneLifeCycle({
+	addToProject,
+	cell,
+	root,
+}: {
+	addToProject: AddToProject
+	cell: { appName: string; folder: string }
+	root: string
+}): boolean {
 	const ios = path.join(root, cell.folder, 'ios')
 	const app = path.join(ios, cell.appName)
 

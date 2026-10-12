@@ -3,7 +3,8 @@
  * is tested, never pass or fail results.
  */
 
-import { FLOOR_MINOR } from './floor.mjs'
+import { FLOOR_MINOR } from './floor.mts'
+import type { MatrixCell } from './matrix.mts'
 
 /** The React Native releases overview, which holds the support schedule the levels come from. */
 const RELEASES_URL = 'https://reactnative.dev/releases/overview'
@@ -26,10 +27,9 @@ const TESTED_LABELS = { blocking: 'every change', floor: 'nightly' }
 /**
  * The Markdown page that lists every tested React Native version and Expo SDK.
  *
- * @param {{ cells: import('./matrix.mjs').MatrixCell[] }} matrix
- * @returns {string}
+ * @param matrix the matrix whose cells the page describes
  */
-export function renderCompatibility(matrix) {
+export function renderCompatibility(matrix: { cells: MatrixCell[] }): string {
 	const rows = matrix.cells.map((cell) => [
 		versionOf(cell),
 		labelOf(SUPPORT_LABELS, cell.support, 'support level', cell.id),
@@ -63,10 +63,9 @@ export function renderCompatibility(matrix) {
  * The note on the supported minors between the floor and the oldest one the table tests every
  * change, which only exist once React Native stops supporting the floor.
  *
- * @param {{ cells: import('./matrix.mjs').MatrixCell[] }} matrix
- * @returns {string[]}
+ * @param matrix the matrix whose cells the page describes
  */
-function untestedNote(matrix) {
+function untestedNote(matrix: { cells: MatrixCell[] }): string[] {
 	const floor = minorNumber(FLOOR_MINOR)
 	const oldest = Math.min(
 		...matrix.cells.filter((cell) => cell.role === 'blocking').map((cell) => minorNumber(cell.reactNative)),
@@ -85,10 +84,9 @@ function untestedNote(matrix) {
 /**
  * The minor number of a version, 85 for both `0.85` and `0.85.3`.
  *
- * @param {string} version
- * @returns {number}
+ * @param version a React Native version
  */
-function minorNumber(version) {
+function minorNumber(version: string): number {
 	return Number(version.split('.')[1])
 }
 
@@ -96,10 +94,9 @@ function minorNumber(version) {
  * The Version column of a cell: the React Native minor, or the Expo SDK with its React Native
  * minor.
  *
- * @param {import('./matrix.mjs').MatrixCell} cell
- * @returns {string}
+ * @param cell the matrix cell whose version the row names
  */
-function versionOf(cell) {
+function versionOf(cell: MatrixCell): string {
 	const minor = cell.reactNative.split('.').slice(0, 2).join('.')
 
 	if (cell.kind === 'expo' && cell.expo !== null) {
@@ -110,34 +107,35 @@ function versionOf(cell) {
 }
 
 /**
- * @param {Record<string, string>} labels
- * @param {string} key
- * @param {string} what
- * @param {string} id
- * @returns {string}
+ * The label of a key, which the page must know.
+ *
+ * @param labels the labels of the column
+ * @param key the value the cell carries
+ * @param what the column the error message names
+ * @param id the cell's id, for the error message
  */
-function labelOf(labels, key, what, id) {
+function labelOf(labels: Record<string, string>, key: string, what: string, id: string): string {
 	if (!Object.hasOwn(labels, key)) {
 		throw new Error(`the ${id} cell has the ${what} '${key}', which the compatibility page does not know`)
 	}
 
-	return labels[key]
+	return labels[key]!
 }
 
 /**
  * A Markdown table with aligned columns, in the layout the repository formatter writes, so
  * formatting the page never changes it.
  *
- * @param {string[][]} rows the header row first
- * @returns {string}
+ * @param rows the header row first
  */
-function table(rows) {
-	const widths = rows[0].map((_, column) => Math.max(...rows.map((row) => row[column].length)))
+function table(rows: string[][]): string {
+	const widths = rows[0]!.map((_, column) => Math.max(...rows.map((row) => row[column]!.length)))
 
-	/** @param {string[]} cells */
-	const line = (cells) => `| ${cells.map((cell, column) => cell.padEnd(widths[column])).join(' | ')} |`
+	const line = (cells: string[]) => `| ${cells.map((cell, column) => cell.padEnd(widths[column]!)).join(' | ')} |`
 
-	return [line(rows[0]), line(widths.map((width) => '-'.repeat(width))), ...rows.slice(1).map((row) => line(row))].join(
-		'\n',
-	)
+	return [
+		line(rows[0]!),
+		line(widths.map((width) => '-'.repeat(width))),
+		...rows.slice(1).map((row) => line(row)),
+	].join('\n')
 }

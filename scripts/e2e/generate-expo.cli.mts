@@ -10,41 +10,39 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
-import { generateExpo, planGeneration, readExpoFolders, templateFor } from './generate-expo.mjs'
+import type { ExpoMetadata } from './generate-expo.config.mts'
+import { generateExpo, planGeneration, readExpoFolders, templateFor } from './generate-expo.mts'
+import type { MatrixCell } from './matrix.mts'
 
 const REPOSITORY_ROOT = path.resolve(import.meta.dirname, '..', '..')
 
 /**
- * @param {string} url
- * @returns {Promise<Record<string, any>>}
+ * @param url the URL to read
  */
-async function fetchJson(url) {
+async function fetchJson(url: string): Promise<unknown> {
 	const response = await fetch(url)
 
 	if (!response.ok) {
 		throw new Error(`${url} answered ${response.status}`)
 	}
 
-	return (
-		/** @type {Promise<Record<string, any>>} */
-		(response.json())
-	)
+	return (await response.json()) as unknown
 }
 
 /**
  * Reads what an `expo` version publishes, from its package on unpkg.
  *
- * @param {string} expo
- * @returns {Promise<import('./generate-expo.config.mjs').ExpoMetadata>}
+ * @param expo the `expo` version the cell pins
  */
-async function fetchMetadata(expo) {
-	const bundledNativeModules =
-		/** @type {Record<string, string>} */
-		(await fetchJson(`https://unpkg.com/expo@${expo}/bundledNativeModules.json`))
+async function fetchMetadata(expo: string): Promise<ExpoMetadata> {
+	const bundledNativeModules = (await fetchJson(`https://unpkg.com/expo@${expo}/bundledNativeModules.json`)) as Record<
+		string,
+		string
+	>
 
-	const manifest =
-		/** @type {{ dependencies: Record<string, string> }} */
-		(await fetchJson(`https://unpkg.com/expo@${expo}/package.json`))
+	const manifest = (await fetchJson(`https://unpkg.com/expo@${expo}/package.json`)) as {
+		dependencies: Record<string, string>
+	}
 
 	return { bundledNativeModules, dependencies: manifest.dependencies }
 }
@@ -56,14 +54,13 @@ try {
 		throw new Error(`unknown option ${unknown.join(' ')}; the command takes none`)
 	}
 
-	const { cells } =
-		/** @type {{ cells: import('./matrix.mjs').MatrixCell[] }} */
-		(JSON.parse(readFileSync(path.join(REPOSITORY_ROOT, 'e2e/matrix.json'), 'utf8')))
+	const { cells } = JSON.parse(readFileSync(path.join(REPOSITORY_ROOT, 'e2e/matrix.json'), 'utf8')) as {
+		cells: MatrixCell[]
+	}
 
 	const planned = planGeneration(cells, readExpoFolders(REPOSITORY_ROOT))
 
-	/** @type {Map<string, import('./generate-expo.config.mjs').ExpoMetadata>} */
-	const metadata = new Map()
+	const metadata = new Map<string, ExpoMetadata>()
 
 	await Promise.all(
 		planned.create.map(async (cell) => {

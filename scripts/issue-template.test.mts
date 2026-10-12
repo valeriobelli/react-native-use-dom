@@ -33,20 +33,20 @@ const VERIFY_COMMANDS = ['pnpm lint', 'pnpm format:check', 'pnpm typecheck', 'pn
 
 /**
  * A `textarea` field of the issue form.
- *
- * @typedef {object} FormField
- * @property {string} type
- * @property {string} id
- * @property {{ label?: string, value?: string }} attributes
- * @property {{ required?: boolean }} validations
  */
+interface FormField {
+	attributes: { label?: string | undefined; value?: string | undefined }
+	id: string
+	type: string
+	validations: { required?: boolean }
+}
 
 /**
  * The issue form, whose every field is a textarea.
- *
- * @typedef {object} IssueForm
- * @property {FormField[]} body
  */
+interface IssueForm {
+	body: FormField[]
+}
 
 const TEMPLATES = path.resolve(__dirname, '..', '.github', 'ISSUE_TEMPLATE')
 const markdown = readFileSync(path.join(TEMPLATES, 'task.md'), 'utf8')
@@ -55,25 +55,21 @@ const form = readForm(readFileSync(path.join(TEMPLATES, 'task.yml'), 'utf8'))
 /**
  * Collapses every run of whitespace, so indentation and line wrapping don't count as differences.
  *
- * @param {string} text
- * @returns {string}
+ * @param text the text to normalize
  */
-function normalize(text) {
+function normalize(text: string): string {
 	return text.replaceAll(/\s+/gu, ' ').trim()
 }
 
 /**
  * Splits the markdown template into its sections, in the order they appear.
  *
- * @param {string} source
- * @returns {Map<string, string>}
+ * @param source the markdown template
  */
-function markdownSections(source) {
-	/** @type {Map<string, string>} */
-	const sections = new Map()
+function markdownSections(source: string): Map<string, string> {
+	const sections = new Map<string, string>()
 
-	/** @type {string | null} */
-	let current = null
+	let current: string | null = null
 
 	for (const line of source.split('\n')) {
 		if (line.startsWith('## ')) {
@@ -92,10 +88,9 @@ const sections = markdownSections(markdown)
 /**
  * The text of a markdown section, which must exist when a rule reads it.
  *
- * @param {string} name
- * @returns {string}
+ * @param name the section's name
  */
-function sectionOf(name) {
+function sectionOf(name: string): string {
 	const text = sections.get(name)
 
 	if (text === undefined) {
@@ -109,18 +104,16 @@ function sectionOf(name) {
  * Reads the issue form, rejecting anything but its textareas: the template rules compare exactly
  * the textareas, in order, with the markdown template's sections.
  *
- * @param {string} source
- * @returns {IssueForm}
+ * @param source the issue form, as YAML
  */
-function readForm(source) {
+function readForm(source: string): IssueForm {
 	const body = parseDocument(source).get('body')
 
 	if (!(body instanceof YAMLSeq)) {
 		throw new TypeError('task.yml has no body array')
 	}
 
-	/** @type {FormField[]} */
-	const fields = []
+	const fields: FormField[] = []
 
 	for (const entry of body.items) {
 		if (!(entry instanceof YAMLMap)) {
@@ -158,32 +151,30 @@ function readForm(source) {
 }
 
 /** The label of every textarea of the form, with a missing label read as an empty string. */
-function textareaLabels() {
+function textareaLabels(): string[] {
 	return form.body.map((field) => field.attributes.label ?? '')
 }
 
 /**
  * The pre-filled value of the form's textarea with the given id, or an empty string.
  *
- * @param {string} id
- * @returns {string}
+ * @param id the textarea's id
  */
-function textareaValue(id) {
+function textareaValue(id: string): string {
 	return form.body.find((field) => field.id === id)?.attributes.value ?? ''
 }
 
 /** The ids of the textareas the form requires, in the order `task.yml` lists them. */
-function requiredTextareaIds() {
+function requiredTextareaIds(): string[] {
 	return form.body.filter((field) => field.validations.required === true).map((field) => field.id)
 }
 
 /**
  * The command lines of a verify block, without the fences, hints and trailing comments.
  *
- * @param {string} text
- * @returns {string[]}
+ * @param text the verify block's markdown
  */
-function verifyCommands(text) {
+function verifyCommands(text: string): string[] {
 	return text
 		.split('\n')
 		.map((line) => line.trim())

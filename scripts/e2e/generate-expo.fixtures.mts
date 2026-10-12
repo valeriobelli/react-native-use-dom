@@ -1,13 +1,20 @@
 /** The matrix cell, the template and the metadata the tests of the Expo generator share. */
 
+import type { ExpoMetadata } from './generate-expo.config.mts'
+import type { MatrixCell } from './matrix.mts'
+
 /**
- * @param {string} sdk
- * @param {string} expo
- * @param {string} reactNative
- * @param {string} support
- * @returns {import('./matrix.mjs').MatrixCell & { expo: string }}
+ * @param sdk the Expo SDK the cell pins
+ * @param expo the exact `expo` version the cell pins
+ * @param reactNative the react-native version the cell pins
+ * @param support the support level the React Native schedule gives the minor
  */
-export function cell(sdk, expo, reactNative = '0.86.3', support = 'Active') {
+export function cell(
+	sdk: string,
+	expo: string,
+	reactNative = '0.86.3',
+	support = 'Active',
+): MatrixCell & { expo: string } {
 	return {
 		appName: `ExpoExample${sdk}`,
 		bundleId: `dev.reactnativeusedom.expo${sdk}`,
@@ -24,11 +31,10 @@ export function cell(sdk, expo, reactNative = '0.86.3', support = 'Active') {
 }
 
 /**
- * @param {string} sdk
- * @param {string} reactNative
- * @returns {import('./generate-expo.config.mjs').ExpoMetadata}
+ * @param sdk the Expo SDK the metadata describes
+ * @param reactNative the react-native version that SDK pins
  */
-export function metadata(sdk, reactNative) {
+export function metadata(sdk: string, reactNative: string): ExpoMetadata {
 	return {
 		bundledNativeModules: {
 			'expo-build-properties': `~${sdk}.0.9`,
