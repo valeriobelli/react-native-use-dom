@@ -1,66 +1,22 @@
 import { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { DomErrorCode, isDomError } from 'react-native-use-dom'
+import { DomErrorCode } from 'react-native-use-dom'
 import type { DomProps, DomRefHandle } from 'react-native-use-dom'
 
+import { CaseRow, describeError, NOT_RUN } from './errors/CaseRow'
 import Echo from './errors/Echo'
 import type { EchoHandle } from './errors/Echo'
 import Inert from './errors/Inert'
+import Missing from './errors/Missing'
 import Reporter from './errors/Reporter'
 import type { ReporterHandle } from './errors/Reporter'
-
-/** What a result shows before its button is pressed. */
-const NOT_RUN = 'Not run yet.'
 
 /** Does nothing. */
 function noop() {}
 
 /** The DOM components of this screen are only hosts for a call: a small strip is enough. */
 const HOST_STYLE = { height: 24 }
-
-/**
- * The code of an error, which is all a case shows. Anything that is not a `DomError` is shown by its
- * message, so the flow fails on it instead of passing on a wrong error.
- */
-function describeError(error: unknown): string {
-	if (isDomError(error)) {
-		return error.code
-	}
-
-	return `Not a DomError: ${String(error)}`
-}
-
-/** The ids of a case: the code in kebab case, without its prefix. */
-function caseIds(code: string) {
-	const name = code.replace('ERR_USE_DOM_', '').toLowerCase().replaceAll('_', '-')
-
-	return { button: `error-${name}`, result: `error-${name}-result`, title: name.replaceAll('-', ' ') }
-}
-
-interface CaseRowProps {
-	code: string
-	/** What the button does. */
-	onPress: () => void
-	result: string
-	/** The DOM component the case needs, if it needs one on screen. */
-	children?: ReactNode
-}
-
-/** One case: a native button, the text its error's code goes to, and the host of the case. */
-function CaseRow({ children, code, onPress, result }: CaseRowProps) {
-	const ids = caseIds(code)
-
-	return (
-		<View style={styles.row}>
-			<Button testID={ids.button} title={ids.title} onPress={onPress} />
-			<Text testID={ids.result} style={styles.result}>
-				{result}
-			</Text>
-			{children}
-		</View>
-	)
-}
 
 /** A promise with the function that settles it from outside. */
 function createDeferred() {
@@ -126,6 +82,29 @@ function RenderCase({ code, element }: { code: string; element: ReactNode }) {
 	return (
 		<CaseRow code={code} onPress={show} result={result}>
 			<CatchRender onError={fail}>{shown ? element : null}</CatchRender>
+		</CaseRow>
+	)
+}
+
+/**
+ * A DOM component whose page is missing from the folder next to the running bundle: `dom.onError`
+ * receives a `DomLoadError` with `ERR_USE_DOM_PAGE_NOT_FOUND`. The `page-not-found` flow removes the
+ * page before pressing the button; every other flow leaves the page in place, so the case stays idle.
+ */
+function PageNotFoundCase() {
+	const [shown, setShown] = useState(false)
+	const [result, setResult] = useState(NOT_RUN)
+	const show = useCallback(() => {
+		setShown(true)
+	}, [])
+	const onError = useCallback((error: unknown) => {
+		setResult(describeError(error))
+	}, [])
+	const dom = useMemo<DomProps>(() => ({ onError, style: HOST_STYLE }), [onError])
+
+	return (
+		<CaseRow code={DomErrorCode.PageNotFound} onPress={show} result={result}>
+			{shown ? <Missing dom={dom} /> : null}
 		</CaseRow>
 	)
 }
@@ -273,6 +252,7 @@ export default function Errors({ onBack }: { onBack: () => void }) {
 			<EchoCase code={DomErrorCode.UnknownHandleMethod} call={callMissing} />
 			<BridgeClosedCase />
 			<RenderCase code={DomErrorCode.ChildrenUnsupported} element={WITH_CHILDREN} />
+			<PageNotFoundCase />
 			<View style={styles.back}>
 				<Button testID="back" title="Back" onPress={onBack} />
 			</View>
@@ -282,8 +262,6 @@ export default function Errors({ onBack }: { onBack: () => void }) {
 
 const styles = StyleSheet.create({
 	back: { marginTop: 24 },
-	result: { paddingVertical: 4 },
-	row: { paddingVertical: 8 },
 	screen: { padding: 16 },
 	title: { fontSize: 20, fontWeight: '600' },
 })

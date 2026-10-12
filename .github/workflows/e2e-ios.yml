@@ -204,6 +204,13 @@ jobs:
 
       - name: Install the Release build
         run: xcrun simctl install "$UDID" "$CELL_FOLDER/build/Build/Products/Release-iphonesimulator/$CELL_APP.app"
+      - name: Remove the missing page for the page-not-found flow
+        # The `page-not-found` release flow needs a page that is not next to the running bundle, so the
+        # example app's `Missing` component's page is deleted from the installed app before the flows run.
+        if: matrix.cell.id == 'bare-0.87'
+        run: |
+          APP=$(xcrun simctl get_app_container "$UDID" dev.reactnativeusedom.bare087 app)
+          node "$GITHUB_WORKSPACE/scripts/e2e/remove-page.cli.mjs" "$APP/dom.bundle"
       - name: Run the release flows
         env:
           UPDATE_BASELINES: ${{ inputs.update-baselines && '--update-baselines' || '' }}

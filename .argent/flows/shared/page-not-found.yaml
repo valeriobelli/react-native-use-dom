@@ -1,0 +1,22 @@
+# A DOM component whose page is not next to the running JavaScript bundle fails, and the failure
+# reaches `dom.onError` as a `DomLoadError` with its code. The `page-not-found` setup removes this
+# component's page from the built app before the release flows run, so the page is missing here.
+executionPrerequisite: A release build whose `Missing` page has been removed from dom.bundle.
+steps:
+  - echo: A page missing next to the running bundle reports ERR_USE_DOM_PAGE_NOT_FOUND
+  - run: ready
+  - await: { visible: { id: open-errors }, timeout: 30000 }
+  - tap: { id: open-errors }
+  - await: { visible: { id: error-non-serializable-prop }, timeout: 15000 }
+  # The screen mounts the web views of its cases as it opens; a busy runner loses a first tap while
+  # they load, so nothing is tapped before the screen settles.
+  - await: { idle: true, stableFor: 1000, timeout: 30000 }
+  # The case is the last row, so it is below the fold and has to be scrolled to before it is tapped.
+  - scroll-to: { target: { id: error-page-not-found } }
+  - wait: 2500
+  - tap: { id: error-page-not-found }
+  - wait: 2500
+  - when: { text: { in: { id: error-page-not-found-result }, equals: Not run yet. } }
+    steps:
+      - tap: { id: error-page-not-found }
+  - await: { text: { in: { id: error-page-not-found-result }, equals: ERR_USE_DOM_PAGE_NOT_FOUND }, timeout: 15000 }
