@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Runs one directory of Argent flows: `node scripts/e2e/run.cli.mjs <app> <release|dev> [--device <id>]
+ * Runs one directory of Argent flows: `node scripts/e2e/run.cli.mts <app> <release|dev> [--device <id>]
  * [--update-baselines]`, which runs `argent flow run .argent/flows/<app>/<kind>`. Every flag after the two
  * arguments goes to `argent flow run` unchanged.
  */
@@ -33,10 +33,9 @@ if (result.error !== undefined) {
 process.exit(result.status ?? 1)
 
 /**
- * @param {string} message
- * @returns {never}
+ * @param message the reason, printed on the standard error
  */
-function fail(message) {
+function fail(message: string): never {
 	process.stderr.write(`${message}\n`)
 	process.exit(2)
 }

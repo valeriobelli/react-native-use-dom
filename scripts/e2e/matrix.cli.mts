@@ -10,8 +10,8 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
-import { buildMatrix, renderCompatibility } from './matrix.mjs'
-import { bundledReactNative, cellOverrides, reactNativeVersions, stringMap } from './sources.mjs'
+import { buildMatrix, renderCompatibility } from './matrix.mts'
+import { bundledReactNative, cellOverrides, reactNativeVersions, stringMap } from './sources.mts'
 
 const REPOSITORY_ROOT = path.resolve(import.meta.dirname, '..', '..')
 
@@ -27,7 +27,7 @@ try {
 		fetchJson(EXPO_TAGS_URL),
 	])
 
-	const expoTags = stringMap(expoPage, 'the expo dist-tags')
+	const expoTags = stringMap(expoPage as Record<string, unknown>, 'the expo dist-tags')
 	const tagNames = [
 		...Object.keys(expoTags)
 			.filter((tag) => /^sdk-\d+$/u.test(tag))
@@ -38,19 +38,20 @@ try {
 	// The expo package of every candidate tag names the react-native version its SDK pins, which
 	// decides whether the SDK's minor is inside the tested window.
 	const bundledPages = await Promise.all(
-		tagNames.map((tag) => fetchJson(`https://unpkg.com/expo@${expoTags[tag]}/bundledNativeModules.json`)),
+		tagNames.map((tag) => fetchJson(`https://unpkg.com/expo@${expoTags[tag]!}/bundledNativeModules.json`)),
 	)
 
-	/** @type {Record<string, string>} */
-	const bundledRn = {}
+	const bundledRn: Record<string, string> = {}
 
 	for (const [index, tag] of tagNames.entries()) {
-		bundledRn[expoTags[tag]] = bundledReactNative(bundledPages[index])
+		bundledRn[expoTags[tag]!] = bundledReactNative(bundledPages[index] as Record<string, unknown>)
 	}
 
 	const overrides = cellOverrides(
-		/** @type {Record<string, unknown>} */
-		(JSON.parse(readFileSync(path.join(REPOSITORY_ROOT, 'e2e/matrix.overrides.json'), 'utf8'))),
+		JSON.parse(readFileSync(path.join(REPOSITORY_ROOT, 'e2e/matrix.overrides.json'), 'utf8')) as Record<
+			string,
+			unknown
+		>,
 	)
 
 	const matrix = buildMatrix({
@@ -58,7 +59,7 @@ try {
 		date: new Date().toISOString().slice(0, 10),
 		expoTags,
 		overrides,
-		rnVersions: reactNativeVersions(reactNative),
+		rnVersions: reactNativeVersions(reactNative as Record<string, unknown>),
 		supportTable,
 	})
 
@@ -75,10 +76,9 @@ try {
 }
 
 /**
- * @param {string} url
- * @returns {Promise<string>}
+ * @param url the URL to read
  */
-async function fetchText(url) {
+async function fetchText(url: string): Promise<string> {
 	const response = await fetch(url)
 
 	if (!response.ok) {
@@ -89,12 +89,8 @@ async function fetchText(url) {
 }
 
 /**
- * @param {string} url
- * @returns {Promise<unknown>}
+ * @param url the URL to read
  */
-async function fetchJson(url) {
-	return (
-		/** @type {unknown} */
-		(JSON.parse(await fetchText(url)))
-	)
+async function fetchJson(url: string): Promise<unknown> {
+	return JSON.parse(await fetchText(url)) as unknown
 }

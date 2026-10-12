@@ -4,17 +4,17 @@
 	"private": true,
 	"scripts": {
 		"build": "pnpm --filter react-native-use-dom build",
-		"typecheck": "tsc -p packages/react-native-use-dom/tsconfig.json",
+		"typecheck": "tsc -p packages/react-native-use-dom/tsconfig.json && tsc -p scripts/tsconfig.json",
 		"lint": "oxlint",
 		"format": "oxfmt .",
 		"format:check": "oxfmt --check .",
 		"test": "jest",
-		"e2e": "node scripts/e2e/run.cli.mjs",
-		"e2e:generate:bare": "node scripts/e2e/generate-bare.cli.mjs",
-		"e2e:generate:expo": "node scripts/e2e/generate-expo.cli.mjs",
-		"e2e:generate:flows": "node scripts/e2e/generate-flows.cli.mjs",
-		"e2e:matrix": "node scripts/e2e/matrix.cli.mjs",
-		"e2e:pods:bare": "node scripts/e2e/bare-pods.cli.mjs",
+		"e2e": "node scripts/e2e/run.cli.mts",
+		"e2e:generate:bare": "node scripts/e2e/generate-bare.cli.mts",
+		"e2e:generate:expo": "node scripts/e2e/generate-expo.cli.mts",
+		"e2e:generate:flows": "node scripts/e2e/generate-flows.cli.mts",
+		"e2e:matrix": "node scripts/e2e/matrix.cli.mts",
+		"e2e:pods:bare": "node scripts/e2e/bare-pods.cli.mts",
 		"docs:errors": "WRITE_ERRORS_DOC=1 jest packages/react-native-use-dom/src/docs",
 		"changeset": "changeset",
 		"release": "pnpm build && changeset publish"
@@ -47,7 +47,7 @@
 		"yaml": "^2.9.1"
 	},
 	"engines": {
-		"node": ">=22.12.0"
+		"node": ">=22.18.0"
 	},
 	"packageManager": "pnpm@12.8.0"
 }

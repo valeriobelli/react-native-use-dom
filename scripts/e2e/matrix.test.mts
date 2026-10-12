@@ -3,8 +3,10 @@ import path from 'node:path'
 
 import { expect, test } from '@jest/globals'
 
-import { buildMatrix, pickVersion } from './matrix.mjs'
-import { bundledReactNative, cellOverrides, parseSupportTable, reactNativeVersions, stringMap } from './sources.mjs'
+import { buildMatrix, pickVersion } from './matrix.mts'
+import type { MatrixCell } from './matrix.mts'
+import { bundledReactNative, cellOverrides, parseSupportTable, reactNativeVersions, stringMap } from './sources.mts'
+import type { CellOverrides } from './sources.mts'
 
 /**
  * The fixtures hold saved copies of the sources the CLI fetches, trimmed to the versions that
@@ -14,28 +16,34 @@ const FIXTURES = path.resolve(__dirname, '__fixtures__')
 
 const supportTable = readFileSync(path.join(FIXTURES, 'support-table.md'), 'utf8')
 
-/** @type {string[]} */
-const rnVersions = JSON.parse(readFileSync(path.join(FIXTURES, 'react-native-versions.json'), 'utf8'))
+const rnVersions = JSON.parse(readFileSync(path.join(FIXTURES, 'react-native-versions.json'), 'utf8')) as string[]
 
-/** @type {Record<string, string>} */
-const expoTags = JSON.parse(readFileSync(path.join(FIXTURES, 'expo-dist-tags.json'), 'utf8'))
+const expoTags = JSON.parse(readFileSync(path.join(FIXTURES, 'expo-dist-tags.json'), 'utf8')) as Record<string, string>
 
-/** @type {Record<string, string>} */
-const bundledRn = JSON.parse(readFileSync(path.join(FIXTURES, 'bundled-native-modules.json'), 'utf8'))
+const bundledRn = JSON.parse(readFileSync(path.join(FIXTURES, 'bundled-native-modules.json'), 'utf8')) as Record<
+	string,
+	string
+>
 
-const overrides = {
+const overrides: Record<string, CellOverrides> = {
 	'bare-0.87': { appName: 'BareExample' },
 	'expo-57': { appName: 'ReactNativeUseDomExpoExample' },
 }
 
 /**
  * Builds the matrix from the fixtures, with one source replaced.
+ *
+ * @param sources the fixture source to replace
  */
 function buildFixtureMatrix({
 	overrides: cellOverridesOf = overrides,
 	rnVersions: versions = rnVersions,
 	supportTable: table = supportTable,
-} = {}) {
+}: {
+	overrides?: Record<string, CellOverrides>
+	rnVersions?: string[]
+	supportTable?: string
+} = {}): { cells: MatrixCell[]; generatedAt: string } {
 	return buildMatrix({
 		bundledRn,
 		date: '2026-10-03',

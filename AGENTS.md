@@ -43,5 +43,5 @@ zizmor .github
 ## Task issues
 
 Issues that track work follow the structure of [`.github/ISSUE_TEMPLATE/task.md`](./.github/ISSUE_TEMPLATE/task.md).
-Never remove or rename its sections: `scripts/issue-template.test.mjs` compares them with the issue form
+Never remove or rename its sections: `scripts/issue-template.test.mts` compares them with the issue form
 in `task.yml`, so the two stay interchangeable.

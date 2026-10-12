@@ -96,10 +96,9 @@ export const TSCONFIG = `{
 /**
  * The README of a generated folder.
  *
- * @param {{ bundleId: string, reactNative: string }} cell
- * @returns {string}
+ * @param cell the cell the folder renders
  */
-export function readme(cell) {
+export function readme(cell: { bundleId: string; reactNative: string }): string {
 	return `# Bare React Native example, ${cell.reactNative}
 
 The [React Native Community CLI](https://github.com/react-native-community/cli) template for React Native

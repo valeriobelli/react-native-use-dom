@@ -8,19 +8,19 @@ const requiredHeadings = ['Status', 'Context', 'Decision', 'Consequences']
 /**
  * Reads a page of the wiki.
  *
- * @param {string} wikiFolder
- * @param {string} page
+ * @param wikiFolder the wiki's folder
+ * @param page the page's file name
  */
-function readPage(wikiFolder, page) {
+function readPage(wikiFolder: string, page: string): string {
 	return readFileSync(path.join(wikiFolder, page), 'utf8')
 }
 
 /**
  * Lists the ADR files of a wiki folder.
  *
- * @param {string} wikiFolder
+ * @param wikiFolder the wiki's folder
  */
-function listAdrs(wikiFolder) {
+function listAdrs(wikiFolder: string): string[] {
 	return readdirSync(wikiFolder)
 		.filter((file) => /^ADR-.*\.md$/u.test(file))
 		.sort()
@@ -29,9 +29,9 @@ function listAdrs(wikiFolder) {
 /**
  * Returns the targets of the links in `Home.md`.
  *
- * @param {string} wikiFolder
+ * @param wikiFolder the wiki's folder
  */
-function readHomeLinks(wikiFolder) {
+function readHomeLinks(wikiFolder: string): string[] {
 	const home = readPage(wikiFolder, 'Home.md')
 
 	return [...home.matchAll(/\]\(([^)\s]+)\)/gu)].map((match) => match[1] ?? '')
@@ -40,9 +40,9 @@ function readHomeLinks(wikiFolder) {
 /**
  * Returns the ADR files that `Home.md` does not link.
  *
- * @param {string} wikiFolder
+ * @param wikiFolder the wiki's folder
  */
-function findUnlistedAdrs(wikiFolder) {
+function findUnlistedAdrs(wikiFolder: string): string[] {
 	const linked = new Set(readHomeLinks(wikiFolder))
 
 	return listAdrs(wikiFolder).filter((file) => !linked.has(file))
@@ -51,9 +51,9 @@ function findUnlistedAdrs(wikiFolder) {
 /**
  * Returns the local pages `Home.md` links that do not exist.
  *
- * @param {string} wikiFolder
+ * @param wikiFolder the wiki's folder
  */
-function findBrokenHomeLinks(wikiFolder) {
+function findBrokenHomeLinks(wikiFolder: string): string[] {
 	const pages = new Set(readdirSync(wikiFolder))
 
 	return readHomeLinks(wikiFolder)
@@ -64,9 +64,9 @@ function findBrokenHomeLinks(wikiFolder) {
 /**
  * Returns the `##` headings of a page, in order.
  *
- * @param {string} content
+ * @param content the page's markdown
  */
-function readHeadings(content) {
+function readHeadings(content: string): (string | undefined)[] {
 	return [...content.matchAll(/^## (.+?)\s*$/gmu)].map((match) => match[1])
 }
 

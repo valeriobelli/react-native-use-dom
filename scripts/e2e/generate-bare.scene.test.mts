@@ -4,8 +4,9 @@ import path from 'node:path'
 
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
 
-import { generateBare } from './generate-bare.mjs'
-import { addSceneManifest, APP_DELEGATE, applySceneLifeCycle, sceneDelegate } from './generate-bare.scene.mjs'
+import { generateBare } from './generate-bare.mts'
+import { addSceneManifest, APP_DELEGATE, applySceneLifeCycle, sceneDelegate } from './generate-bare.scene.mts'
+import type { MatrixCell } from './matrix.mts'
 
 const PLIST = `<dict>
 	<key>RCTNewArchEnabled</key>
@@ -16,10 +17,9 @@ const PLIST = `<dict>
 `
 
 /**
- * @param {string} id
- * @returns {import('./matrix.mjs').MatrixCell}
+ * @param id the cell's id
  */
-function cell(id) {
+function cell(id: string): MatrixCell {
 	return {
 		appName: `App${id.replaceAll(/[-.]/gu, '')}`,
 		bundleId: 'dev.reactnativeusedom.app',
@@ -48,10 +48,10 @@ afterEach(() => {
 /**
  * Writes the iOS folder of a template: with a `SceneDelegate.swift` when it ships one.
  *
- * @param {import('./matrix.mjs').MatrixCell} target
- * @param {boolean} withScene
+ * @param target the cell whose iOS folder is written
+ * @param withScene whether the template ships a `SceneDelegate.swift`
  */
-function writeIos(target, withScene) {
+function writeIos(target: MatrixCell, withScene: boolean): void {
 	const app = path.join(root, target.folder, 'ios', target.appName)
 
 	mkdirSync(app, { recursive: true })
@@ -80,17 +80,16 @@ test('the scene manifest goes before the launch storyboard, and only once', () =
 
 test('a template without a scene delegate gets one, and a second run changes nothing', () => {
 	const target = cell('bare-0.86')
-	/** @type {string[][]} */
-	const added = []
+	const added: string[][] = []
 
 	writeIos(target, false)
 
 	const options = {
 		/**
-		 * @param {string} project
-		 * @param {string} name
+		 * @param project the path of the Xcode project
+		 * @param name the app the file is added to
 		 */
-		addToProject: (project, name) => {
+		addToProject: (project: string, name: string) => {
 			added.push([path.relative(root, project), name])
 		},
 		cell: target,
@@ -132,8 +131,7 @@ test('the generator patches the existing folders that lack a scene delegate and 
 	writeIos(old, false)
 	writeIos(current, true)
 
-	/** @type {string[]} */
-	const logged = []
+	const logged: string[] = []
 
 	generateBare({
 		addToProject: () => {},

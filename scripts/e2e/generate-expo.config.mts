@@ -3,7 +3,8 @@
  * the template's files, the matrix cell, and what the cell's `expo` version publishes.
  */
 
-import { EXAMPLE_APP, TEMPLATE_PACKAGES } from './generate-expo.files.mjs'
+import { EXAMPLE_APP, TEMPLATE_PACKAGES } from './generate-expo.files.mts'
+import type { MatrixCell } from './matrix.mts'
 
 /**
  * The version of the packages every example shares, which `pnpm-workspace.yaml` holds in its default
@@ -15,42 +16,40 @@ const CATALOG = 'catalog:'
 const SCENE_SDK = 57
 
 /**
- * @typedef {import('./matrix.mjs').MatrixCell} MatrixCell
- */
-
-/**
  * A `package.json`: the sections the generator reads, and whatever else it carries along.
- *
- * @typedef {{
- *   dependencies?: Record<string, string>,
- *   devDependencies?: Record<string, string>,
- *   scripts?: Record<string, string>,
- *   [key: string]: unknown,
- * }} Manifest
  */
+export interface Manifest {
+	dependencies?: Record<string, string>
+	devDependencies?: Record<string, string>
+	scripts?: Record<string, string>
+	[key: string]: unknown
+}
 
 /**
  * What an `expo` version publishes about the versions of its SDK.
- *
- * @typedef {object} ExpoMetadata
- * @property {Record<string, string>} bundledNativeModules the packages `expo install` pins, from the
- * `bundledNativeModules.json` of the `expo` package
- * @property {Record<string, string>} dependencies the `dependencies` of the `expo` package
  */
+export interface ExpoMetadata {
+	/** The packages `expo install` pins, from the `bundledNativeModules.json` of the `expo` package. */
+	bundledNativeModules: Record<string, string>
+	/** The `dependencies` of the `expo` package. */
+	dependencies: Record<string, string>
+}
 
 /**
  * An `app.json`'s `expo` section: the keys the generator sets, and whatever else it carries along.
- *
- * @typedef {{ android?: Record<string, unknown>, ios?: Record<string, unknown>, [key: string]: unknown }} AppConfig
  */
+export type AppConfig = {
+	android?: Record<string, unknown>
+	ios?: Record<string, unknown>
+	[key: string]: unknown
+}
 
 /**
  * The SDK an `expo` version belongs to.
  *
- * @param {string} expo
- * @returns {number}
+ * @param expo a published `expo` version
  */
-export function sdkOf(expo) {
+export function sdkOf(expo: string): number {
 	return Number(expo.split('.')[0])
 }
 
@@ -58,21 +57,19 @@ export function sdkOf(expo) {
  * Pins a `package.json` to another `expo` version, and nothing else: `expo install --fix` aligns the
  * packages that depend on it.
  *
- * @param {Manifest} manifest
- * @param {string} expo
- * @returns {Manifest}
+ * @param manifest the template's `package.json`
+ * @param expo the version to pin
  */
-export function bumpManifest(manifest, expo) {
+export function bumpManifest(manifest: Manifest, expo: string): Manifest {
 	return { ...manifest, dependencies: { ...manifest.dependencies, expo } }
 }
 
 /**
- * @param {Record<string, string>} versions
- * @param {string} name
- * @param {string} source where the version comes from, for the error
- * @returns {string}
+ * @param versions the versions a source publishes
+ * @param name the package whose version is required
+ * @param source where the version comes from, for the error
  */
-function required(versions, name, source) {
+function required(versions: Record<string, string>, name: string, source: string): string {
 	const version = versions[name]
 
 	if (version === undefined) {
@@ -83,10 +80,9 @@ function required(versions, name, source) {
 }
 
 /**
- * @param {Record<string, string>} record
- * @returns {Record<string, string>}
+ * @param record the keys to sort, by locale
  */
-function sortKeys(record) {
+function sortKeys(record: Record<string, string>): Record<string, string> {
 	return Object.fromEntries(Object.entries(record).sort(([left], [right]) => left.localeCompare(right, 'en')))
 }
 
@@ -94,12 +90,15 @@ function sortKeys(record) {
  * Turns the template's `package.json` into the example's: named after the cell, wired to the
  * workspace, and with the versions the cell's `expo` version publishes.
  *
- * @param {Manifest} template
- * @param {MatrixCell & { expo: string }} cell
- * @param {ExpoMetadata} metadata
- * @returns {Manifest}
+ * @param template the template's `package.json`
+ * @param cell the cell the folder renders, with the exact `expo` version it pins
+ * @param metadata what the cell's `expo` version publishes
  */
-export function wireManifest(template, cell, metadata) {
+export function wireManifest(
+	template: Manifest,
+	cell: MatrixCell & { expo: string },
+	metadata: ExpoMetadata,
+): Manifest {
 	const source = `expo ${cell.expo}`
 	const bundled = metadata.bundledNativeModules
 	const reactNative = required(bundled, 'react-native', source)
@@ -143,11 +142,13 @@ export function wireManifest(template, cell, metadata) {
  * Turns the template's `app.json` into the example's: named after the cell, with its ids, without
  * the web target, and with the scene life cycle where the SDK needs it.
  *
- * @param {{ expo: AppConfig }} template
- * @param {MatrixCell & { expo: string }} cell
- * @returns {{ expo: Record<string, unknown> }}
+ * @param template the template's `app.json`
+ * @param cell the cell the folder renders, with the exact `expo` version it pins
  */
-export function wireAppConfig(template, cell) {
+export function wireAppConfig(
+	template: { expo: AppConfig },
+	cell: MatrixCell & { expo: string },
+): { expo: Record<string, unknown> } {
 	const { web: _web, ...config } = template.expo
 
 	return {

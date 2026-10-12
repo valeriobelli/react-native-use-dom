@@ -9,7 +9,7 @@
 import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 
-import { staleBareFolders, updateStalePods } from './bare-pods.mjs'
+import { staleBareFolders, updateStalePods } from './bare-pods.mts'
 
 const REPOSITORY_ROOT = path.resolve(import.meta.dirname, '..', '..')
 

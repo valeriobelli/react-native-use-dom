@@ -4,15 +4,15 @@ import path from 'node:path'
 
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
 
-import { bumpManifest, generateBare, planGeneration, wireManifest } from './generate-bare.mjs'
+import { bumpManifest, generateBare, planGeneration, wireManifest } from './generate-bare.mts'
+import type { MatrixCell } from './matrix.mts'
 
 /**
- * @param {string} id
- * @param {string} reactNative
- * @param {string} role
- * @returns {import('./matrix.mjs').MatrixCell}
+ * @param id the cell's id
+ * @param reactNative the react-native version the cell pins
+ * @param role the cell's role
  */
-function cell(id, reactNative, role = 'blocking') {
+function cell(id: string, reactNative: string, role = 'blocking'): MatrixCell {
 	const slug = id.replaceAll(/[-.]/gu, '')
 
 	return {
@@ -151,9 +151,9 @@ afterEach(() => {
 /**
  * Stands in for the template's `init`: a folder with the files the generator touches.
  *
- * @param {import('./matrix.mjs').MatrixCell} created
+ * @param created the cell whose folder is created
  */
-function fakeInit(created) {
+function fakeInit(created: MatrixCell): void {
 	const folder = path.join(root, created.folder)
 
 	mkdirSync(path.join(folder, 'ios'), { recursive: true })
@@ -219,8 +219,7 @@ test('a folder that left the matrix is deleted, except the floor', () => {
 	const options = { addToProject: () => {}, hermesCompilerOf: () => null, root, runInit: fakeInit }
 
 	generateBare({ ...options, cells: [cell('bare-0.84', '0.84.9'), cell('bare-0.85', '0.85.3', 'floor')] })
-	/** @type {string[]} */
-	const logged = []
+	const logged: string[] = []
 
 	generateBare({
 		...options,
@@ -237,14 +236,13 @@ test('a folder that left the matrix is deleted, except the floor', () => {
 /**
  * The content of every file under the root, keyed by its path.
  *
- * @param {string} directory
- * @returns {Map<string, string>}
+ * @param directory the directory to walk
  */
-function snapshot(directory) {
+function snapshot(directory: string): Map<string, string> {
 	return new Map(
 		readdirSync(directory, { recursive: true, withFileTypes: true })
 			.filter((entry) => entry.isFile())
-			.map((entry) => {
+			.map((entry): [string, string] => {
 				const file = path.join(entry.parentPath, entry.name)
 
 				return [path.relative(directory, file), readFileSync(file, 'utf8')]
