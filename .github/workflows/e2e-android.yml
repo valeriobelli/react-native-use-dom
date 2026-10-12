@@ -117,12 +117,11 @@ jobs:
         run: ./gradlew :app:assembleRelease :app:assembleDebug
 
       - name: Remove the missing page for the page-not-found flow
-        # The `page-not-found` release flow needs a page that is not next to the running bundle. Android
-        # serves a release page from the APK's assets, so the example app's `Missing` component's page is
-        # removed from the APK and the APK re-signed before the emulator installs it. The strip runs here,
-        # in a normal step: the emulator action runs its `script` one line at a time, so an `if` block
-        # spanning lines would be split and fail.
-        if: matrix.cell.id == 'bare-0.87'
+        # Every cell runs the `page-not-found` flow, which needs a page that is not next to the running
+        # bundle. Android serves a release page from the APK's assets, so the example app's `Missing`
+        # component's page is removed from the APK and the APK re-signed before the emulator installs it.
+        # The strip runs here, in a normal step: the emulator action runs its `script` one line at a time,
+        # so a loop or `if` block spanning lines would be split and fail.
         run: |
           APK="$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
           for js in $(unzip -Z1 "$APK" | grep '^assets/dom\.bundle/.*\.js$'); do
