@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
@@ -14,11 +14,11 @@ test('finds the page whose script holds the marker', () => {
 		{ contents: `var text = "${MARKER}";`, name: 'bbbb.js' },
 	]
 
-	expect(findPageByMarker(files, MARKER)).toBe('bbbb.html')
+	expect(findPageByMarker({ files, marker: MARKER })).toBe('bbbb.html')
 })
 
 test('finds no page when no script holds the marker', () => {
-	expect(findPageByMarker([{ contents: 'nothing here', name: 'aaaa.js' }], MARKER)).toBeNull()
+	expect(findPageByMarker({ files: [{ contents: 'nothing here', name: 'aaaa.js' }], marker: MARKER })).toBeNull()
 })
 
 test('removes the page and its script, and throws when the marker is absent', () => {
@@ -30,9 +30,16 @@ test('removes the page and its script, and throws when the marker is absent', ()
 		writeFileSync(path.join(directory, 'bbbb.html'), '<script src="bbbb.js"></script>')
 		writeFileSync(path.join(directory, 'bbbb.js'), `var text = "${MARKER}";`)
 
-		expect(removePageByMarker(directory, MARKER)).toBe('bbbb.html')
-		expect(findPageByMarker([{ contents: 'var text = "nothing";', name: 'aaaa.js' }], MARKER)).toBeNull()
-		expect(() => removePageByMarker(directory, MARKER)).toThrow(`no page in ${directory} holds the marker`)
+		expect(removePageByMarker({ bundleDirectory: directory, marker: MARKER })).toBe('bbbb.html')
+		// The page and the script it loads are both gone, and the other page stays.
+		expect(existsSync(path.join(directory, 'bbbb.html'))).toBe(false)
+		expect(existsSync(path.join(directory, 'bbbb.js'))).toBe(false)
+		expect(existsSync(path.join(directory, 'aaaa.html'))).toBe(true)
+		expect(existsSync(path.join(directory, 'aaaa.js'))).toBe(true)
+
+		expect(() => removePageByMarker({ bundleDirectory: directory, marker: MARKER })).toThrow(
+			`no page in ${directory} holds the marker`,
+		)
 	} finally {
 		rmSync(directory, { force: true, recursive: true })
 	}

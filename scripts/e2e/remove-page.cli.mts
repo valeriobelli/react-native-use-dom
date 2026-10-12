@@ -10,13 +10,13 @@ import { removePageByMarker } from './remove-page.mts'
 
 const [bundleDirectory] = process.argv.slice(2)
 
-if (bundleDirectory === undefined) {
+if (!bundleDirectory) {
 	process.stderr.write('usage: node scripts/e2e/remove-page.cli.mts <dom.bundle directory>\n')
 	process.exit(2)
 }
 
 try {
-	const page = removePageByMarker(bundleDirectory)
+	const page = removePageByMarker({ bundleDirectory })
 
 	process.stdout.write(`removed ${page} from ${bundleDirectory}\n`)
 } catch (failure) {

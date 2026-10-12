@@ -125,7 +125,9 @@ jobs:
         run: |
           APK="$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
           for js in $(unzip -Z1 "$APK" | grep '^assets/dom\.bundle/.*\.js$'); do
-            if unzip -p "$APK" "$js" | grep -q 'use-dom-e2e-missing-page'; then
+            # No `-q`: `grep -q` closes the pipe as soon as it matches, which under `pipefail` makes
+            # `unzip` fail with SIGPIPE. Reading the whole stream keeps the pipeline a success.
+            if unzip -p "$APK" "$js" | grep 'use-dom-e2e-missing-page' > /dev/null; then
               zip -d "$APK" "$js" "${js%.js}.html"
             fi
           done

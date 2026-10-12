@@ -8,17 +8,18 @@ const NOT_FOUND_FIX =
 	'Rebuild with `withDom()` in `metro.config.js`, so the page is written to `dom.bundle/` next to the running bundle, and keep `dom.bundle/` beside the bundle in an over-the-air update. The page is never served from the app binary instead.'
 
 /** The code a load failure of this kind carries. */
-function codeFor(kind: DomLoadErrorKind): DomErrorCode {
+function codeFor({ kind }: { kind: DomLoadErrorKind }): DomErrorCode {
 	return kind === 'notFound' ? DomErrorCode.PageNotFound : DomErrorCode.PageLoadFailed
 }
 
-/** The message a load failure of this kind carries. */
-function messageFor(payload: DomLoadErrorPayload): string {
+/** The message a load failure carries, from its kind, URL, status and description. */
+function messageFor({ payload }: { payload: DomLoadErrorPayload }): string {
 	if (payload.kind === 'notFound') {
 		return `No page was found for the DOM component at ${payload.url}.`
 	}
 
-	const status = payload.status === undefined ? '' : ` with HTTP ${payload.status}`
+	// A status only reads well when there is one, and HTTP status 0 is not one.
+	const status = payload.status ? ` with HTTP ${payload.status}` : ''
 
 	return `Loading the DOM component's page at ${payload.url} failed${status}: ${payload.description}`
 }
@@ -28,7 +29,7 @@ function messageFor(payload: DomLoadErrorPayload): string {
  * {@link DomErrorCode.PageNotFound} and a fix naming `withDom` and `dom.bundle/`, everything else
  * carries {@link DomErrorCode.PageLoadFailed}.
  */
-export function toPageLoadError(payload: DomLoadErrorPayload): DomLoadError {
+export function toPageLoadError({ payload }: { payload: DomLoadErrorPayload }): DomLoadError {
 	const base: DomLoadErrorOptions = {
 		kind: payload.kind,
 		status: payload.status ?? null,
@@ -36,8 +37,8 @@ export function toPageLoadError(payload: DomLoadErrorPayload): DomLoadError {
 	}
 
 	return new DomLoadError(
-		codeFor(payload.kind),
-		messageFor(payload),
+		codeFor({ kind: payload.kind }),
+		messageFor({ payload }),
 		payload.kind === 'notFound' ? { ...base, fix: NOT_FOUND_FIX } : base,
 	)
 }
@@ -46,8 +47,14 @@ export function toPageLoadError(payload: DomLoadErrorPayload): DomLoadError {
  * Hands a native load failure to the component's `dom.onError`, or logs it when there is no handler,
  * so a page that never loaded never leaves a blank view with nothing said about it.
  */
-export function reportPageLoadError(payload: DomLoadErrorPayload, onError: ((error: Error) => void) | undefined): void {
-	const error = toPageLoadError(payload)
+export function reportPageLoadError({
+	onError,
+	payload,
+}: {
+	onError: ((error: Error) => void) | undefined
+	payload: DomLoadErrorPayload
+}): void {
+	const error = toPageLoadError({ payload })
 
 	if (onError) {
 		onError(error)

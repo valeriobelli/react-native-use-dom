@@ -249,7 +249,7 @@ function DomWebView({
 					dom.onLoad?.()
 				})}
 				onLoadError={callback((error: DomLoadErrorPayload) => {
-					reportPageLoadError(error, dom.onError)
+					reportPageLoadError({ onError: dom.onError, payload: error })
 				})}
 				onNavigationBlocked={callback((url: string) => {
 					dom.onNavigationBlocked?.(url)
