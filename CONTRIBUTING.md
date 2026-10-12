@@ -96,7 +96,9 @@ and it is the status check that branch protection requires on `main`. The other 
 adding or removing a cell needs no change to branch protection.
 
 The floor cell (role `floor`) runs every night, or by hand from Actions → E2E → Run workflow with
-**include-floor** checked. Its failure marks that run red and blocks nothing.
+**include-floor** checked. Its failure marks that run red and blocks nothing. The matrix has a floor cell only once
+React Native stops supporting the oldest version of the peer range, `FLOOR_MINOR` in `scripts/e2e/floor.mjs`.
+Until then that version's blocking cell covers it, and the nightly run has no cell to run.
 
 ## Example apps
 
@@ -110,7 +112,7 @@ version has one committed app in `examples/<id>`. The UI lives once, in `e2e/exa
   React Native version, wired to the library and to `e2e/example-app`, with its pods installed on macOS;
 - a folder that pins another `react-native` version than its cell only has its `react-native` and
   `@react-native/*` versions changed, and on macOS the pods that come from `node_modules` updated;
-- a bare folder with no cell is deleted, except `bare-0.81`.
+- a bare folder with no cell is deleted, except the floor's, `bare-0.85`.
 
 The versions the examples and the library share live once, in the default `catalog` of `pnpm-workspace.yaml`,
 and the generator writes them into the examples as `catalog:`. Bump them there.

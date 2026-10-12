@@ -28,7 +28,7 @@ Errors the library raises carry a stable code, starting `ERR_USE_DOM_`. Look it 
 - **`ERR_USE_DOM_INVALID_MODULE_EXPORTS`.** The `'use dom'` module exports something besides its default
   component. Move the value to a module of its own.
 - **iOS: `The New Architecture is required`, or a minimum React Native version.** The library needs the New
-  Architecture and React Native 0.81 or later. Run `pod install` again after fixing it.
+  Architecture and React Native 0.85 or later. Run `pod install` again after fixing it.
 - **Android: `minSdkVersion 24 or higher is required`.** Raise `minSdkVersion` in the app's Gradle config.
 - **An error that the native view or a Nitro module can't be found.** The app was not rebuilt after the library
   was installed. Rebuild the native app.

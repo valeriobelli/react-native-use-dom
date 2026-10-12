@@ -2,10 +2,10 @@
 
 ## Requirements
 
-- React Native 0.81 or newer, with the New Architecture enabled.
+- React Native 0.85 or newer, with the New Architecture enabled.
 - iOS 15.1 or newer, and Android `minSdkVersion` 24 or newer.
 - React and React DOM 19.1 or newer, in the same version.
-- Metro 0.83.1 or newer, which React Native 0.81 and later already use.
+- Metro 0.83.1 or newer, which React Native 0.85 and later already use.
 
 The native build fails with a message naming the requirement when one of these is not met.
 

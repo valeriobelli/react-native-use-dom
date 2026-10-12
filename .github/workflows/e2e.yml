@@ -2,7 +2,8 @@ name: E2E
 
 # Runs the cells of e2e/matrix.json that block merges on iOS and Android, and reports them as one check,
 # `e2e-result`, which branch protection requires: the job names change with the matrix, its name doesn't.
-# The floor cell runs on the nightly schedule, or when a manual run asks for it.
+# The floor cell runs on the nightly schedule, or when a manual run asks for it. The matrix has one only
+# once React Native stops supporting the floor of the peer range; until then the floor jobs run no cell.
 
 on:
   pull_request:

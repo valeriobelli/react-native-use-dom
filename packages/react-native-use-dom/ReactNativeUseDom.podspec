@@ -4,7 +4,7 @@ package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
 # The oldest React Native this library is built and tested against. Older versions fail here, with
 # the requirement named, rather than later with a compiler error.
-min_react_native_minor = 81
+min_react_native_minor = 85
 min_ios_version = "15.1"
 
 react_native_package = `cd "#{Pod::Config.instance.installation_root}" && node --print "require.resolve('react-native/package.json')"`.strip

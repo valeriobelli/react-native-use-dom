@@ -76,11 +76,11 @@ test('a folder that already pins the cell version is left alone', () => {
 })
 
 test('the floor example is created like the others, and never deleted', () => {
-	const floor = cell('bare-0.81', '0.81.6', 'floor')
+	const floor = cell('bare-0.85', '0.85.3', 'floor')
 
 	expect(planGeneration([floor], new Map())).toEqual({ bump: [], create: [floor], remove: [] })
-	expect(planGeneration([], new Map([['bare-0.81', '0.81.6']]))).toEqual({ bump: [], create: [], remove: [] })
-	expect(planGeneration([floor], new Map([['bare-0.81', '0.81.5']])).bump).toEqual([floor])
+	expect(planGeneration([], new Map([['bare-0.85', '0.85.3']]))).toEqual({ bump: [], create: [], remove: [] })
+	expect(planGeneration([floor], new Map([['bare-0.85', '0.85.2']])).bump).toEqual([floor])
 })
 
 test('expo cells are not bare examples', () => {
@@ -218,7 +218,7 @@ test('a second run changes nothing, and a patch release only changes package.jso
 test('a folder that left the matrix is deleted, except the floor', () => {
 	const options = { addToProject: () => {}, hermesCompilerOf: () => null, root, runInit: fakeInit }
 
-	generateBare({ ...options, cells: [cell('bare-0.84', '0.84.9'), cell('bare-0.81', '0.81.6', 'floor')] })
+	generateBare({ ...options, cells: [cell('bare-0.84', '0.84.9'), cell('bare-0.85', '0.85.3', 'floor')] })
 	/** @type {string[]} */
 	const logged = []
 
@@ -230,7 +230,7 @@ test('a folder that left the matrix is deleted, except the floor', () => {
 		},
 	})
 
-	expect(readdirSync(path.join(root, 'examples')).sort()).toEqual(['bare-0.81', 'bare-0.86'])
+	expect(readdirSync(path.join(root, 'examples')).sort()).toEqual(['bare-0.85', 'bare-0.86'])
 	expect(logged).toContain('deleting examples/bare-0.84: it has no cell in the matrix')
 })
 
