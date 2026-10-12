@@ -19,6 +19,7 @@
 
 #include <string>
 #include <functional>
+#include "DomLoadErrorPayload.hpp"
 #include <memory>
 #include "HybridRNUseDomWebViewSpec.hpp"
 #include <optional>
@@ -49,7 +50,7 @@ namespace margelo::nitro::usedom::views {
     nitro::ReactProp<bool> inspectable;
     nitro::ReactProp<std::function<void(const std::string& /* message */)>> onMessage;
     nitro::ReactProp<std::function<void()>> onLoadEnd;
-    nitro::ReactProp<std::function<void(const std::string& /* reason */)>> onLoadError;
+    nitro::ReactProp<std::function<void(const DomLoadErrorPayload& /* error */)>> onLoadError;
     nitro::ReactProp<std::function<void(const std::string& /* url */)>> onNavigationBlocked;
     nitro::ReactProp<std::optional<std::function<void(const std::shared_ptr<HybridRNUseDomWebViewSpec>& /* ref */)>>> hybridRef;
 

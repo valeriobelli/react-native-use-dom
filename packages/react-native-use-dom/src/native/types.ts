@@ -3,6 +3,8 @@ import type { StyleProp, ViewStyle } from 'react-native'
 
 import type { Serializable } from '../runtime/serializable'
 
+export type { Serializable } from '../runtime/serializable'
+
 /**
  * Configuration for the native view a DOM component renders into, passed as the reserved `dom`
  * prop. Every other prop is forwarded to the DOM component itself.
@@ -54,8 +56,9 @@ export interface DomProps {
 	onLoad?: () => void
 
 	/**
-	 * Called when the DOM component fails to load or throws an error that escapes it. Without this,
-	 * such an error surfaces as a development overlay and is logged in release.
+	 * Called when the DOM component fails to load or throws an error that escapes it. A page that
+	 * fails to load arrives as a {@link DomLoadError}; anything else is a plain `Error`. Without
+	 * this, such an error surfaces as a development overlay and is logged in release.
 	 */
 	onError?: (error: Error) => void
 

@@ -203,20 +203,20 @@ open class HybridRNUseDomWebViewSpec_cxx {
     }
   }
   
-  public final var onLoadError: bridge.Func_void_std__string {
+  public final var onLoadError: bridge.Func_void_DomLoadErrorPayload {
     @inline(__always)
     get {
-      return { () -> bridge.Func_void_std__string in
-        let __closureWrapper = Func_void_std__string(self.__implementation.onLoadError)
-        return bridge.create_Func_void_std__string(__closureWrapper.toUnsafe())
+      return { () -> bridge.Func_void_DomLoadErrorPayload in
+        let __closureWrapper = Func_void_DomLoadErrorPayload(self.__implementation.onLoadError)
+        return bridge.create_Func_void_DomLoadErrorPayload(__closureWrapper.toUnsafe())
       }()
     }
     @inline(__always)
     set {
-      self.__implementation.onLoadError = { () -> (String) -> Void in
-        let __wrappedFunction = bridge.wrap_Func_void_std__string(newValue)
-        return { (__reason: String) -> Void in
-          __wrappedFunction.call(std.string(__reason))
+      self.__implementation.onLoadError = { () -> (DomLoadErrorPayload) -> Void in
+        let __wrappedFunction = bridge.wrap_Func_void_DomLoadErrorPayload(newValue)
+        return { (__error: DomLoadErrorPayload) -> Void in
+          __wrappedFunction.call(__error)
         }
       }()
     }

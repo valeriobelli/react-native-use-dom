@@ -14,16 +14,33 @@ final class OfflineBundleSchemeHandler: NSObject, WKURLSchemeHandler {
     .appendingPathComponent(OfflineBundleSchemeHandler.bundleDirectory, isDirectory: true)
     .standardizedFileURL
 
+  /// Called with the URL of a page (an `.html` under the bundle folder) that is not in the bundle, so
+  /// the view can report it. WebKit does not route a `WKURLSchemeHandler`'s response through the
+  /// navigation delegate, so a 404 answered here would otherwise be rendered as the page.
+  var onPageMissing: ((URL) -> Void)?
+
   func webView(_ webView: WKWebView, start task: WKURLSchemeTask) {
     guard let url = task.request.url else {
       task.didFailWithError(URLError(.badURL))
       return
     }
-    guard let file = resolve(url), let data = try? Data(contentsOf: file) else {
+    // Existence is part of the guard: `resolve` only keeps the path inside the bundle, so a page that
+    // was never written, or was removed, has to be reported as missing here, not left to fail the read.
+    guard let file = resolve(url), FileManager.default.fileExists(atPath: file.path) else {
+      if url.pathExtension == "html" {
+        onPageMissing?(url)
+      }
       respond(task, url: url, status: 404, type: "text/plain; charset=utf-8", body: Data("Not found".utf8))
       return
     }
-    respond(task, url: url, status: 200, type: mimeType(of: file), body: data)
+    // The page exists but cannot be read: that is an I/O failure, not a missing page, so the task
+    // fails and the navigation delegate reports it, instead of reporting it as `PageNotFound`.
+    do {
+      let data = try Data(contentsOf: file)
+      respond(task, url: url, status: 200, type: mimeType(of: file), body: data)
+    } catch {
+      task.didFailWithError(error)
+    }
   }
 
   func webView(_ webView: WKWebView, stop task: WKURLSchemeTask) {

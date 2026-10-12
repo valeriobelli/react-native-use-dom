@@ -62,8 +62,8 @@ namespace margelo::nitro::usedom {
     void setOnMessage(const std::function<void(const std::string& /* message */)>& onMessage) override;
     std::function<void()> getOnLoadEnd() override;
     void setOnLoadEnd(const std::function<void()>& onLoadEnd) override;
-    std::function<void(const std::string& /* reason */)> getOnLoadError() override;
-    void setOnLoadError(const std::function<void(const std::string& /* reason */)>& onLoadError) override;
+    std::function<void(const DomLoadErrorPayload& /* error */)> getOnLoadError() override;
+    void setOnLoadError(const std::function<void(const DomLoadErrorPayload& /* error */)>& onLoadError) override;
     std::function<void(const std::string& /* url */)> getOnNavigationBlocked() override;
     void setOnNavigationBlocked(const std::function<void(const std::string& /* url */)>& onNavigationBlocked) override;
 

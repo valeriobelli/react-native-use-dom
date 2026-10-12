@@ -92,6 +92,22 @@ Every error `react-native-use-dom` throws is a `DomError` with a stable `code`, 
 
 **Fix.** Return only strings, finite numbers, booleans, `null`, arrays and plain objects, or nothing.
 
+## `ERR_USE_DOM_PAGE_LOAD_FAILED`
+
+**What happens.** A DOM component's page fails to load for a reason other than a missing page, and `dom.onError` receives a `DomLoadError`.
+
+**Why.** Release builds serve a page from `<folder>/dom.bundle/` next to the running JavaScript bundle. The load failed there: the page answered an HTTP error, the request failed on the network, or the native side could not load or render it — the file could not be read, the WebView failed, or its renderer went away.
+
+**Fix.** Check that the page URL matches a page the build produced, and that the running JavaScript bundle and its `dom.bundle/` folder come from the same build. The failure is reported with the URL and any HTTP status.
+
+## `ERR_USE_DOM_PAGE_NOT_FOUND`
+
+**What happens.** A DOM component's page is missing next to the running JavaScript bundle, and `dom.onError` receives a `DomLoadError`.
+
+**Why.** In a release build a page loads from `<folder>/dom.bundle/`, the folder next to the running bundle. Nothing wrote the page there: the build never ran the library's Metro integration, or an update replaced the bundle without the pages built from it.
+
+**Fix.** Rebuild with `withDom()` in `metro.config.js` so the page is written to `<folder>/dom.bundle/` next to the running bundle, and ship `dom.bundle/` beside the bundle in an over-the-air update. Don't serve it from the app binary instead.
+
 ## `ERR_USE_DOM_REACT_NATIVE_IMPORT`
 
 **What happens.** The build of a DOM component fails, naming the module that imports `react-native` or one of its libraries.

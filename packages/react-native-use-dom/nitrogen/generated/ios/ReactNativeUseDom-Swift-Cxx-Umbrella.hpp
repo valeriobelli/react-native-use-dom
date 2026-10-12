@@ -8,15 +8,22 @@
 #pragma once
 
 // Forward declarations of C++ defined types
+// Forward declaration of `DomLoadErrorKind` to properly resolve imports.
+namespace margelo::nitro::usedom { enum class DomLoadErrorKind; }
+// Forward declaration of `DomLoadErrorPayload` to properly resolve imports.
+namespace margelo::nitro::usedom { struct DomLoadErrorPayload; }
 // Forward declaration of `HybridRNUseDomWebViewSpec` to properly resolve imports.
 namespace margelo::nitro::usedom { class HybridRNUseDomWebViewSpec; }
 
 // Include C++ defined types
+#include "DomLoadErrorKind.hpp"
+#include "DomLoadErrorPayload.hpp"
 #include "HybridRNUseDomWebViewSpec.hpp"
 #include <NitroModules/Result.hpp>
 #include <exception>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 // C++ helpers for Swift

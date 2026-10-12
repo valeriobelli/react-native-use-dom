@@ -13,10 +13,12 @@
 #error NitroModules cannot be found! Are you sure you installed NitroModules properly?
 #endif
 
-
+// Forward declaration of `DomLoadErrorPayload` to properly resolve imports.
+namespace margelo::nitro::usedom { struct DomLoadErrorPayload; }
 
 #include <string>
 #include <functional>
+#include "DomLoadErrorPayload.hpp"
 
 namespace margelo::nitro::usedom {
 
@@ -57,8 +59,8 @@ namespace margelo::nitro::usedom {
       virtual void setOnMessage(const std::function<void(const std::string& /* message */)>& onMessage) = 0;
       virtual std::function<void()> getOnLoadEnd() = 0;
       virtual void setOnLoadEnd(const std::function<void()>& onLoadEnd) = 0;
-      virtual std::function<void(const std::string& /* reason */)> getOnLoadError() = 0;
-      virtual void setOnLoadError(const std::function<void(const std::string& /* reason */)>& onLoadError) = 0;
+      virtual std::function<void(const DomLoadErrorPayload& /* error */)> getOnLoadError() = 0;
+      virtual void setOnLoadError(const std::function<void(const DomLoadErrorPayload& /* error */)>& onLoadError) = 0;
       virtual std::function<void(const std::string& /* url */)> getOnNavigationBlocked() = 0;
       virtual void setOnNavigationBlocked(const std::function<void(const std::string& /* url */)>& onNavigationBlocked) = 0;
 

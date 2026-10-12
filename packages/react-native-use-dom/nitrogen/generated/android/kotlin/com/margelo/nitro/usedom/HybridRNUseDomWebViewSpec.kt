@@ -79,13 +79,13 @@ abstract class HybridRNUseDomWebViewSpec: HybridView() {
       onLoadEnd = value
     }
   
-  abstract var onLoadError: (reason: String) -> Unit
+  abstract var onLoadError: (error: DomLoadErrorPayload) -> Unit
   
-  private var onLoadError_cxx: Func_void_std__string
+  private var onLoadError_cxx: Func_void_DomLoadErrorPayload
     @Keep
     @DoNotStrip
     get() {
-      return Func_void_std__string_java(onLoadError)
+      return Func_void_DomLoadErrorPayload_java(onLoadError)
     }
     @Keep
     @DoNotStrip

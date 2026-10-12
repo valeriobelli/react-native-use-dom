@@ -26,7 +26,7 @@ namespace margelo::nitro::usedom::views {
     inspectable(nitro::ReactProp<bool>::fromRawValue("RNUseDomWebView", "inspectable", rawProps, sourceProps.inspectable)),
     onMessage(nitro::ReactProp<std::function<void(const std::string& /* message */)>>::fromRawValue("RNUseDomWebView", "onMessage", rawProps, sourceProps.onMessage)),
     onLoadEnd(nitro::ReactProp<std::function<void()>>::fromRawValue("RNUseDomWebView", "onLoadEnd", rawProps, sourceProps.onLoadEnd)),
-    onLoadError(nitro::ReactProp<std::function<void(const std::string& /* reason */)>>::fromRawValue("RNUseDomWebView", "onLoadError", rawProps, sourceProps.onLoadError)),
+    onLoadError(nitro::ReactProp<std::function<void(const DomLoadErrorPayload& /* error */)>>::fromRawValue("RNUseDomWebView", "onLoadError", rawProps, sourceProps.onLoadError)),
     onNavigationBlocked(nitro::ReactProp<std::function<void(const std::string& /* url */)>>::fromRawValue("RNUseDomWebView", "onNavigationBlocked", rawProps, sourceProps.onNavigationBlocked)),
     hybridRef(nitro::ReactProp<std::optional<std::function<void(const std::shared_ptr<HybridRNUseDomWebViewSpec>& /* ref */)>>>::fromRawValue("RNUseDomWebView", "hybridRef", rawProps, sourceProps.hybridRef)) { }
 

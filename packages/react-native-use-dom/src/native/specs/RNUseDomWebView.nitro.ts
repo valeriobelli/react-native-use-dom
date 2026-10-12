@@ -1,5 +1,20 @@
 import type { HybridView, HybridViewMethods, HybridViewProps } from 'react-native-nitro-modules'
 
+/** Why a DOM component's page failed to load, as the native view reports it. */
+export type DomLoadErrorKind = 'notFound' | 'http' | 'network' | 'other'
+
+/** What the native view reports when a DOM component's page fails to load. */
+export interface DomLoadErrorPayload {
+	/** Why the load failed. */
+	kind: DomLoadErrorKind
+	/** The HTTP status the page answered with, when the failure carried one. */
+	status?: number
+	/** The URL the view tried to load. */
+	url: string
+	/** A human-readable description, for the error message only. */
+	description: string
+}
+
 /**
  * The native view a DOM component renders into.
  *
@@ -31,8 +46,11 @@ export interface RNUseDomWebViewProps extends HybridViewProps {
 	/** Called once the page has loaded. Failures come through {@linkcode onLoadError} instead. */
 	onLoadEnd: () => void
 
-	/** Called with a human-readable reason when the page could not be loaded. */
-	onLoadError: (reason: string) => void
+	/**
+	 * Called when the page could not be loaded, with why, the URL and any HTTP status. The native
+	 * side fills in {@linkcode DomLoadErrorPayload.kind}; the JS side never parses message text.
+	 */
+	onLoadError: (error: DomLoadErrorPayload) => void
 
 	/**
 	 * Called with the URL of a navigation that was blocked. Navigation away from the component's

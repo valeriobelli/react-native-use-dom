@@ -29,6 +29,10 @@ export const DomErrorCode = {
 	NonSerializableProp: 'ERR_USE_DOM_NON_SERIALIZABLE_PROP',
 	/** A native action's return value cannot be represented in the wire format. */
 	NonSerializableResult: 'ERR_USE_DOM_NON_SERIALIZABLE_RESULT',
+	/** A DOM component's page failed to load for a reason other than a missing page. */
+	PageLoadFailed: 'ERR_USE_DOM_PAGE_LOAD_FAILED',
+	/** A DOM component's page is missing from the folder next to the running JavaScript bundle. */
+	PageNotFound: 'ERR_USE_DOM_PAGE_NOT_FOUND',
 	/** A `'use dom'` module imported `react-native`, which does not exist in a browser context. */
 	ReactNativeImportInDom: 'ERR_USE_DOM_REACT_NATIVE_IMPORT',
 	/** The DOM side called a native action that is not among the component's current props. */
@@ -64,7 +68,7 @@ export interface DomErrorOptions {
  * ```
  */
 export class DomError extends Error {
-	override readonly name = 'DomError'
+	override readonly name: string = 'DomError'
 	readonly code: DomErrorCode
 	readonly fix: string | undefined
 

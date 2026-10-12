@@ -16,7 +16,7 @@ public protocol HybridRNUseDomWebViewSpec_protocol: HybridObject, HybridView {
   var inspectable: Bool { get set }
   var onMessage: (_ message: String) -> Void { get set }
   var onLoadEnd: () -> Void { get set }
-  var onLoadError: (_ reason: String) -> Void { get set }
+  var onLoadError: (_ error: DomLoadErrorPayload) -> Void { get set }
   var onNavigationBlocked: (_ url: String) -> Void { get set }
 
   // Methods

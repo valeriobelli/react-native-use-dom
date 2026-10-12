@@ -7,13 +7,22 @@
 
 #include "JHybridRNUseDomWebViewSpec.hpp"
 
-
+// Forward declaration of `DomLoadErrorPayload` to properly resolve imports.
+namespace margelo::nitro::usedom { struct DomLoadErrorPayload; }
+// Forward declaration of `DomLoadErrorKind` to properly resolve imports.
+namespace margelo::nitro::usedom { enum class DomLoadErrorKind; }
 
 #include <string>
 #include <functional>
 #include "JFunc_void_std__string.hpp"
 #include <NitroModules/JNICallable.hpp>
 #include "JFunc_void.hpp"
+#include "DomLoadErrorPayload.hpp"
+#include "JFunc_void_DomLoadErrorPayload.hpp"
+#include "JDomLoadErrorPayload.hpp"
+#include "DomLoadErrorKind.hpp"
+#include "JDomLoadErrorKind.hpp"
+#include <optional>
 
 namespace margelo::nitro::usedom {
 
@@ -115,22 +124,22 @@ namespace margelo::nitro::usedom {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void::javaobject> /* onLoadEnd */)>("setOnLoadEnd_cxx");
     method(_javaPart, JFunc_void_cxx::fromCpp(onLoadEnd));
   }
-  std::function<void(const std::string& /* reason */)> JHybridRNUseDomWebViewSpec::getOnLoadError() {
-    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_std__string::javaobject>()>("getOnLoadError_cxx");
+  std::function<void(const DomLoadErrorPayload& /* error */)> JHybridRNUseDomWebViewSpec::getOnLoadError() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_DomLoadErrorPayload::javaobject>()>("getOnLoadError_cxx");
     auto __result = method(_javaPart);
-    return [&]() -> std::function<void(const std::string& /* reason */)> {
-      if (__result->isInstanceOf(JFunc_void_std__string_cxx::javaClassStatic())) [[likely]] {
-        auto downcast = jni::static_ref_cast<JFunc_void_std__string_cxx::javaobject>(__result);
+    return [&]() -> std::function<void(const DomLoadErrorPayload& /* error */)> {
+      if (__result->isInstanceOf(JFunc_void_DomLoadErrorPayload_cxx::javaClassStatic())) [[likely]] {
+        auto downcast = jni::static_ref_cast<JFunc_void_DomLoadErrorPayload_cxx::javaobject>(__result);
         return downcast->cthis()->getFunction();
       } else {
         auto __resultRef = jni::make_global(__result);
-        return JNICallable<JFunc_void_std__string, void(std::string)>(std::move(__resultRef));
+        return JNICallable<JFunc_void_DomLoadErrorPayload, void(DomLoadErrorPayload)>(std::move(__resultRef));
       }
     }();
   }
-  void JHybridRNUseDomWebViewSpec::setOnLoadError(const std::function<void(const std::string& /* reason */)>& onLoadError) {
-    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_std__string::javaobject> /* onLoadError */)>("setOnLoadError_cxx");
-    method(_javaPart, JFunc_void_std__string_cxx::fromCpp(onLoadError));
+  void JHybridRNUseDomWebViewSpec::setOnLoadError(const std::function<void(const DomLoadErrorPayload& /* error */)>& onLoadError) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_DomLoadErrorPayload::javaobject> /* onLoadError */)>("setOnLoadError_cxx");
+    method(_javaPart, JFunc_void_DomLoadErrorPayload_cxx::fromCpp(onLoadError));
   }
   std::function<void(const std::string& /* url */)> JHybridRNUseDomWebViewSpec::getOnNavigationBlocked() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_std__string::javaobject>()>("getOnNavigationBlocked_cxx");

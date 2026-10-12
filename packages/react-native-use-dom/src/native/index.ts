@@ -19,4 +19,5 @@ export type {
 } from './types'
 
 export { DomError, DomErrorCode, isDomError, type DomErrorOptions } from '../runtime/errors'
+export { DomLoadError, type DomLoadErrorKind, type DomLoadErrorOptions } from '../runtime/load-error'
 export type { Serializable } from '../runtime/serializable'

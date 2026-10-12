@@ -84,6 +84,7 @@ jobs:
       CELL_ID: ${{ matrix.cell.id }}
       CELL_FOLDER: ${{ matrix.cell.folder }}
       CELL_APP: ${{ matrix.cell.appName }}
+      CELL_BUNDLE_ID: ${{ matrix.cell.bundleId }}
       CELL_KIND: ${{ matrix.cell.kind }}
       CELL_XCODE: ${{ matrix.cell.ios.xcode }}
     defaults:
@@ -204,6 +205,13 @@ jobs:
 
       - name: Install the Release build
         run: xcrun simctl install "$UDID" "$CELL_FOLDER/build/Build/Products/Release-iphonesimulator/$CELL_APP.app"
+      - name: Remove the missing page for the page-not-found flow
+        # Every cell runs the `page-not-found` flow, which needs a page that is not next to the running
+        # bundle, so the example app's `Missing` component's page is deleted from the installed app
+        # before the flows run.
+        run: |
+          APP=$(xcrun simctl get_app_container "$UDID" "$CELL_BUNDLE_ID" app)
+          node "$GITHUB_WORKSPACE/scripts/e2e/remove-page.cli.mts" "$APP/dom.bundle"
       - name: Run the release flows
         env:
           UPDATE_BASELINES: ${{ inputs.update-baselines && '--update-baselines' || '' }}

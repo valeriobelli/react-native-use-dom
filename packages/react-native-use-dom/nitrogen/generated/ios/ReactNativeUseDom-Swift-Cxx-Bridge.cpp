@@ -30,6 +30,14 @@ namespace margelo::nitro::usedom::bridge::swift {
     };
   }
   
+  // pragma MARK: std::function<void(const DomLoadErrorPayload& /* error */)>
+  Func_void_DomLoadErrorPayload create_Func_void_DomLoadErrorPayload(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = ReactNativeUseDom::Func_void_DomLoadErrorPayload::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const DomLoadErrorPayload& error) mutable -> void {
+      swiftClosure.call(error);
+    };
+  }
+  
   // pragma MARK: std::shared_ptr<HybridRNUseDomWebViewSpec>
   std::shared_ptr<HybridRNUseDomWebViewSpec> create_std__shared_ptr_HybridRNUseDomWebViewSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
     ReactNativeUseDom::HybridRNUseDomWebViewSpec_cxx swiftPart = ReactNativeUseDom::HybridRNUseDomWebViewSpec_cxx::fromUnsafe(swiftUnsafePointer);

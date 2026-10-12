@@ -19,6 +19,7 @@ export const RELEASE_SCENARIOS = [
 	'first-render',
 	'native-action',
 	'navigation-blocked',
+	'page-not-found',
 	'prop-change',
 	'refs',
 	'view-options',

@@ -17,6 +17,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.Keep
+import java.io.ByteArrayInputStream
 import androidx.webkit.ScriptHandler
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
@@ -92,7 +93,7 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
 
   override var onMessage: (message: String) -> Unit = {}
   override var onLoadEnd: () -> Unit = {}
-  override var onLoadError: (reason: String) -> Unit = {}
+  override var onLoadError: (error: DomLoadErrorPayload) -> Unit = {}
   override var onNavigationBlocked: (url: String) -> Unit = {}
 
   override fun afterUpdate() {
@@ -197,8 +198,25 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
       return true
     }
 
-    override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
-      assetLoader.shouldInterceptRequest(request.url)
+    override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+      val response = assetLoader.shouldInterceptRequest(request.url)
+      if (response != null) return response
+      // The asset loader answers nothing for a page that is missing from the app's assets, which would
+      // leave the WebView to fetch the offline URL over the network and report a network failure. A page
+      // under the bundle folder answers 404 instead, as the iOS scheme handler does, so a page that is not
+      // next to the running bundle is reported as missing rather than as unreachable.
+      if (isOfflinePage(request.url)) {
+        return WebResourceResponse(
+          "text/plain",
+          "utf-8",
+          404,
+          "Not Found",
+          mapOf("Cache-Control" to "no-cache"),
+          ByteArrayInputStream("Not found".toByteArray()),
+        )
+      }
+      return null
+    }
 
     override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
       loadFailed = false
@@ -211,20 +229,42 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
     override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
       if (!request.isForMainFrame) return
       loadFailed = true
-      onLoadError("${error.description} (${request.url})")
+      onLoadError(
+        DomLoadErrorPayload(
+          kind = kindForError(error.errorCode),
+          status = null,
+          url = request.url.toString(),
+          description = error.description.toString(),
+        ),
+      )
     }
 
     override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, response: WebResourceResponse) {
       // The page is still shown, since a development server explains its errors in the page.
       if (!request.isForMainFrame) return
       loadFailed = true
-      onLoadError("Loading ${request.url} failed with HTTP ${response.statusCode}.")
+      val status = response.statusCode
+      onLoadError(
+        DomLoadErrorPayload(
+          kind = if (status == 404) DomLoadErrorKind.NOTFOUND else DomLoadErrorKind.HTTP,
+          status = status.toDouble(),
+          url = request.url.toString(),
+          description = "The page answered HTTP $status.",
+        ),
+      )
     }
 
     override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
       // The WebView cannot be used again once its renderer is gone. Reporting it, rather than
       // letting the app crash, is what returning true asks for.
-      onLoadError(if (detail.didCrash()) "The page's renderer crashed." else "The system stopped the page's renderer.")
+      onLoadError(
+        DomLoadErrorPayload(
+          kind = DomLoadErrorKind.OTHER,
+          status = null,
+          url = source,
+          description = if (detail.didCrash()) "The page's renderer crashed." else "The system stopped the page's renderer.",
+        ),
+      )
       return true
     }
   }
@@ -234,6 +274,21 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
     const val OFFLINE_BUNDLE_DIR = "dom.bundle"
     const val BRIDGE_GLOBAL = "ReactNativeWebView"
     const val LISTENER_GLOBAL = "__reactNativeUseDom"
+
+    /** Whether a request is for a page under the offline bundle folder. */
+    fun isOfflinePage(url: Uri): Boolean =
+      url.host == OFFLINE_HOST && url.path?.startsWith("/$OFFLINE_BUNDLE_DIR/") == true
+
+    /** The network is what a connectivity failure is about; anything else the WebView reports is not. */
+    fun kindForError(errorCode: Int): DomLoadErrorKind =
+      when (errorCode) {
+        WebViewClient.ERROR_HOST_LOOKUP,
+        WebViewClient.ERROR_CONNECT,
+        WebViewClient.ERROR_TIMEOUT,
+        WebViewClient.ERROR_IO,
+        -> DomLoadErrorKind.NETWORK
+        else -> DomLoadErrorKind.OTHER
+      }
 
     /** The origin of a URL as web message rules spell it: `scheme://host[:port]`. */
     fun originOf(url: String): String? {
