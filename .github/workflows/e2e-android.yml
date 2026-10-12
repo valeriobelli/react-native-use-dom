@@ -116,6 +116,26 @@ jobs:
         working-directory: ${{ matrix.cell.folder }}/android
         run: ./gradlew :app:assembleRelease :app:assembleDebug
 
+      - name: Remove the missing page for the page-not-found flow
+        # The `page-not-found` release flow needs a page that is not next to the running bundle. Android
+        # serves a release page from the APK's assets, so the example app's `Missing` component's page is
+        # removed from the APK and the APK re-signed before the emulator installs it. The strip runs here,
+        # in a normal step: the emulator action runs its `script` one line at a time, so an `if` block
+        # spanning lines would be split and fail.
+        if: matrix.cell.id == 'bare-0.87'
+        run: |
+          APK="$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
+          for js in $(unzip -Z1 "$APK" | grep '^assets/dom\.bundle/.*\.js$'); do
+            if unzip -p "$APK" "$js" | grep -q 'use-dom-e2e-missing-page'; then
+              zip -d "$APK" "$js" "${js%.js}.html"
+            fi
+          done
+          zip -d "$APK" 'META-INF/*' > /dev/null
+          BUILD_TOOLS=$(ls -d "${ANDROID_SDK_ROOT:-$ANDROID_HOME}"/build-tools/*/ | sort -V | tail -1)
+          "${BUILD_TOOLS}zipalign" -f 4 "$APK" "$APK.aligned"
+          "${BUILD_TOOLS}apksigner" sign --ks "$CELL_FOLDER/android/app/debug.keystore" --ks-pass pass:android --key-pass pass:android --ks-key-alias androiddebugkey "$APK.aligned"
+          mv "$APK.aligned" "$APK"
+
       # The action shuts the emulator down when this step ends, so the installs and both flow runs
       # happen in its script. Each line runs in its own shell.
       # Expo serves the app's entry from the workspace root, so its bundle path starts with the app's folder.
@@ -143,22 +163,6 @@ jobs:
             nohup adb logcat -v time > logcat.txt 2>&1 &
             nohup pnpm exec argent server start > /dev/null 2>&1 &
             for _ in $(seq 60); do pnpm exec argent server status --json | grep -q '"running": true' && break; sleep 2; done; pnpm exec argent server status --json | grep -q '"running": true'
-            # The `page-not-found` release flow needs a page that is not next to the running bundle.
-            # Android serves a release page from the APK's assets, so the example app's `Missing`
-            # component's page is removed from the APK and the APK re-signed before it is installed.
-            if [ "$CELL_ID" = bare-0.87 ]; then
-              APK="$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
-              for js in $(unzip -Z1 "$APK" | grep '^assets/dom\\.bundle/.*\\.js$'); do
-                if unzip -p "$APK" "$js" | grep -q 'use-dom-e2e-missing-page'; then
-                  zip -d "$APK" "$js" "${js%.js}.html"
-                fi
-              done
-              zip -d "$APK" 'META-INF/*' > /dev/null
-              BUILD_TOOLS=$(ls -d "${ANDROID_SDK_ROOT:-$ANDROID_HOME}"/build-tools/*/ | sort -V | tail -1)
-              "${BUILD_TOOLS}zipalign" -f 4 "$APK" "$APK.aligned"
-              "${BUILD_TOOLS}apksigner" sign --ks "$CELL_FOLDER/android/app/debug.keystore" --ks-pass pass:android --key-pass pass:android --ks-key-alias androiddebugkey "$APK.aligned"
-              mv "$APK.aligned" "$APK"
-            fi
             adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
             pnpm e2e "$CELL_ID" release --device emulator-5554 --output e2e-output $UPDATE_BASELINES || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
             nohup pnpm --dir "$CELL_FOLDER" start > metro.log 2>&1 &
