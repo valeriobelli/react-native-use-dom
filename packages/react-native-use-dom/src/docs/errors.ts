@@ -65,7 +65,7 @@ export const ERROR_DOCS: { readonly [Code in DomErrorCode]: ErrorDoc } = {
 	[DomErrorCode.PageLoadFailed]: {
 		fix: 'Check that the page URL matches a page the build produced, and that the running JavaScript bundle and its `dom.bundle/` folder come from the same build. The failure is reported with the URL and any HTTP status.',
 		what: "A DOM component's page fails to load for a reason other than a missing page, and `dom.onError` receives a `DomLoadError`.",
-		why: 'Release builds serve a page from `<folder>/dom.bundle/` next to the running JavaScript bundle. The load failed there: the page answered an HTTP error, or the request failed on the network.',
+		why: 'Release builds serve a page from `<folder>/dom.bundle/` next to the running JavaScript bundle. The load failed there: the page answered an HTTP error, the request failed on the network, or the native side could not load or render it — the file could not be read, the WebView failed, or its renderer went away.',
 	},
 	[DomErrorCode.PageNotFound]: {
 		fix: "Rebuild with `withDom()` in `metro.config.js` so the page is written to `<folder>/dom.bundle/` next to the running bundle, and ship `dom.bundle/` beside the bundle in an over-the-air update. Don't serve it from the app binary instead.",

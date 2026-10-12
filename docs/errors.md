@@ -96,7 +96,7 @@ Every error `react-native-use-dom` throws is a `DomError` with a stable `code`, 
 
 **What happens.** A DOM component's page fails to load for a reason other than a missing page, and `dom.onError` receives a `DomLoadError`.
 
-**Why.** Release builds serve a page from `<folder>/dom.bundle/` next to the running JavaScript bundle. The load failed there: the page answered an HTTP error, or the request failed on the network.
+**Why.** Release builds serve a page from `<folder>/dom.bundle/` next to the running JavaScript bundle. The load failed there: the page answered an HTTP error, the request failed on the network, or the native side could not load or render it — the file could not be read, the WebView failed, or its renderer went away.
 
 **Fix.** Check that the page URL matches a page the build produced, and that the running JavaScript bundle and its `dom.bundle/` folder come from the same build. The failure is reported with the URL and any HTTP status.
 

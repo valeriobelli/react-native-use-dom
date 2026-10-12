@@ -24,14 +24,16 @@ final class OfflineBundleSchemeHandler: NSObject, WKURLSchemeHandler {
       task.didFailWithError(URLError(.badURL))
       return
     }
-    guard let file = resolve(url) else {
+    // Existence is part of the guard: `resolve` only keeps the path inside the bundle, so a page that
+    // was never written, or was removed, has to be reported as missing here, not left to fail the read.
+    guard let file = resolve(url), FileManager.default.fileExists(atPath: file.path) else {
       if url.pathExtension == "html" {
         onPageMissing?(url)
       }
       respond(task, url: url, status: 404, type: "text/plain; charset=utf-8", body: Data("Not found".utf8))
       return
     }
-    // The page resolves but cannot be read: that is an I/O failure, not a missing page, so the task
+    // The page exists but cannot be read: that is an I/O failure, not a missing page, so the task
     // fails and the navigation delegate reports it, instead of reporting it as `PageNotFound`.
     do {
       let data = try Data(contentsOf: file)
