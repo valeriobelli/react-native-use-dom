@@ -37,6 +37,12 @@ abstract class HybridRNUseDomWebViewSpec: HybridView() {
   @get:Keep
   @set:DoNotStrip
   @set:Keep
+  abstract var pagesDirectory: String
+  
+  @get:DoNotStrip
+  @get:Keep
+  @set:DoNotStrip
+  @set:Keep
   abstract var injectedObjectJson: String
   
   @get:DoNotStrip

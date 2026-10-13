@@ -63,6 +63,15 @@ namespace margelo::nitro::usedom {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* source */)>("setSource");
     method(_javaPart, jni::make_jstring(source));
   }
+  std::string JHybridRNUseDomWebViewSpec::getPagesDirectory() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JString>()>("getPagesDirectory");
+    auto __result = method(_javaPart);
+    return __result->toStdString();
+  }
+  void JHybridRNUseDomWebViewSpec::setPagesDirectory(const std::string& pagesDirectory) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* pagesDirectory */)>("setPagesDirectory");
+    method(_javaPart, jni::make_jstring(pagesDirectory));
+  }
   std::string JHybridRNUseDomWebViewSpec::getInjectedObjectJson() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JString>()>("getInjectedObjectJson");
     auto __result = method(_javaPart);

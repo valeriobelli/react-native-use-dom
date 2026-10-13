@@ -59,6 +59,11 @@ void JHybridRNUseDomWebViewStateUpdater::updateViewProps(jni::alias_ref<jni::JCl
     hybridView->setSource(newProps->source.get());
   }
   if (oldProps == nullptr
+        ? newProps->pagesDirectory.isProvided()
+        : !newProps->pagesDirectory.hasSameValue(oldProps->pagesDirectory)) {
+    hybridView->setPagesDirectory(newProps->pagesDirectory.get());
+  }
+  if (oldProps == nullptr
         ? newProps->injectedObjectJson.isProvided()
         : !newProps->injectedObjectJson.hasSameValue(oldProps->injectedObjectJson)) {
     hybridView->setInjectedObjectJson(newProps->injectedObjectJson.get());

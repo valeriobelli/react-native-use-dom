@@ -29,6 +29,13 @@ export interface RNUseDomWebViewProps extends HybridViewProps {
 	source: string
 
 	/**
+	 * The folder the offline origin is served from: `dom.bundle` next to the running JS bundle, as a
+	 * `file://` URL, or an `assets://` one for a bundle inside an Android APK. Only files inside it are
+	 * served. Empty when the page comes from the dev server.
+	 */
+	pagesDirectory: string
+
+	/**
 	 * The JSON the page reads synchronously as `window.ReactNativeWebView.injectedObjectJson()`,
 	 * before the bundle's first script runs. This is what lets the first paint show real data.
 	 */

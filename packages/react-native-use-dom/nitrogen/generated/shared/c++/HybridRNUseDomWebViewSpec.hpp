@@ -49,6 +49,8 @@ namespace margelo::nitro::usedom {
       // Properties
       virtual std::string getSource() = 0;
       virtual void setSource(const std::string& source) = 0;
+      virtual std::string getPagesDirectory() = 0;
+      virtual void setPagesDirectory(const std::string& pagesDirectory) = 0;
       virtual std::string getInjectedObjectJson() = 0;
       virtual void setInjectedObjectJson(const std::string& injectedObjectJson) = 0;
       virtual bool getScrollEnabled() = 0;

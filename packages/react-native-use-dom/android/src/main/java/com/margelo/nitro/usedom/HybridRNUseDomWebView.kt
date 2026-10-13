@@ -9,6 +9,7 @@ import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.JavascriptInterface
+import android.webkit.MimeTypeMap
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -18,6 +19,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.Keep
 import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 import androidx.webkit.ScriptHandler
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
@@ -40,10 +44,11 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
   private val mainHandler = Handler(Looper.getMainLooper())
   private val assetLoader = WebViewAssetLoader.Builder()
     .setDomain(OFFLINE_HOST)
-    .addPathHandler("/$OFFLINE_BUNDLE_DIR/", WebViewAssetLoader.AssetsPathHandler(context).let { assets ->
-      WebViewAssetLoader.PathHandler { path -> assets.handle("$OFFLINE_BUNDLE_DIR/$path") }
-    })
+    .addPathHandler("/$OFFLINE_BUNDLE_DIR/", WebViewAssetLoader.PathHandler { path -> openPage(path) })
     .build()
+
+  /** Read by the asset loader from the WebView's own thread. */
+  @Volatile private var currentPagesDirectory = ""
 
   private var needsLoad = false
   private var needsBridge = true
@@ -68,6 +73,12 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
     set(value) {
       if (field != value) needsLoad = true
       field = value
+    }
+
+  override var pagesDirectory: String = ""
+    set(value) {
+      field = value
+      currentPagesDirectory = value
     }
 
   override var injectedObjectJson: String = "{}"
@@ -125,6 +136,35 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
   }
 
   // Page
+
+  /**
+   * A file of the pages folder next to the running bundle: the APK's assets for the bundle built into
+   * the app, a folder on device storage for one an update installed. Only files inside that folder are
+   * served, and nothing at all without one: a page is never taken from the APK in place of the running
+   * bundle's own. Returns null for a file that is not there, which the client answers with a 404.
+   */
+  private fun openPage(path: String): WebResourceResponse? {
+    val directory = currentPagesDirectory
+    if (path.isEmpty() || path.split('/').any { it == ".." }) return null
+    val stream = try {
+      when {
+        directory.startsWith(ASSETS_SCHEME) -> context.assets.open("${directory.removePrefix(ASSETS_SCHEME).trimEnd('/')}/$path")
+        directory.startsWith(FILE_SCHEME) -> {
+          val root = File(Uri.parse(directory).path ?: return null).canonicalFile
+          val file = File(root, path).canonicalFile
+          if (!file.path.startsWith(root.path + File.separator) || !file.isFile) return null
+          FileInputStream(file)
+        }
+        else -> return null
+      }
+    } catch (_: IOException) {
+      return null
+    }
+    // Updates replace the pages behind the same URLs, so the WebView must never answer from its cache.
+    val type = mimeTypeOf(path)
+    val encoding = if (type.startsWith("text/") || type == "application/json") "utf-8" else null
+    return WebResourceResponse(type, encoding, 200, "OK", mapOf("Cache-Control" to "no-cache"), stream)
+  }
 
   private fun load() {
     needsLoad = false
@@ -219,7 +259,9 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
     }
 
     override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
-      loadFailed = false
+      // loadFailed is reset in load(), not here: a 404 from shouldInterceptRequest can make the
+      // WebView restart the load after onReceivedHttpError, so resetting here would clear the
+      // flag before onPageFinished reads it.
     }
 
     override fun onPageFinished(view: WebView, url: String?) {
@@ -272,8 +314,27 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
   private companion object {
     const val OFFLINE_HOST = "use-dom.localhost"
     const val OFFLINE_BUNDLE_DIR = "dom.bundle"
+    const val ASSETS_SCHEME = "assets://"
+    const val FILE_SCHEME = "file://"
     const val BRIDGE_GLOBAL = "ReactNativeWebView"
     const val LISTENER_GLOBAL = "__reactNativeUseDom"
+
+    /**
+     * The type a page's file is served with. Module scripts only run with a JavaScript type, so the
+     * types the pages are made of are fixed here rather than left to the system's table.
+     */
+    fun mimeTypeOf(path: String): String {
+      val extension = path.substringAfterLast('.', "").lowercase()
+      return when (extension) {
+        "html", "htm" -> "text/html"
+        "js", "mjs" -> "text/javascript"
+        "css" -> "text/css"
+        "json", "map" -> "application/json"
+        "svg" -> "image/svg+xml"
+        "wasm" -> "application/wasm"
+        else -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "application/octet-stream"
+      }
+    }
 
     /** Whether a request is for a page under the offline bundle folder. */
     fun isOfflinePage(url: Uri): Boolean =

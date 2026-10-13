@@ -104,6 +104,12 @@ using namespace margelo::nitro::usedom::views;
           : !newViewProps.source.hasSameValue(oldViewProps->source)) {
       swiftPart.setSource(newViewProps.source.get());
     }
+    // pagesDirectory: string
+    if (oldViewProps == nullptr
+          ? newViewProps.pagesDirectory.isProvided()
+          : !newViewProps.pagesDirectory.hasSameValue(oldViewProps->pagesDirectory)) {
+      swiftPart.setPagesDirectory(newViewProps.pagesDirectory.get());
+    }
     // injectedObjectJson: string
     if (oldViewProps == nullptr
           ? newViewProps.injectedObjectJson.isProvided()

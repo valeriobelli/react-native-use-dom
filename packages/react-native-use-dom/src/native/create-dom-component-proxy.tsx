@@ -16,7 +16,7 @@ import type { DomLoadErrorPayload, RNUseDomWebViewMethods } from './web-view'
 export interface DomComponentProxyOptions {
 	/** Absolute path of the `'use dom'` module this proxy stands in for. */
 	filePath: string
-	/** Name of the pre-built page inside the app bundle. Written by the Babel plugin on release. */
+	/** Name of the pre-built page next to the JS bundle. Written by the Babel plugin on release. */
 	bundleFile?: string
 }
 
@@ -67,7 +67,7 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 		useDomLifecycle(bridge, props, actionNames)
 		useImperativeHandle(ref, () => createHandleProxy(bridge), [bridge])
 
-		const source = useMemo(() => resolveDomSource(options), [])
+		const page = useMemo(() => resolveDomSource(options), [])
 
 		return (
 			<DomWebView
@@ -76,7 +76,7 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 				dom={dom}
 				contentHeight={contentHeight}
 				injectedObjectJson={injectedObjectJson}
-				source={source}
+				{...page}
 				viewRef={view}
 			/>
 		)
@@ -203,6 +203,7 @@ interface DomWebViewProps {
 	dom: DomProps
 	contentHeight: number | null
 	injectedObjectJson: string
+	pagesDirectory: string
 	source: string
 	viewRef: RefObject<RNUseDomWebViewMethods | null>
 }
@@ -221,6 +222,7 @@ function DomWebView({
 	contentHeight,
 	dom,
 	injectedObjectJson,
+	pagesDirectory,
 	source,
 	viewRef,
 }: DomWebViewProps) {
@@ -235,6 +237,7 @@ function DomWebView({
 		>
 			<RNUseDomWebView
 				source={source}
+				pagesDirectory={pagesDirectory}
 				injectedObjectJson={injectedObjectJson}
 				scrollEnabled={dom.scrollEnabled ?? true}
 				inspectable={__DEV__}
