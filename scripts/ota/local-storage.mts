@@ -18,7 +18,8 @@ export interface LocalStorageOptions {
 	baseUrl: string
 }
 
-// oxlint-disable-next-line max-lines-per-function: the adapter returns one object literal
+// the adapter returns one object literal
+// oxlint-disable-next-line max-lines-per-function
 export const localStorage = ({ directory, baseUrl }: LocalStorageOptions) => {
 	mkdirSync(directory, { recursive: true })
 

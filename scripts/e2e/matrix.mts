@@ -1,4 +1,4 @@
-// oxlint-disable max-lines: the matrix builder is one cohesive module
+// oxlint-disable max-lines: the matrix builder is one cohesive module max-lines
 /**
  * Builds the e2e matrix: the exact set of example apps the end-to-end tests must cover, derived
  * from the support table and the published versions. Every function here is pure, so the tests
