@@ -179,7 +179,7 @@ jobs:
             adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
             pnpm e2e "$CELL_ID" release --device emulator-5554 --output e2e-output $UPDATE_BASELINES || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
             if [ "$CELL_OTA" = true ]; then adb reverse tcp:3000 tcp:3000; fi
-            if [ "$CELL_OTA" = true ]; then pnpm e2e "$CELL_ID" ota --device emulator-5554 --output e2e-output $UPDATE_BASELINES; fi
+            if [ "$CELL_OTA" = true ]; then pnpm e2e "$CELL_ID" ota --device emulator-5554 --output e2e-output --update-baselines; fi
             nohup pnpm --dir "$CELL_FOLDER" start > metro.log 2>&1 &
             for i in $(seq 60); do curl -sf http://localhost:8081/status | grep -q running && break; sleep 2; done; curl -sf http://localhost:8081/status | grep -q running
             adb reverse tcp:8081 tcp:8081

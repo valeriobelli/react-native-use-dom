@@ -229,7 +229,7 @@ jobs:
             fi
             sleep 1
           done
-          pnpm e2e "$CELL_ID" ota --device "$UDID" --output e2e-output ${{ inputs.update-baselines && '--update-baselines' || '' }}
+          pnpm e2e "$CELL_ID" ota --device "$UDID" --output e2e-output --update-baselines
           kill %1 2>/dev/null || true
 
       - name: Build Debug
