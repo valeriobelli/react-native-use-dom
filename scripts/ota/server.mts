@@ -47,7 +47,7 @@ app.mount('/hot-updater', hotUpdater.handlers.client)
 
 // The server has no authentication and must never leave the machine: only loopback. The iOS
 // simulator reaches it through localhost, and the Android emulator through `adb reverse`.
-serve({ fetch: app.fetch, hostname: '[IP_ADDRESS]', port: PORT })
+serve({ fetch: app.fetch, hostname: 'localhost', port: PORT })
 
 function guessMime({ key }: { key: string }): string {
 	const ext = path.extname(key).slice(1).toLowerCase()
