@@ -187,7 +187,6 @@ jobs:
             for c in Note Greeting Lines; do curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" --data-urlencode "dev=true" --data-urlencode "platform=web" --data-urlencode "transform.dom=$GITHUB_WORKSPACE/e2e/example-app/src/$c.tsx"; done
             adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/debug/app-debug.apk"
             pnpm e2e "$CELL_ID" dev --device emulator-5554 --output e2e-output $UPDATE_BASELINES
-            if [ "$CELL_OTA" = true ]; then pkill -f scripts/ota/server.mts || true; fi
 
       - name: Upload the new baselines
         if: ${{ inputs.update-baselines && !cancelled() }}
