@@ -33,6 +33,13 @@ const deviceIndex = flags.indexOf('--device')
 const device = deviceIndex === -1 ? undefined : flags[deviceIndex + 1]
 const platformIndex = flags.indexOf('--platform')
 const explicitPlatform = platformIndex === -1 ? undefined : flags[platformIndex + 1]
+
+// Validated here, not in the deploy script: the platform reaches its shell command through
+// config.json, and a typo should fail this CLI, not a later build.
+if (explicitPlatform !== undefined && explicitPlatform !== 'ios' && explicitPlatform !== 'android') {
+	fail(`the platform must be "ios" or "android", got "${explicitPlatform}"`)
+}
+
 const platform = explicitPlatform ?? (device?.startsWith('emulator-') ? 'android' : 'ios')
 
 if (kind === 'ota' && device === undefined && explicitPlatform === undefined) {

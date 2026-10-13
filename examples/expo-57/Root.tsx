@@ -2,7 +2,6 @@ import { HotUpdater } from '@hot-updater/react-native'
 import ExampleApp from '@react-native-use-dom/example-app'
 import OtaApp from '@react-native-use-dom/ota-app'
 import type { OtaHotUpdater } from '@react-native-use-dom/ota-app'
-import { registerRootComponent } from 'expo'
 import { useCallback, useState } from 'react'
 import { Button, StyleSheet, View } from 'react-native'
 
@@ -41,8 +40,6 @@ export default function Root() {
 		</View>
 	)
 }
-
-registerRootComponent(Root)
 
 const styles = StyleSheet.create({
 	container: { flex: 1 },

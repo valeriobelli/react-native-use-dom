@@ -17,8 +17,9 @@ steps:
   - echo: Open the OTA screen
   - run: ready
   - tap: { id: open-ota }
+  - await: { visible: { id: ota-back }, timeout: 30000 }
+  - await: { idle: true, stableFor: 500, timeout: 30000 }
   - echo: The built-in greeting renders
-  - wait: 3000
   - when: { platform: android }
     steps:
       - assert: { visible: { text: 'Built-in greeting' } }
@@ -31,12 +32,13 @@ steps:
   - wait: 10000
   - run: ready
   - tap: { id: open-ota }
+  - await: { visible: { id: ota-back }, timeout: 30000 }
+  - await: { idle: true, stableFor: 500, timeout: 30000 }
   - when: { platform: android }
     steps:
       - assert: { visible: { text: 'Updated greeting' } }
       - assert: { visible: { text: 'written-before-update' } }
       - assert: { visible: { text: 'page b' } }
-  - wait: 3000
   - snapshot: { name: ota-updated }
   - echo: Roll back to the built-in bundle
   - script: { path: ../../scripts/ota/rollback.mjs, timeout: 60000 }
@@ -44,9 +46,10 @@ steps:
   - wait: 10000
   - run: ready
   - tap: { id: open-ota }
+  - await: { visible: { id: ota-back }, timeout: 30000 }
+  - await: { idle: true, stableFor: 500, timeout: 30000 }
   - when: { platform: android }
     steps:
       - assert: { visible: { text: 'Built-in greeting' } }
       - assert: { visible: { text: 'page a' } }
-  - wait: 3000
   - snapshot: { name: ota-rolled-back }
