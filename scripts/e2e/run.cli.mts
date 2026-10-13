@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 
 const REPOSITORY_ROOT = path.resolve(import.meta.dirname, '..', '..')
-const KINDS = ['release', 'dev']
+const KINDS = ['release', 'dev', 'ota']
 
 const [app, kind, ...flags] = process.argv.slice(2)
 

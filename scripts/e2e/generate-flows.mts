@@ -28,13 +28,16 @@ export const RELEASE_SCENARIOS = [
 /** The shared scenario every cell runs against a dev build, since it needs Metro. */
 export const DEV_SCENARIO = 'fast-refresh'
 
+/** The shared scenario only OTA cells run, against a release build with a local update server. */
+export const OTA_SCENARIO = 'ota'
+
 /** The directory, under `.argent/flows/`, that holds the scenarios the wrappers run. */
 const SHARED_DIRECTORY = 'shared'
 
 /**
  * One cell's identity, which is all a wrapper needs.
  */
-export type FlowCell = Pick<MatrixCell, 'bundleId' | 'id' | 'slug'>
+export type FlowCell = Pick<MatrixCell, 'bundleId' | 'id' | 'ota' | 'slug'>
 
 /**
  * The content of one wrapper: the launch of the app, then the shared scenario.
@@ -75,6 +78,10 @@ export function planCell(cell: FlowCell): Map<string, string> {
 	}
 
 	files.set(`${cell.id}/dev/${cell.slug}-${DEV_SCENARIO}.yaml`, wrapper(cell, DEV_SCENARIO))
+
+	if (cell.ota) {
+		files.set(`${cell.id}/ota/${cell.slug}-${OTA_SCENARIO}.yaml`, wrapper(cell, OTA_SCENARIO))
+	}
 
 	return files
 }
@@ -117,6 +124,13 @@ export function generateFlows({
 			mkdirSync(path.dirname(path.join(flows, file)), { recursive: true })
 			writeFileSync(path.join(flows, file), content)
 			written.push(file)
+		}
+
+		// A cell that no longer runs the OTA scenario keeps no stale ota/ directory.
+		if (!cell.ota) {
+			const otaDir = path.join(flows, cell.id, 'ota')
+
+			rmSync(otaDir, { force: true, recursive: true })
 		}
 	}
 

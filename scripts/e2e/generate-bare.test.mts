@@ -23,6 +23,7 @@ function cell(id: string, reactNative: string, role = 'blocking'): MatrixCell {
 		id,
 		ios: { runner: 'xcode-27' },
 		kind: 'bare',
+		ota: false,
 		reactNative,
 		role,
 		slug,
@@ -84,7 +85,7 @@ test('the floor example is created like the others, and never deleted', () => {
 })
 
 test('expo cells are not bare examples', () => {
-	const expo = { ...cell('expo-57', '0.86.3'), kind: 'expo' }
+	const expo = { ...cell('expo-57', '0.86.3'), kind: 'expo', ota: false }
 
 	expect(planGeneration([expo], new Map())).toEqual({ bump: [], create: [], remove: [] })
 })
