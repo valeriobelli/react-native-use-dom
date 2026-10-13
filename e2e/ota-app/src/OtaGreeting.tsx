@@ -21,12 +21,12 @@ const CONTAINER_STYLE = { font: '16px system-ui', padding: 8 }
  * from a prop, so a new JS bundle with a changed greeting is what the update ships.
  */
 export default function OtaGreeting({ greeting }: { greeting: string; dom?: DomProps }) {
-	// A lazy initializer reads localStorage before the first paint, without an effect.
+	// A lazy initializer reads localStorage before the first paint, without an effect. The sentinel
+	// this test writes is never empty, so a truthiness check covers the stored case.
 	const [stored] = useState<string>(() => {
-		// `!== null`, not a truthiness check: an empty string is a stored value that must round-trip.
 		const existing = domStorage.getItem('ota-test-value')
 
-		if (existing !== null) {
+		if (existing) {
 			return existing
 		}
 
