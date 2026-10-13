@@ -12,7 +12,15 @@ const DOM_PROPS = { matchContents: true, scrollEnabled: false }
  * update that changes the greeting, restarts the app, and verifies the new text renders and
  * `localStorage` survives.
  */
-export default function OtaApp({ greeting, hotUpdater }: { greeting: string; hotUpdater: OtaHotUpdater }) {
+export default function OtaApp({
+	greeting,
+	hotUpdater,
+	storageSeed,
+}: {
+	greeting: string
+	hotUpdater: OtaHotUpdater
+	storageSeed?: string
+}) {
 	const [status, setStatus] = useState('')
 
 	const checkForUpdate = useCallback(() => {
@@ -48,7 +56,7 @@ export default function OtaApp({ greeting, hotUpdater }: { greeting: string; hot
 	return (
 		<View style={styles.screen}>
 			<Text style={styles.title}>OTA</Text>
-			<OtaGreeting greeting={greeting} dom={DOM_PROPS} />
+			<OtaGreeting greeting={greeting} storageSeed={storageSeed} dom={DOM_PROPS} />
 			<Text testID="ota-status">{status}</Text>
 			<Button testID="ota-check" title="Check for update" onPress={checkForUpdate} />
 		</View>

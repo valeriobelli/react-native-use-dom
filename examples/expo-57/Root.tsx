@@ -26,7 +26,7 @@ export default function Root() {
 	if (screen === 'ota') {
 		return (
 			<View style={styles.container}>
-				<OtaApp greeting={GREETING} hotUpdater={hotUpdater} />
+				<OtaApp greeting={GREETING} storageSeed="written-before-update" hotUpdater={hotUpdater} />
 				<Button testID="ota-back" title="Back" onPress={back} />
 			</View>
 		)

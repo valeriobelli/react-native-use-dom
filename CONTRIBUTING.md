@@ -62,7 +62,7 @@ component to have no page in `dom.bundle`, so that the app reports `ERR_USE_DOM_
 Android workflows remove that page from every cell before they install the app; to run it by hand, remove the
 page from the installed app or the built app first with `node scripts/e2e/remove-page.cli.mts <dom.bundle>`.
 
-The OTA flow (`pnpm e2e <cell> ota`) runs only on the newest stable cell of each kind (today `bare-0.87` and
+The OTA flow (`pnpm e2e <cell> ota --device <simulator udid or emulator serial>`) runs only on the newest stable cell of each kind (today `bare-0.87` and
 `expo-57`). It needs the local Hot Updater server running on port 3000:
 
 ```sh

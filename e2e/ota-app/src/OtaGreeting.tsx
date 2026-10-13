@@ -16,27 +16,45 @@ const domStorage = (globalThis as unknown as { localStorage: DomStorage }).local
 const CONTAINER_STYLE = { font: '16px system-ui', padding: 8 }
 
 /**
- * The DOM component the OTA scenario checks. It reads a value from `localStorage` on mount and
- * reports it, so the flow can verify that storage survives an update. The greeting it renders comes
- * from a prop, so a new JS bundle with a changed greeting is what the update ships. The page stamp
- * lives in this module, so the deploy changes the page's own bytes: an update that serves the old
- * page fails the flow even though the prop came from the new bundle.
+ * The DOM component the OTA scenario checks. The greeting it renders comes from a prop, so a new JS
+ * bundle with a changed greeting is what the update ships. The page stamp lives in this module, so
+ * the deploy changes the page's own bytes: an update that serves the old page fails the flow even
+ * though the prop came from the new bundle.
+ *
+ * `storageSeed` writes the sentinel to `localStorage` when the store is empty, and only the
+ * built-in build passes it: the deploy removes it from the update, whose page only reads. A store
+ * the update lost therefore reads back empty and the flow's assertion fails, instead of the page
+ * silently re-seeding it.
  */
 const PAGE_STAMP = 'page a'
 
-export default function OtaGreeting({ greeting }: { greeting: string; dom?: DomProps }) {
-	// A lazy initializer reads localStorage before the first paint, without an effect. The sentinel
-	// this test writes is never empty, so a truthiness check covers the stored case.
+/** The key the OTA scenario reads and writes. */
+const STORAGE_KEY = 'ota-test-value'
+
+export default function OtaGreeting({
+	greeting,
+	storageSeed,
+}: {
+	greeting: string
+	storageSeed?: string
+	dom?: DomProps
+}) {
+	// A lazy initializer reads localStorage before the first paint, without an effect. The seed
+	// writes only when the store is empty, so a read of an existing value is never overwritten.
 	const [stored] = useState<string>(() => {
-		const existing = domStorage.getItem('ota-test-value')
+		const existing = domStorage.getItem(STORAGE_KEY)
 
 		if (existing) {
 			return existing
 		}
 
-		domStorage.setItem('ota-test-value', 'written-before-update')
+		if (storageSeed) {
+			domStorage.setItem(STORAGE_KEY, storageSeed)
 
-		return 'written-before-update'
+			return storageSeed
+		}
+
+		return ''
 	})
 
 	return (

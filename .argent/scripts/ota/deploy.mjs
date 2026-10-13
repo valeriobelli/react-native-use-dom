@@ -36,6 +36,9 @@ const pageFile = path.join(root, 'e2e/ota-app/src/OtaGreeting.tsx')
 
 const rootSource = await readFile(rootFile, 'utf8')
 const updatedRoot = rootSource.replace("'Built-in greeting'", "'Updated greeting'")
+// The update's page only reads `localStorage`: dropping the seed means a store the update lost
+// reads back empty, so the flow's persistence assertion can fail instead of re-seeding silently.
+const withoutSeed = updatedRoot.replace(' storageSeed="written-before-update"', '')
 const pageSource = await readFile(pageFile, 'utf8')
 const updatedPage = pageSource.replace("'page a'", "'page b'")
 
@@ -43,11 +46,15 @@ if (updatedRoot === rootSource) {
 	throw new Error('Could not find the greeting to change in Root.tsx')
 }
 
+if (withoutSeed === updatedRoot) {
+	throw new Error('Could not find the storage seed to drop from Root.tsx')
+}
+
 if (updatedPage === pageSource) {
 	throw new Error('Could not find the page stamp to change in OtaGreeting.tsx')
 }
 
-await writeFile(rootFile, updatedRoot)
+await writeFile(rootFile, withoutSeed)
 await writeFile(pageFile, updatedPage)
 
 try {

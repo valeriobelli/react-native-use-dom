@@ -117,6 +117,17 @@ jobs:
         working-directory: ${{ matrix.cell.folder }}/android
         run: ./gradlew :app:assembleRelease :app:assembleDebug
 
+      - name: Start the OTA server for the OTA cell
+        # The OTA cell runs the `ota` flow against a local Hot Updater server. The server runs on the
+        # host, so it starts in its own step: the emulator action runs its `script` one line at a
+        # time, and each line is its own shell.
+        if: ${{ matrix.cell.ota }}
+        run: |
+          npx hot-updater db generate scripts/ota/hotUpdater.mts --yes
+          npx hot-updater db migrate scripts/ota/hotUpdater.mts
+          node scripts/ota/server.mts &
+          for _ in $(seq 1 30); do curl -sf http://localhost:3000/hot-updater/version && break; sleep 1; done
+
       - name: Remove the missing page for the page-not-found flow
         # Every cell runs the `page-not-found` flow, which needs a page that is not next to the running
         # bundle. Android serves a release page from the APK's assets, so the example app's `Missing`
@@ -167,15 +178,8 @@ jobs:
             for _ in $(seq 60); do pnpm exec argent server status --json | grep -q '"running": true' && break; sleep 2; done; pnpm exec argent server status --json | grep -q '"running": true'
             adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
             pnpm e2e "$CELL_ID" release --device emulator-5554 --output e2e-output $UPDATE_BASELINES || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
-            if [ "$CELL_OTA" = true ]; then
-              npx hot-updater db generate scripts/ota/hotUpdater.mts --yes
-              npx hot-updater db migrate scripts/ota/hotUpdater.mts
-              node scripts/ota/server.mts &
-              for _ in $(seq 1 30); do curl -sf http://localhost:3000/hot-updater/version && break; sleep 1; done
-              adb reverse tcp:3000 tcp:3000
-              pnpm e2e "$CELL_ID" ota --device emulator-5554 --output e2e-output $UPDATE_BASELINES
-              kill %1 2>/dev/null || true
-            fi
+            if [ "$CELL_OTA" = true ]; then adb reverse tcp:3000 tcp:3000; fi
+            if [ "$CELL_OTA" = true ]; then pnpm e2e "$CELL_ID" ota --device emulator-5554 --output e2e-output $UPDATE_BASELINES; fi
             nohup pnpm --dir "$CELL_FOLDER" start > metro.log 2>&1 &
             for i in $(seq 60); do curl -sf http://localhost:8081/status | grep -q running && break; sleep 2; done; curl -sf http://localhost:8081/status | grep -q running
             adb reverse tcp:8081 tcp:8081
@@ -183,6 +187,7 @@ jobs:
             for c in Note Greeting Lines; do curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" --data-urlencode "dev=true" --data-urlencode "platform=web" --data-urlencode "transform.dom=$GITHUB_WORKSPACE/e2e/example-app/src/$c.tsx"; done
             adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/debug/app-debug.apk"
             pnpm e2e "$CELL_ID" dev --device emulator-5554 --output e2e-output $UPDATE_BASELINES
+            if [ "$CELL_OTA" = true ]; then pkill -f scripts/ota/server.mts || true; fi
 
       - name: Upload the new baselines
         if: ${{ inputs.update-baselines && !cancelled() }}
