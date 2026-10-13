@@ -18,8 +18,12 @@ const CONTAINER_STYLE = { font: '16px system-ui', padding: 8 }
 /**
  * The DOM component the OTA scenario checks. It reads a value from `localStorage` on mount and
  * reports it, so the flow can verify that storage survives an update. The greeting it renders comes
- * from a prop, so a new JS bundle with a changed greeting is what the update ships.
+ * from a prop, so a new JS bundle with a changed greeting is what the update ships. The page stamp
+ * lives in this module, so the deploy changes the page's own bytes: an update that serves the old
+ * page fails the flow even though the prop came from the new bundle.
  */
+const PAGE_STAMP = 'page a'
+
 export default function OtaGreeting({ greeting }: { greeting: string; dom?: DomProps }) {
 	// A lazy initializer reads localStorage before the first paint, without an effect. The sentinel
 	// this test writes is never empty, so a truthiness check covers the stored case.
@@ -39,6 +43,7 @@ export default function OtaGreeting({ greeting }: { greeting: string; dom?: DomP
 		<div style={CONTAINER_STYLE}>
 			<p>{greeting}</p>
 			<p data-testid="storage-value">{stored}</p>
+			<p data-testid="page-stamp">{PAGE_STAMP}</p>
 		</div>
 	)
 }

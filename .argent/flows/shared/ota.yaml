@@ -35,6 +35,7 @@ steps:
     steps:
       - assert: { visible: { text: 'Updated greeting' } }
       - assert: { visible: { text: 'written-before-update' } }
+      - assert: { visible: { text: 'page b' } }
   - wait: 3000
   - snapshot: { name: ota-updated }
   - echo: Roll back to the built-in bundle
@@ -46,5 +47,6 @@ steps:
   - when: { platform: android }
     steps:
       - assert: { visible: { text: 'Built-in greeting' } }
+      - assert: { visible: { text: 'page a' } }
   - wait: 3000
   - snapshot: { name: ota-rolled-back }

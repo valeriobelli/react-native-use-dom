@@ -27,18 +27,28 @@ if (!build || (build !== 'bare' && build !== 'expo')) {
 	throw new Error('config.json must set build to "bare" or "expo"')
 }
 
-// The greeting lives in the host app's Root.tsx, so the OTA update changes it in the bundle.
+// The greeting lives in the host app's Root.tsx and the page stamp in the DOM component, so the
+// OTA update changes both the bundle and the page's own bytes: an implementation still serving the
+// old page fails the flow, even though the prop came from the new bundle.
 const appDir = build === 'expo' ? 'examples/expo-57' : 'examples/bare-0.87'
 const rootFile = path.join(root, appDir, 'Root.tsx')
+const pageFile = path.join(root, 'e2e/ota-app/src/OtaGreeting.tsx')
 
-const source = await readFile(rootFile, 'utf8')
-const updated = source.replace("'Built-in greeting'", "'Updated greeting'")
+const rootSource = await readFile(rootFile, 'utf8')
+const updatedRoot = rootSource.replace("'Built-in greeting'", "'Updated greeting'")
+const pageSource = await readFile(pageFile, 'utf8')
+const updatedPage = pageSource.replace("'page a'", "'page b'")
 
-if (updated === source) {
+if (updatedRoot === rootSource) {
 	throw new Error('Could not find the greeting to change in Root.tsx')
 }
 
-await writeFile(rootFile, updated)
+if (updatedPage === pageSource) {
+	throw new Error('Could not find the page stamp to change in OtaGreeting.tsx')
+}
+
+await writeFile(rootFile, updatedRoot)
+await writeFile(pageFile, updatedPage)
 
 try {
 	// Deploy the update through the Hot Updater CLI for the platform the flow runs on. The config in
@@ -99,6 +109,7 @@ try {
 		)
 	}
 } finally {
-	// Restore the greeting so the next flow run starts from the built-in one.
-	await writeFile(rootFile, source)
+	// Restore both files, so the next flow run starts from the built-in greeting and page stamp.
+	await writeFile(rootFile, rootSource)
+	await writeFile(pageFile, pageSource)
 }
