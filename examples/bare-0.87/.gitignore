@@ -64,3 +64,6 @@ yarn-error.log
 
 # testing
 /coverage
+# hot-updater
+.hot-updater/output
+dist/

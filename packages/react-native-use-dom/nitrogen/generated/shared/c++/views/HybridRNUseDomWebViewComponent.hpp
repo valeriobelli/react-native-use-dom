@@ -45,6 +45,7 @@ namespace margelo::nitro::usedom::views {
 
   public:
     nitro::ReactProp<std::string> source;
+    nitro::ReactProp<std::string> pagesDirectory;
     nitro::ReactProp<std::string> injectedObjectJson;
     nitro::ReactProp<bool> scrollEnabled;
     nitro::ReactProp<bool> inspectable;
@@ -57,6 +58,7 @@ namespace margelo::nitro::usedom::views {
     [[nodiscard]]
     bool hasSameProps(const HybridRNUseDomWebViewProps& other) const noexcept {
       return source.hasSameValue(other.source) &&
+             pagesDirectory.hasSameValue(other.pagesDirectory) &&
              injectedObjectJson.hasSameValue(other.injectedObjectJson) &&
              scrollEnabled.hasSameValue(other.scrollEnabled) &&
              inspectable.hasSameValue(other.inspectable) &&
@@ -70,6 +72,7 @@ namespace margelo::nitro::usedom::views {
     [[nodiscard]]
     bool hasAnyProvidedProps() const noexcept {
       return source.isProvided() ||
+             pagesDirectory.isProvided() ||
              injectedObjectJson.isProvided() ||
              scrollEnabled.isProvided() ||
              inspectable.isProvided() ||

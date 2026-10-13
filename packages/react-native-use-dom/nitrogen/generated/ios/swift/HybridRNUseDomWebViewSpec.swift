@@ -11,6 +11,7 @@ import NitroModules
 public protocol HybridRNUseDomWebViewSpec_protocol: HybridObject, HybridView {
   // Properties
   var source: String { get set }
+  var pagesDirectory: String { get set }
   var injectedObjectJson: String { get set }
   var scrollEnabled: Bool { get set }
   var inspectable: Bool { get set }

@@ -51,6 +51,15 @@ class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
     didSet { if source != oldValue { needsLoad = true } }
   }
 
+  var pagesDirectory: String = "" {
+    didSet {
+      onMain { owner in
+        let url = URL(string: owner.pagesDirectory)
+        owner.schemeHandler.root = url?.isFileURL == true ? url : nil
+      }
+    }
+  }
+
   var injectedObjectJson: String = "{}" {
     didSet { if injectedObjectJson != oldValue { needsBridgeScript = true } }
   }

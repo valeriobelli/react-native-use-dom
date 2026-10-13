@@ -52,6 +52,8 @@ namespace margelo::nitro::usedom {
     // Properties
     std::string getSource() override;
     void setSource(const std::string& source) override;
+    std::string getPagesDirectory() override;
+    void setPagesDirectory(const std::string& pagesDirectory) override;
     std::string getInjectedObjectJson() override;
     void setInjectedObjectJson(const std::string& injectedObjectJson) override;
     bool getScrollEnabled() override;

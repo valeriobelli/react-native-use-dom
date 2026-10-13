@@ -1,3 +1,4 @@
+// oxlint-disable max-lines: the matrix builder is one cohesive module max-lines
 /**
  * Builds the e2e matrix: the exact set of example apps the end-to-end tests must cover, derived
  * from the support table and the published versions. Every function here is pure, so the tests
@@ -53,6 +54,11 @@ export interface MatrixCell {
 	slug: string
 	/** The support level the React Native schedule gives the minor. */
 	support: string
+	/**
+	 * Whether the OTA end-to-end scenario runs on this cell: the newest stable cell of each kind.
+	 * Derived by `buildMatrix`, never set by hand.
+	 */
+	ota: boolean
 }
 
 /**
@@ -142,7 +148,11 @@ export function buildMatrix(sources: MatrixSources): { cells: MatrixCell[]; gene
 
 	const expo = expoCells(sources, supportOf).sort((left, right) => digitsOf(left.id) - digitsOf(right.id))
 
-	return { cells: [...bare, ...expo, ...floorCells(sources, supportOf)], generatedAt: sources.date }
+	const cells = [...bare, ...expo, ...floorCells(sources, supportOf)]
+
+	markOtaCells({ cells })
+
+	return { cells, generatedAt: sources.date }
 }
 
 /**
@@ -164,6 +174,23 @@ function floorCells(sources: MatrixSources, supportOf: Map<string, string>): Mat
 	}
 
 	return [{ ...bareCell(FLOOR_MINOR, 'Unsupported', floorVersion, sources.overrides), role: 'floor' }]
+}
+
+/**
+ * The newest stable cell of each kind — the highest bare cell and the highest Expo cell whose support
+ * level is not `Future` — runs the OTA end-to-end scenario. Derived from the matrix, never set by hand:
+ * when the matrix rolls, the host moves to the next stable cell automatically.
+ *
+ * @param options `cells` are the cells of the matrix, sorted by version within each kind
+ */
+function markOtaCells({ cells }: { cells: MatrixCell[] }): void {
+	for (const kind of ['bare', 'expo'] as const) {
+		const stable = cells.filter((cell) => cell.kind === kind && cell.role === 'blocking' && cell.support !== 'Future')
+
+		if (stable.length > 0) {
+			stable.at(-1)!.ota = true
+		}
+	}
 }
 
 /**
@@ -214,6 +241,7 @@ function expoCells(sources: MatrixSources, supportOf: Map<string, string>): Matr
 			id,
 			ios: iosCell(id, Number(sdk) <= LAST_SCENELESS_SDK, sources.overrides),
 			kind: 'expo',
+			ota: false,
 			reactNative,
 			role: 'blocking',
 			slug: `expo${sdk}`,
@@ -251,6 +279,7 @@ function bareCell(
 		id,
 		ios: iosCell(id, false, overrides),
 		kind: 'bare',
+		ota: false,
 		reactNative,
 		role: 'blocking',
 		slug,

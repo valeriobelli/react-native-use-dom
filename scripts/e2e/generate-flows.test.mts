@@ -6,8 +6,8 @@ import { afterEach, beforeEach, expect, test } from '@jest/globals'
 
 import { DEV_SCENARIO, generateFlows, planCell, RELEASE_SCENARIOS } from './generate-flows.mts'
 
-const bare = { bundleId: 'dev.reactnativeusedom.bare087', id: 'bare-0.87', slug: 'bare087' }
-const expo = { bundleId: 'dev.reactnativeusedom.expo57', id: 'expo-57', slug: 'expo57' }
+const bare = { bundleId: 'dev.reactnativeusedom.bare087', id: 'bare-0.87', ota: true, slug: 'bare087' }
+const expo = { bundleId: 'dev.reactnativeusedom.expo57', id: 'expo-57', ota: true, slug: 'expo57' }
 
 let root: string
 
@@ -19,7 +19,7 @@ afterEach(() => {
 	rmSync(root, { force: true, recursive: true })
 })
 
-test('a bare cell gets its shared release wrappers and one dev wrapper', () => {
+test('a bare cell gets its shared release wrappers, one dev wrapper and an ota wrapper', () => {
 	const files = planCell(bare)
 
 	expect([...files.keys()]).toEqual([
@@ -32,6 +32,7 @@ test('a bare cell gets its shared release wrappers and one dev wrapper', () => {
 		'bare-0.87/release/bare087-refs.yaml',
 		'bare-0.87/release/bare087-view-options.yaml',
 		'bare-0.87/dev/bare087-fast-refresh.yaml',
+		'bare-0.87/ota/bare087-ota.yaml',
 	])
 
 	expect(files.get('bare-0.87/release/bare087-refs.yaml')).toBe(
@@ -70,7 +71,7 @@ test('the navigation-blocked wrapper brings its own app back on iOS before readi
 test('an Expo cell gets its own bundle id and slug', () => {
 	const files = planCell(expo)
 
-	expect(files.size).toBe(RELEASE_SCENARIOS.length + 1)
+	expect(files.size).toBe(RELEASE_SCENARIOS.length + 2)
 
 	expect(files.get(`expo-57/dev/expo57-${DEV_SCENARIO}.yaml`)).toBe(
 		`steps:
@@ -110,4 +111,23 @@ test('a second run writes the same files', () => {
 
 	expect(result.deleted).toEqual([])
 	expect(readFileSync(refs, 'utf8')).toBe(first)
+})
+
+test('an OTA cell gets an ota wrapper, a non-OTA cell does not', () => {
+	const ota = { ...bare, ota: true }
+	const nonOta = { ...expo, ota: false }
+
+	expect(planCell(ota).has('bare-0.87/ota/bare087-ota.yaml')).toBe(true)
+	expect(planCell(nonOta).has('expo-57/ota/expo57-ota.yaml')).toBe(false)
+})
+
+test('a cell that loses the OTA flag has its ota directory removed', () => {
+	const flows = path.join(root, '.argent', 'flows')
+	const otaDir = path.join(flows, 'bare-0.87', 'ota')
+
+	generateFlows({ cells: [{ ...bare, ota: true }], root })
+	expect(existsSync(otaDir)).toBe(true)
+
+	generateFlows({ cells: [{ ...bare, ota: false }], root })
+	expect(existsSync(otaDir)).toBe(false)
 })

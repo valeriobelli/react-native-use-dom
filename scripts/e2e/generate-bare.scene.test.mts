@@ -28,6 +28,7 @@ function cell(id: string): MatrixCell {
 		id,
 		ios: { runner: 'xcode-27' },
 		kind: 'bare',
+		ota: false,
 		reactNative: '0.86.3',
 		role: 'blocking',
 		slug: 'app',

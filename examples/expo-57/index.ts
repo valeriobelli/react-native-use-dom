@@ -1,4 +1,5 @@
-import App from '@react-native-use-dom/example-app'
 import { registerRootComponent } from 'expo'
 
-registerRootComponent(App)
+import Root from './Root'
+
+registerRootComponent(Root)

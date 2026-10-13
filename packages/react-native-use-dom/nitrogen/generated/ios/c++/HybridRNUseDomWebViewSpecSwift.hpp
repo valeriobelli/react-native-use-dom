@@ -76,6 +76,13 @@ namespace margelo::nitro::usedom {
     inline void setSource(const std::string& source) noexcept override {
       _swiftPart.setSource(source);
     }
+    inline std::string getPagesDirectory() noexcept override {
+      auto __result = _swiftPart.getPagesDirectory();
+      return __result;
+    }
+    inline void setPagesDirectory(const std::string& pagesDirectory) noexcept override {
+      _swiftPart.setPagesDirectory(pagesDirectory);
+    }
     inline std::string getInjectedObjectJson() noexcept override {
       auto __result = _swiftPart.getInjectedObjectJson();
       return __result;

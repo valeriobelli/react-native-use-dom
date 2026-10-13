@@ -23,8 +23,12 @@ app.
 
 ## Release
 
-A release build embeds the page of every DOM component the app renders, with the stylesheets it imports and the
-files of `public`. The pages load from the app itself: they need no dev server and no network connection.
+A release build writes the page of every DOM component the app renders, with the stylesheets it imports and the
+files of `public`, into a `dom.bundle` folder next to the JS bundle. Each page loads from that folder beside the
+running bundle: they need no dev server and no network connection. When the app runs the bundle built into it, the
+pages load from the app. An update that replaces the JS bundle and ships its `dom.bundle` folder — as `react-native
+bundle --assets-dest` and `expo export:embed` write it — updates the DOM components with it. A page the running
+bundle's folder doesn't hold fails with `ERR_USE_DOM_PAGE_NOT_FOUND`: it is never loaded from the app instead.
 
 This happens as part of the release bundle, with `withDom` in `metro.config.js` and no other step:
 

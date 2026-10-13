@@ -58,10 +58,11 @@ public/
 URLs inside an imported stylesheet resolve against the page too, so `url(fonts/Inter.woff2)` works from any
 stylesheet.
 
-In development, the dev server serves the folder. A release build copies it into the app, so the files load
-without a network connection. Write relative URLs, without a leading `/`: they resolve in both.
+In development, the dev server serves the folder. A release build writes it next to the JS bundle, where the pages
+load it from — so an update that replaces the bundle brings the files along, and the files still load without a
+network connection. Write relative URLs, without a leading `/`: they resolve in both.
 
-A file the folder doesn't hold answers 404 in development, and isn't found in release.
+A file the folder doesn't hold answers 404.
 
 ## Other files
 

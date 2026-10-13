@@ -23,6 +23,7 @@ export function cell(
 		id: `expo-${sdk}`,
 		ios: { runner: 'xcode-27' },
 		kind: 'expo',
+		ota: false,
 		reactNative,
 		role: 'blocking',
 		slug: `expo${sdk}`,

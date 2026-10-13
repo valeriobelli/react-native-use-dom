@@ -16,6 +16,8 @@ namespace margelo::nitro::usedom {
     registerHybrids(this, [](Prototype& prototype) {
       prototype.registerHybridGetter("source", &HybridRNUseDomWebViewSpec::getSource);
       prototype.registerHybridSetter("source", &HybridRNUseDomWebViewSpec::setSource);
+      prototype.registerHybridGetter("pagesDirectory", &HybridRNUseDomWebViewSpec::getPagesDirectory);
+      prototype.registerHybridSetter("pagesDirectory", &HybridRNUseDomWebViewSpec::setPagesDirectory);
       prototype.registerHybridGetter("injectedObjectJson", &HybridRNUseDomWebViewSpec::getInjectedObjectJson);
       prototype.registerHybridSetter("injectedObjectJson", &HybridRNUseDomWebViewSpec::setInjectedObjectJson);
       prototype.registerHybridGetter("scrollEnabled", &HybridRNUseDomWebViewSpec::getScrollEnabled);

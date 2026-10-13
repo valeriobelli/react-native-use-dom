@@ -68,6 +68,7 @@ jobs:
     env:
       CELL_ID: ${{ matrix.cell.id }}
       CELL_FOLDER: ${{ matrix.cell.folder }}
+      CELL_OTA: ${{ matrix.cell.ota }}
       # Where the emulator lists the emulators it runs, which Argent's simulator server reads to find
       # them. Argent's own emulator job sets it too: on a runner it is otherwise unset.
       XDG_RUNTIME_DIR: /tmp/xdg-runtime
@@ -115,6 +116,17 @@ jobs:
       - name: Build the Release and Debug APKs
         working-directory: ${{ matrix.cell.folder }}/android
         run: ./gradlew :app:assembleRelease :app:assembleDebug
+
+      - name: Start the OTA server for the OTA cell
+        # The OTA cell runs the `ota` flow against a local Hot Updater server. The server runs on the
+        # host, so it starts in its own step: the emulator action runs its `script` one line at a
+        # time, and each line is its own shell.
+        if: ${{ matrix.cell.ota }}
+        run: |
+          npx hot-updater db generate scripts/ota/hotUpdater.mts --yes
+          echo "yes" | npx hot-updater db migrate scripts/ota/hotUpdater.mts
+          node scripts/ota/server.mts &
+          for _ in $(seq 1 30); do curl -sf http://localhost:3000/hot-updater/version && break; sleep 1; done
 
       - name: Remove the missing page for the page-not-found flow
         # Every cell runs the `page-not-found` flow, which needs a page that is not next to the running
@@ -166,6 +178,8 @@ jobs:
             for _ in $(seq 60); do pnpm exec argent server status --json | grep -q '"running": true' && break; sleep 2; done; pnpm exec argent server status --json | grep -q '"running": true'
             adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
             pnpm e2e "$CELL_ID" release --device emulator-5554 --output e2e-output $UPDATE_BASELINES || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
+            if [ "$CELL_OTA" = true ]; then adb reverse tcp:3000 tcp:3000; fi
+            if [ "$CELL_OTA" = true ]; then pnpm e2e "$CELL_ID" ota --device emulator-5554 --output e2e-output --update-baselines; fi
             nohup pnpm --dir "$CELL_FOLDER" start > metro.log 2>&1 &
             for i in $(seq 60); do curl -sf http://localhost:8081/status | grep -q running && break; sleep 2; done; curl -sf http://localhost:8081/status | grep -q running
             adb reverse tcp:8081 tcp:8081

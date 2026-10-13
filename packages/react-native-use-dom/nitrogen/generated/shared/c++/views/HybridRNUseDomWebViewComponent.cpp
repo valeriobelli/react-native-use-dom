@@ -21,6 +21,7 @@ namespace margelo::nitro::usedom::views {
                                                          const react::RawProps& rawProps):
     react::ViewProps(context, sourceProps, rawProps, filterObjectKeys),
     source(nitro::ReactProp<std::string>::fromRawValue("RNUseDomWebView", "source", rawProps, sourceProps.source)),
+    pagesDirectory(nitro::ReactProp<std::string>::fromRawValue("RNUseDomWebView", "pagesDirectory", rawProps, sourceProps.pagesDirectory)),
     injectedObjectJson(nitro::ReactProp<std::string>::fromRawValue("RNUseDomWebView", "injectedObjectJson", rawProps, sourceProps.injectedObjectJson)),
     scrollEnabled(nitro::ReactProp<bool>::fromRawValue("RNUseDomWebView", "scrollEnabled", rawProps, sourceProps.scrollEnabled)),
     inspectable(nitro::ReactProp<bool>::fromRawValue("RNUseDomWebView", "inspectable", rawProps, sourceProps.inspectable)),
@@ -33,6 +34,7 @@ namespace margelo::nitro::usedom::views {
   bool HybridRNUseDomWebViewProps::filterObjectKeys(const std::string& propName) {
     switch (hashString(propName)) {
       case hashString("source"): return true;
+      case hashString("pagesDirectory"): return true;
       case hashString("injectedObjectJson"): return true;
       case hashString("scrollEnabled"): return true;
       case hashString("inspectable"): return true;

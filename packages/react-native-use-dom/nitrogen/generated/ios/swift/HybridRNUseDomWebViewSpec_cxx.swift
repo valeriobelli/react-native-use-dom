@@ -132,6 +132,17 @@ open class HybridRNUseDomWebViewSpec_cxx {
     }
   }
   
+  public final var pagesDirectory: std.string {
+    @inline(__always)
+    get {
+      return std.string(self.__implementation.pagesDirectory)
+    }
+    @inline(__always)
+    set {
+      self.__implementation.pagesDirectory = String(newValue)
+    }
+  }
+  
   public final var injectedObjectJson: std.string {
     @inline(__always)
     get {

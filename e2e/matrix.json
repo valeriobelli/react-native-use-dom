@@ -13,7 +13,8 @@
 			"reactNative": "0.85.3",
 			"role": "blocking",
 			"slug": "bare085",
-			"support": "End of Cycle"
+			"support": "End of Cycle",
+			"ota": false
 		},
 		{
 			"appName": "BareExample086",
@@ -28,7 +29,8 @@
 			"reactNative": "0.86.3",
 			"role": "blocking",
 			"slug": "bare086",
-			"support": "Active"
+			"support": "Active",
+			"ota": false
 		},
 		{
 			"appName": "BareExample",
@@ -43,7 +45,8 @@
 			"reactNative": "0.87.1",
 			"role": "blocking",
 			"slug": "bare087",
-			"support": "Active"
+			"support": "Active",
+			"ota": true
 		},
 		{
 			"appName": "BareExample088",
@@ -58,7 +61,8 @@
 			"reactNative": "0.88.0-rc.4",
 			"role": "blocking",
 			"slug": "bare088",
-			"support": "Future"
+			"support": "Future",
+			"ota": false
 		},
 		{
 			"appName": "ExpoExample56",
@@ -73,7 +77,8 @@
 			"reactNative": "0.85.3",
 			"role": "blocking",
 			"slug": "expo56",
-			"support": "End of Cycle"
+			"support": "End of Cycle",
+			"ota": false
 		},
 		{
 			"appName": "ReactNativeUseDomExpoExample",
@@ -88,7 +93,8 @@
 			"reactNative": "0.86.3",
 			"role": "blocking",
 			"slug": "expo57",
-			"support": "Active"
+			"support": "Active",
+			"ota": true
 		},
 		{
 			"appName": "ExpoExample58",
@@ -103,7 +109,8 @@
 			"reactNative": "0.88.0-rc.3",
 			"role": "blocking",
 			"slug": "expo58",
-			"support": "Future"
+			"support": "Future",
+			"ota": false
 		}
 	],
 	"generatedAt": "2026-10-09"

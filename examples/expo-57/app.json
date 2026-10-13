@@ -26,7 +26,14 @@
 						"enableSceneSupport": true
 					}
 				}
-			]
+			],
+			[
+				"@hot-updater/expo",
+				{
+					"baseURL": "http://localhost:3000/hot-updater"
+				}
+			],
+			"./with-ota-local-server"
 		]
 	}
 }

@@ -5,9 +5,7 @@ executionPrerequisite: A release build whose `Missing` page has been removed fro
 steps:
   - echo: A page missing next to the running bundle reports ERR_USE_DOM_PAGE_NOT_FOUND
   - run: ready
-  - await: { visible: { id: open-errors }, timeout: 30000 }
-  - tap: { id: open-errors }
-  - await: { visible: { id: error-non-serializable-prop }, timeout: 15000 }
+  - run: open-errors
   # The screen mounts the web views of its cases as it opens; a busy runner loses a first tap while
   # they load, so nothing is tapped before the screen settles.
   - await: { idle: true, stableFor: 1000, timeout: 30000 }

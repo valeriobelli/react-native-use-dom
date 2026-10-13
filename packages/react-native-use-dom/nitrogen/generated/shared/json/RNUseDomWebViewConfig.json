@@ -5,6 +5,7 @@
   "directEventTypes": {},
   "validAttributes": {
     "source": true,
+    "pagesDirectory": true,
     "injectedObjectJson": true,
     "scrollEnabled": true,
     "inspectable": true,
