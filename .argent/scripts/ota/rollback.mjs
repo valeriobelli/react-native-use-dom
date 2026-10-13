@@ -16,7 +16,9 @@ import path from 'node:path'
 
 const root = path.resolve(import.meta.dirname, '..', '..', '..')
 
-const config = JSON.parse(readFileSync(path.join(import.meta.dirname, 'config.json'), 'utf8'))
+const config =
+	/** @type {{ build?: string, bundleId?: string }} */
+	(JSON.parse(readFileSync(path.join(import.meta.dirname, 'config.json'), 'utf8')))
 const build = config.build
 const bundleId = config.bundleId
 

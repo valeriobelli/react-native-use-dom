@@ -14,12 +14,15 @@ import { createHash } from 'node:crypto'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { stripVTControlCharacters } from 'node:util'
 
 const root = path.resolve(import.meta.dirname, '..', '..', '..')
 
 // Argent's script runner only passes a whitelist of env vars, so run.cli.mts writes the build
 // and platform to a config file the scripts read.
-const config = JSON.parse(readFileSync(path.join(import.meta.dirname, 'config.json'), 'utf8'))
+const config =
+	/** @type {{ build?: string, platform?: string }} */
+	(JSON.parse(readFileSync(path.join(import.meta.dirname, 'config.json'), 'utf8')))
 const build = config.build
 const platform = config.platform ?? 'android'
 
@@ -70,8 +73,9 @@ try {
 	})
 
 	// Record the deployed bundle's id, so the rollback disables exactly what this deploy created
-	// rather than whichever bundle happens to be enabled when it runs.
-	const id = /ID:\s*([0-9a-f-]{36})/u.exec(output)?.[1]
+	// rather than whichever bundle happens to be enabled when it runs. On CI the CLI colors its
+	// output even through a pipe, so the escape codes are stripped before matching.
+	const id = /ID:\s*([0-9a-f-]{36})/u.exec(stripVTControlCharacters(output))?.[1]
 
 	if (!id) {
 		throw new Error(`Could not read the deployed bundle id from the deploy output:\n${output}`)
