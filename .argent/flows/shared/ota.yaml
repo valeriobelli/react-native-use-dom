@@ -1,0 +1,45 @@
+# The OTA scenario: a hot-updater update changes a DOM component's greeting, keeps its
+# localStorage, and rolls back. Needs a Release build with Hot Updater configured and a local
+# update server running on port 3000.
+#
+# The flow runs against the newest stable cell, which carries the hot-updater wiring. The deploy
+# and rollback scripts run through `script:` steps and read `HOT_UPDATER_BUILD` and
+# `HOT_UPDATER_PLATFORM` from the environment the CLI sets.
+executionPrerequisite: The example app has just launched with a Release build, and the local Hot Updater server is running on port 3000.
+steps:
+  - echo: Open the OTA screen
+  - run: ready
+  - tap: { id: open-ota }
+  - echo: The built-in greeting renders
+  - wait: 3000
+  - when: { platform: android }
+    steps:
+      - assert: { visible: { text: 'Built-in greeting' } }
+  - snapshot: { name: ota-baseline }
+  - echo: Deploy an update that changes the greeting
+  - script: { path: ../../scripts/ota/deploy.mts }
+  - echo: Check for the update and apply it
+  - tap: { id: ota-check }
+  - await: { visible: { text: 'Reloading…' }, timeout: 30000 }
+  - echo: The app restarts with the new greeting
+  - wait: 10000
+  - run: ready
+  - tap: { id: open-ota }
+  - when: { platform: android }
+    steps:
+      - assert: { visible: { text: 'Updated greeting' } }
+      - assert: { visible: { text: 'written-before-update' } }
+  - wait: 3000
+  - snapshot: { name: ota-updated }
+  - echo: Roll back to the built-in bundle
+  - script: { path: ../../scripts/ota/rollback.mts }
+  - tap: { id: ota-check }
+  - await: { visible: { text: 'Reloading…' }, timeout: 30000 }
+  - wait: 10000
+  - run: ready
+  - tap: { id: open-ota }
+  - when: { platform: android }
+    steps:
+      - assert: { visible: { text: 'Built-in greeting' } }
+  - wait: 3000
+  - snapshot: { name: ota-rolled-back }

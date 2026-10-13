@@ -2,9 +2,9 @@
  * @format
  */
 
-import App from '@react-native-use-dom/example-app'
 import { AppRegistry } from 'react-native'
 
 import { name as appName } from './app.json'
+import Root from './Root'
 
-AppRegistry.registerComponent(appName, () => App)
+AppRegistry.registerComponent(appName, () => Root)

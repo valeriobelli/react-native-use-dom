@@ -24,7 +24,16 @@ if (!KINDS.includes(kind)) {
 
 const directory = path.posix.join('.argent/flows', app, kind)
 
-const result = spawnSync('argent', ['flow', 'run', directory, ...flags], { cwd: REPOSITORY_ROOT, stdio: 'inherit' })
+// The OTA scripts read these to pick the build plugin and platform. The app id encodes the kind
+// (bare or expo), and the platform comes from the device the flows run on.
+const build = app.startsWith('expo') ? 'expo' : 'bare'
+const env: Record<string, string> = { ...process.env, HOT_UPDATER_BUILD: build }
+
+const result = spawnSync('argent', ['flow', 'run', directory, ...flags], {
+	cwd: REPOSITORY_ROOT,
+	env,
+	stdio: 'inherit',
+})
 
 if (result.error !== undefined) {
 	fail(`running argent failed: ${result.error.message}`)

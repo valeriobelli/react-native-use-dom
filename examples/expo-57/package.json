@@ -9,6 +9,7 @@
 		"start": "expo start"
 	},
 	"dependencies": {
+		"@hot-updater/react-native": "^1.0.1",
 		"@react-native-use-dom/example-app": "workspace:*",
 		"expo": "57.0.27",
 		"react": "19.2.3",
@@ -19,9 +20,12 @@
 		"react-native-use-dom": "workspace:*"
 	},
 	"devDependencies": {
+		"@hot-updater/expo": "^1.0.1",
+		"@hot-updater/standalone": "^1.0.1",
 		"@types/react": "~19.2.2",
 		"babel-preset-expo": "~57.0.13",
 		"expo-build-properties": "57.0.22",
+		"hot-updater": "^1.0.1",
 		"typescript": "~6.0.3"
 	},
 	"engines": {

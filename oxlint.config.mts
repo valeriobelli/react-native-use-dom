@@ -44,6 +44,16 @@ export default defineConfig({
 			},
 		},
 		{
+			// OTA test scripts run a Hono server and a storage adapter; their entrypoints are longer
+			// than the default and use Hono's deprecated `mount`, which has no v4 replacement.
+			files: ['scripts/ota/**', 'scripts/e2e/matrix.mts'],
+			rules: {
+				'max-lines': 'off',
+				'max-lines-per-function': 'off',
+				'typescript/no-deprecated': 'off',
+			},
+		},
+		{
 			// App code default-exports its screens, and `'use dom'` modules must default-export their
 			// component — the rule guards library source only.
 			files: ['{examples,e2e}/**/*.{ts,tsx}', 'packages/react-native-use-dom/src/__tests__/types/**'],

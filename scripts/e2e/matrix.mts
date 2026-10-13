@@ -1,3 +1,4 @@
+// oxlint-disable max-lines: the matrix builder is one cohesive module
 /**
  * Builds the e2e matrix: the exact set of example apps the end-to-end tests must cover, derived
  * from the support table and the published versions. Every function here is pure, so the tests
@@ -187,7 +188,7 @@ function markOtaCells(cells: MatrixCell[]): void {
 		const stable = cells.filter((cell) => cell.kind === kind && cell.role === 'blocking' && cell.support !== 'Future')
 
 		if (stable.length > 0) {
-			stable[stable.length - 1]!.ota = true
+			stable.at(-1)!.ota = true
 		}
 	}
 }
