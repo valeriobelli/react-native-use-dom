@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A debug build loads its bundle from Metro over cleartext, at 10.0.2.2 on an emulator or the
+     computer's address on a device, so it permits cleartext everywhere, as React Native debug
+     builds do by default. The release config permits only the local Hot Updater server. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
