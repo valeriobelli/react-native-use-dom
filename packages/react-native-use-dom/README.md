@@ -23,8 +23,9 @@ export default function App() {
 ```
 
 On iOS and Android the component renders in a native web view. Its props are sent across, its function props
-become native actions it can await, and methods it exposes are reachable through a `ref`. Release builds embed
-every page, so components load offline. On web, the module is an ordinary React component.
+become native actions it can await, and methods it exposes are reachable through a `ref`. Release builds ship
+every page with the JS bundle, so components load offline and update with it over the air. On web, the module is
+an ordinary React component.
 
 <p align="center">
 	<img src="https://raw.githubusercontent.com/valeriobelli/react-native-use-dom/main/docs/assets/native-bridge.gif" width="260" alt="Calling a DOM component: native actions, a ref reset, and a prop update" />
@@ -35,6 +36,9 @@ every page, so components load offline. On web, the module is an ordinary React 
 - Works in bare React Native apps and in Expo development builds.
 - New Architecture, React Native 0.85 or newer, iOS 15.1+, Android API 24+.
 - Fast Refresh for DOM components, stylesheets, and a `public` folder for images and fonts.
+- Over-the-air updates that ship the pages with the JS bundle, tested with [hot-updater](https://hot-updater.dev).
+  expo-updates is not supported. See
+  [Over-the-air updates](https://github.com/valeriobelli/react-native-use-dom/blob/main/docs/builds.md#over-the-air-updates).
 
 ## Install
 
