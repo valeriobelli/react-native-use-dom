@@ -9,7 +9,7 @@
 		"start": "expo start"
 	},
 	"dependencies": {
-		"@hot-updater/react-native": "^1.0.1",
+		"@hot-updater/react-native": "^1.0.2",
 		"@react-native-use-dom/example-app": "workspace:*",
 		"@react-native-use-dom/ota-app": "workspace:*",
 		"expo": "57.0.27",

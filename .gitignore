@@ -28,3 +28,8 @@ backlog/
 .tmp-backlog/
 
 vendor/
+
+# runtime state of the OTA test scripts
+.argent/scripts/ota/config.json
+.hot-updater-data/
+hot-updater_migrations/

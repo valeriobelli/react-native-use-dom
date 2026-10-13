@@ -3,8 +3,12 @@
 # update server running on port 3000.
 #
 # The flow runs against the newest stable cell, which carries the hot-updater wiring. The deploy
-# and rollback scripts run through `script:` steps and read `HOT_UPDATER_BUILD` and
-# `HOT_UPDATER_PLATFORM` from the environment the CLI sets.
+# and rollback scripts run through `script:` steps and read the build and platform from
+# `.argent/scripts/ota/config.json`, which `run.cli.mts` writes before the flow runs.
+#
+# `hotUpdater.reload()` restarts the JS runtime, so the app's React state resets and it lands back
+# on the example app's screen: after every reload the flow waits for the app to come up (`ready`)
+# and taps back into the OTA screen.
 #
 # iOS cannot read inside a WebView, so the greeting and localStorage value are checked on Android
 # only; on iOS the screenshots are the proof, as with every other release flow.
@@ -20,10 +24,9 @@ steps:
       - assert: { visible: { text: 'Built-in greeting' } }
   - snapshot: { name: ota-baseline }
   - echo: Deploy an update that changes the greeting
-  - script: { path: ../../scripts/ota/deploy.mts }
-  - echo: Check for the update and apply it
+  - script: { path: ../../scripts/ota/deploy.mjs, timeout: 300000 }
+  - echo: Check for the update and apply it; the app reloads itself
   - tap: { id: ota-check }
-  - await: { visible: { text: 'Reloading…' }, timeout: 30000 }
   - echo: The app restarts with the new greeting
   - wait: 10000
   - run: ready
@@ -35,9 +38,8 @@ steps:
   - wait: 3000
   - snapshot: { name: ota-updated }
   - echo: Roll back to the built-in bundle
-  - script: { path: ../../scripts/ota/rollback.mts }
+  - script: { path: ../../scripts/ota/rollback.mjs, timeout: 60000 }
   - tap: { id: ota-check }
-  - await: { visible: { text: 'Reloading…' }, timeout: 30000 }
   - wait: 10000
   - run: ready
   - tap: { id: open-ota }

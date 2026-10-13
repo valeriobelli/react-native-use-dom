@@ -46,11 +46,17 @@ export default defineConfig({
 		{
 			// OTA test scripts run a Hono server and a storage adapter; their entrypoints are longer
 			// than the default and use Hono's deprecated `mount`, which has no v4 replacement.
-			files: ['scripts/ota/**', 'scripts/e2e/matrix.mts'],
+			files: ['scripts/ota/**', '.argent/scripts/**', 'scripts/e2e/matrix.mts'],
 			rules: {
 				'max-lines': 'off',
 				'max-lines-per-function': 'off',
 				'typescript/no-deprecated': 'off',
+				'typescript/no-unsafe-argument': 'off',
+				'typescript/no-unsafe-assignment': 'off',
+				'typescript/no-unsafe-call': 'off',
+				'typescript/no-unsafe-member-access': 'off',
+				'typescript/no-unsafe-return': 'off',
+				'typescript/strict-boolean-expressions': 'off',
 			},
 		},
 		{

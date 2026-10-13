@@ -28,3 +28,9 @@ allowBuilds:
   tree-sitter-javascript: false
   tree-sitter-typescript: false
   unrs-resolver: false
+
+minimumReleaseAgeExclude:
+  - '@hot-updater/plugin-insights@1.0.2'
+  - '@hot-updater/plugin-remote-config@1.0.2'
+  - '@hot-updater/protocol@1.0.2'
+  - '@hot-updater/react-native@1.0.2'

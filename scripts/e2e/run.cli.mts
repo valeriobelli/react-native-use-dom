@@ -30,11 +30,16 @@ const build = app.startsWith('expo') ? 'expo' : 'bare'
 const deviceIndex = flags.indexOf('--device')
 const device = deviceIndex === -1 ? undefined : flags[deviceIndex + 1]
 const platform = device?.startsWith('emulator-') ? 'android' : 'ios'
-const env: Record<string, string> = { ...process.env, HOT_UPDATER_BUILD: build, HOT_UPDATER_PLATFORM: platform }
+
+// Argent's script runner only passes a whitelist of env vars to `script:` steps, so the OTA
+// scripts read a config file the CLI writes here instead of env vars.
+const configPath = path.join(REPOSITORY_ROOT, '.argent', 'scripts', 'ota', 'config.json')
+const fs = await import('node:fs')
+
+await fs.promises.writeFile(configPath, JSON.stringify({ build, platform }))
 
 const result = spawnSync('argent', ['flow', 'run', directory, ...flags], {
 	cwd: REPOSITORY_ROOT,
-	env,
 	stdio: 'inherit',
 })
 

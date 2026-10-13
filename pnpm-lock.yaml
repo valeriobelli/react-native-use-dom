@@ -467,8 +467,8 @@ importers:
   examples/bare-0.87:
     dependencies:
       '@hot-updater/react-native':
-        specifier: ^1.0.1
-        version: 1.0.1(@hot-updater/plugin-core@1.0.1)(react-native@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@7.0.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+        specifier: ^1.0.2
+        version: 1.0.2(@hot-updater/plugin-core@1.0.1)(react-native@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@7.0.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       '@react-native-use-dom/example-app':
         specifier: workspace:*
         version: link:../../e2e/example-app
@@ -653,8 +653,8 @@ importers:
   examples/expo-57:
     dependencies:
       '@hot-updater/react-native':
-        specifier: ^1.0.1
-        version: 1.0.1(@hot-updater/plugin-core@1.0.1)(react-native@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@6.0.3))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)
+        specifier: ^1.0.2
+        version: 1.0.2(@hot-updater/plugin-core@1.0.1)(react-native@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@6.0.3))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)
       '@react-native-use-dom/example-app':
         specifier: workspace:*
         version: link:../../e2e/example-app
@@ -2365,6 +2365,14 @@ packages:
       '@hot-updater/plugin-core':
         optional: true
 
+  '@hot-updater/plugin-insights@1.0.2':
+    resolution: {integrity: sha512-hXhRlZgS2gDUJa4Zsa1yQnEsLUfwjWMuvsgRcvvY0UX/r9Z3PMIZ+o2yBcEPf1mKta0dPhV4WJiP/gGKCCgmjg==}
+    peerDependencies:
+      '@hot-updater/plugin-core': ^1.0.2
+    peerDependenciesMeta:
+      '@hot-updater/plugin-core':
+        optional: true
+
   '@hot-updater/plugin-remote-config@1.0.1':
     resolution: {integrity: sha512-99YmoS4MYTb90+avUO5Ql7pnASB3bSZBFqnUWi/3aWQdLOjeBMaxrW+XsbSNPiO1fcPfzihhI0N+C1htmVdozg==}
     peerDependencies:
@@ -2373,11 +2381,22 @@ packages:
       '@hot-updater/plugin-core':
         optional: true
 
+  '@hot-updater/plugin-remote-config@1.0.2':
+    resolution: {integrity: sha512-Wt7X+pQ6aGrR9BAM1M082xrtdPNrbnvAuqyfgZz9hKdqhJT7e0eCYTMOIRitrZWnvq03ralvT30I7tc0DxbKSg==}
+    peerDependencies:
+      '@hot-updater/plugin-core': ^1.0.2
+    peerDependenciesMeta:
+      '@hot-updater/plugin-core':
+        optional: true
+
   '@hot-updater/protocol@1.0.1':
     resolution: {integrity: sha512-RiCREOm5JMr6MQCLtMPHkJS8mefjjQcYVJIy0n2V+wzDMOxIJeYHIRqsvEJrrdRqc21Mi0xc8sC9OHYIi2QDDg==}
 
-  '@hot-updater/react-native@1.0.1':
-    resolution: {integrity: sha512-4/6JIDQ+ESZCMXO16bbAbWr2/fC5IGByuyOMqBoPTKILSg+VH8M+c95aw43BwMBh34nASL61GAQe0PD3AGRyXA==}
+  '@hot-updater/protocol@1.0.2':
+    resolution: {integrity: sha512-14mbcKsWG6YSJAULLDwqmeolBoHo1n+VR0DKs/KtdC8NZJe8yPk89IznCfAEVlp2QkkqE56Sr4Hu/WfICXrIQw==}
+
+  '@hot-updater/react-native@1.0.2':
+    resolution: {integrity: sha512-yuJzTVZv9SOE7kbQvbhmr6BEm4M0R4Oy1ZRFE+OQmVRZUrjGgK2zOM9yPWnKPfqT7zVOhGFxmYvldo8uXwjoFg==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -12007,6 +12026,12 @@ snapshots:
     optionalDependencies:
       '@hot-updater/plugin-core': 1.0.1
 
+  '@hot-updater/plugin-insights@1.0.2(@hot-updater/plugin-core@1.0.1)':
+    dependencies:
+      '@hot-updater/protocol': 1.0.2
+    optionalDependencies:
+      '@hot-updater/plugin-core': 1.0.1
+
   '@hot-updater/plugin-remote-config@1.0.1(@hot-updater/plugin-core@1.0.1)':
     dependencies:
       '@hot-updater/protocol': 1.0.1
@@ -12014,24 +12039,33 @@ snapshots:
     optionalDependencies:
       '@hot-updater/plugin-core': 1.0.1
 
+  '@hot-updater/plugin-remote-config@1.0.2(@hot-updater/plugin-core@1.0.1)':
+    dependencies:
+      '@hot-updater/protocol': 1.0.2
+      verkit: 0.4.0
+    optionalDependencies:
+      '@hot-updater/plugin-core': 1.0.1
+
   '@hot-updater/protocol@1.0.1': {}
 
-  '@hot-updater/react-native@1.0.1(@hot-updater/plugin-core@1.0.1)(react-native@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@6.0.3))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)':
+  '@hot-updater/protocol@1.0.2': {}
+
+  '@hot-updater/react-native@1.0.2(@hot-updater/plugin-core@1.0.1)(react-native@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@6.0.3))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)':
     dependencies:
-      '@hot-updater/plugin-insights': 1.0.1(@hot-updater/plugin-core@1.0.1)
-      '@hot-updater/plugin-remote-config': 1.0.1(@hot-updater/plugin-core@1.0.1)
-      '@hot-updater/protocol': 1.0.1
+      '@hot-updater/plugin-insights': 1.0.2(@hot-updater/plugin-core@1.0.1)
+      '@hot-updater/plugin-remote-config': 1.0.2(@hot-updater/plugin-core@1.0.1)
+      '@hot-updater/protocol': 1.0.2
       react: 19.2.3
       react-native: 0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@6.0.3))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1)
       use-sync-external-store: 1.5.0(react@19.2.3)
     transitivePeerDependencies:
       - '@hot-updater/plugin-core'
 
-  '@hot-updater/react-native@1.0.1(@hot-updater/plugin-core@1.0.1)(react-native@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@7.0.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)':
+  '@hot-updater/react-native@1.0.2(@hot-updater/plugin-core@1.0.1)(react-native@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@7.0.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)':
     dependencies:
-      '@hot-updater/plugin-insights': 1.0.1(@hot-updater/plugin-core@1.0.1)
-      '@hot-updater/plugin-remote-config': 1.0.1(@hot-updater/plugin-core@1.0.1)
-      '@hot-updater/protocol': 1.0.1
+      '@hot-updater/plugin-insights': 1.0.2(@hot-updater/plugin-core@1.0.1)
+      '@hot-updater/plugin-remote-config': 1.0.2(@hot-updater/plugin-core@1.0.1)
+      '@hot-updater/protocol': 1.0.2
       react: 19.3.0
       react-native: 0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@7.0.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
       use-sync-external-store: 1.5.0(react@19.3.0)
