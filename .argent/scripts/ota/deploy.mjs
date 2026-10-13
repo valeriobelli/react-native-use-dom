@@ -63,22 +63,40 @@ try {
 	await writeFile(path.join(import.meta.dirname, 'config.json'), JSON.stringify({ build, bundleId: id, platform }))
 
 	// #62: the build must have written a page next to the bundle for every DOM component the app
-	// renders. The OTA screen renders OtaGreeting, whose page is named after the MD5 of its absolute
-	// path (as `bundle-file.ts` names every page), so an update without that page is not an update.
+	// renders. The host app bundles the DOM modules of e2e/example-app and e2e/ota-app, so the check
+	// enumerates their `'use dom'` modules and requires each one's page — named after the MD5 of the
+	// module's absolute path, as `bundle-file.ts` names every page — in the build's dom.bundle.
 	const pagesDir = path.join(root, appDir, 'dist', 'dom.bundle')
-	const greetingPage = `${createHash('md5').update(path.join(root, 'e2e/ota-app/src/OtaGreeting.tsx')).digest('hex')}.html`
+	const sourceDirs = ['e2e/example-app/src', 'e2e/ota-app/src'].map((dir) => path.join(root, dir))
+	const missing = []
 
-	if (!existsSync(pagesDir) || !existsSync(path.join(pagesDir, greetingPage))) {
-		throw new Error(
-			`The ${platform} build wrote no page for the OTA greeting at ${pagesDir}; ` +
-				'withDom() wrote no dom.bundle/ next to the bundle',
-		)
+	for (const sourceDir of sourceDirs) {
+		for (const entry of readdirSync(sourceDir, { recursive: true, withFileTypes: true })) {
+			if (!entry.isFile() || !entry.name.endsWith('.tsx')) {
+				continue
+			}
+
+			const file = path.join(entry.parentPath ?? entry.path, entry.name)
+
+			// Only a module whose first statement is 'use dom' gets a page, exactly as the Babel
+			// plugin decides.
+			if (!readFileSync(file, 'utf8').startsWith("'use dom'")) {
+				continue
+			}
+
+			const page = `${createHash('md5').update(file).digest('hex')}.html`
+
+			if (!existsSync(path.join(pagesDir, page))) {
+				missing.push(path.relative(root, file))
+			}
+		}
 	}
 
-	const pageCount = readdirSync(pagesDir).filter((file) => file.endsWith('.html')).length
-
-	if (pageCount === 0) {
-		throw new Error(`The ${platform} build wrote no DOM pages at ${pagesDir}`)
+	if (missing.length > 0) {
+		throw new Error(
+			`The ${platform} build wrote no page for these DOM components at ${path.relative(root, pagesDir)}:\n` +
+				missing.map((name) => `- ${name}`).join('\n'),
+		)
 	}
 } finally {
 	// Restore the greeting so the next flow run starts from the built-in one.
