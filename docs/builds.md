@@ -26,9 +26,7 @@ app.
 A release build writes the page of every DOM component the app renders, with the stylesheets it imports and the
 files of `public`, into a `dom.bundle` folder next to the JS bundle. Each page loads from that folder beside the
 running bundle: they need no dev server and no network connection. When the app runs the bundle built into it, the
-pages load from the app. An update that replaces the JS bundle and ships its `dom.bundle` folder — as `react-native
-bundle --assets-dest` and `expo export:embed` write it — updates the DOM components with it. A page the running
-bundle's folder doesn't hold fails with `ERR_USE_DOM_PAGE_NOT_FOUND`: it is never loaded from the app instead.
+pages load from the app itself.
 
 This happens as part of the release bundle, with `withDom` in `metro.config.js` and no other step:
 
@@ -41,3 +39,16 @@ This happens as part of the release bundle, with `withDom` in `metro.config.js` 
 
 A DOM component's `console` calls still reach the app's log, as the app's own do. The web view can't be
 inspected in a release build.
+
+## Over-the-air updates
+
+Pages load from the same place as the running JS bundle. An over-the-air update that replaces the JS bundle
+updates the DOM components with it, as long as it ships the `dom.bundle` folder that
+`react-native bundle --assets-dest` or `expo export:embed` writes next to the bundle.
+
+- **Storage is kept.** `localStorage` and the page's other storage stay across updates and rollbacks.
+- **No fallback.** A page missing from an update fails with `ERR_USE_DOM_PAGE_NOT_FOUND`, which `dom.onError`
+  receives. The page built into the app is never loaded in its place.
+- **Tested with** [hot-updater](https://hot-updater.dev), in bare React Native and Expo apps.
+
+expo-updates is not supported: see [Limitations](./limitations.md).

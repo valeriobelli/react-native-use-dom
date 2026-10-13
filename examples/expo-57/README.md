@@ -33,7 +33,7 @@ and the library. An app outside a monorepo doesn't need that.
 
 - The [Expo environment for development builds](https://docs.expo.dev/get-started/set-up-your-environment/) for
   the platforms you run on: Xcode and CocoaPods' Ruby for iOS, Android Studio with an emulator for Android.
-- Node.js 22.12 or newer.
+- Node.js 22.18 or newer.
 - pnpm, in the version the repository's `packageManager` field names (`corepack enable` picks it up).
 
 ## Run it

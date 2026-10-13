@@ -2,16 +2,20 @@
 
 ## Setup
 
-Requires Node.js 22.12 or later, pnpm (the version in `package.json`'s `packageManager`) and
-[zizmor](https://docs.zizmor.sh/installation/) (for example `brew install zizmor` or `uv tool install zizmor`).
+Requires Node.js 22.18 or later, pnpm (the version in `package.json`'s `packageManager`, which `corepack enable`
+provides) and [zizmor](https://docs.zizmor.sh/installation/) (for example `brew install zizmor` or
+`uv tool install zizmor`).
 
 ```sh
+corepack enable
 pnpm install
 pnpm exec lefthook install
+pnpm build
 ```
 
 Dependencies' install scripts are disabled in this workspace, so the git hooks are not installed by
-`pnpm install`: run `pnpm exec lefthook install` once after cloning.
+`pnpm install`: run `pnpm exec lefthook install` once after cloning. The example apps use the library through its
+build, so run `pnpm build` again after changing it.
 
 ## Git hooks
 
@@ -31,6 +35,8 @@ pnpm typecheck
 pnpm test
 zizmor .github
 ```
+
+These tests need no simulator or device: they run Metro, Babel and both runtimes in-process.
 
 `pnpm typecheck` checks the tests as well as the library. That includes the type tests in
 `packages/react-native-use-dom/src/__tests__/types`, which are never run. Each `@ts-expect-error` in them

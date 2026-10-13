@@ -44,6 +44,12 @@ Errors the library raises carry a stable code, starting `ERR_USE_DOM_`. Look it 
   rendered.
 - **`ERR_USE_DOM_UNKNOWN_HANDLE_METHOD`.** The method isn't in the object `useDOMImperativeHandle` returned in the
   latest render.
+- **`ERR_USE_DOM_PAGE_NOT_FOUND` in a release build.** The page isn't next to the running JS bundle. After an
+  over-the-air update, the update didn't ship the `dom.bundle` folder written next to its bundle. See
+  [Errors](./errors.md#err_use_dom_page_not_found) and [Over-the-air updates](./builds.md#over-the-air-updates).
+- **`ERR_USE_DOM_PAGE_LOAD_FAILED` in a release build.** The page is there but failed to load or render. Check that
+  the running JS bundle and its `dom.bundle` folder come from the same build. See
+  [Errors](./errors.md#err_use_dom_page_load_failed).
 
 ## The dev server
 

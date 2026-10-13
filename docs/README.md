@@ -14,7 +14,7 @@ It needs no Expo package. It works in bare React Native apps and in Expo apps th
 5. [Refs](./refs.md): calling a DOM component from native code.
 6. [Sizing](./sizing.md): fill the parent, or size to the content.
 7. [Assets](./assets.md): stylesheets, and files from the `public` folder.
-8. [Development and release builds](./builds.md): Fast Refresh, debugging, offline pages.
+8. [Development and release builds](./builds.md): Fast Refresh, debugging, offline pages, over-the-air updates.
 9. [Limitations](./limitations.md).
 10. [Troubleshooting](./troubleshooting.md).
 11. [Errors](./errors.md): every error code, what it means and how to fix it.
