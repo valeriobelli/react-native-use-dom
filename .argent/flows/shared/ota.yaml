@@ -5,6 +5,9 @@
 # The flow runs against the newest stable cell, which carries the hot-updater wiring. The deploy
 # and rollback scripts run through `script:` steps and read `HOT_UPDATER_BUILD` and
 # `HOT_UPDATER_PLATFORM` from the environment the CLI sets.
+#
+# iOS cannot read inside a WebView, so the greeting and localStorage value are checked on Android
+# only; on iOS the screenshots are the proof, as with every other release flow.
 executionPrerequisite: The example app has just launched with a Release build, and the local Hot Updater server is running on port 3000.
 steps:
   - echo: Open the OTA screen
