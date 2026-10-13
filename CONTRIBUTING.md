@@ -51,15 +51,27 @@ Each example app has its own directory, `.argent/flows/<app>`, named after the e
 It splits the flows by the build they need. Every flow is a small wrapper, `<slug>-<scenario>.yaml`, that launches
 the app and runs the scenario in `.argent/flows/shared`.
 
-| Directory                      | Scenarios                                                                             | Build                               |
-| ------------------------------ | ------------------------------------------------------------------------------------- | ----------------------------------- |
-| `.argent/flows/<app>/release/` | first-render, prop-change, refs, native-action, navigation-blocked and page-not-found | A Release build, with no dev server |
-| `.argent/flows/<app>/dev/`     | fast-refresh                                                                          | A Debug build, with the dev server  |
+| Directory                      | Scenarios                                                                             | Build                                |
+| ------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------ |
+| `.argent/flows/<app>/release/` | first-render, prop-change, refs, native-action, navigation-blocked and page-not-found | A Release build, with no dev server  |
+| `.argent/flows/<app>/dev/`     | fast-refresh                                                                          | A Debug build, with the dev server   |
+| `.argent/flows/<app>/ota/`     | ota                                                                                   | A Release build, with the OTA server |
 
 The `page-not-found` flow is the one a Release build cannot run as installed: it needs the example's `Missing`
 component to have no page in `dom.bundle`, so that the app reports `ERR_USE_DOM_PAGE_NOT_FOUND`. The iOS and
 Android workflows remove that page from every cell before they install the app; to run it by hand, remove the
 page from the installed app or the built app first with `node scripts/e2e/remove-page.cli.mts <dom.bundle>`.
+
+The OTA flow (`pnpm e2e <cell> ota`) runs only on the newest stable cell of each kind (today `bare-0.87` and
+`expo-57`). It needs the local Hot Updater server running on port 3000:
+
+```sh
+npx hot-updater db generate scripts/ota/hotUpdater.mts --yes
+npx hot-updater db migrate scripts/ota/hotUpdater.mts
+node scripts/ota/server.mts
+```
+
+On Android, run `adb reverse tcp:3000 tcp:3000` first, so the emulator can reach the server.
 
 The Debug build loads from the example's own dev server, on port 8081, so run one example at a time: start its
 dev server and install its app as its README says. Then, from the repository root, run one directory:

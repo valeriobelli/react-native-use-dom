@@ -217,6 +217,21 @@ jobs:
           UPDATE_BASELINES: ${{ inputs.update-baselines && '--update-baselines' || '' }}
         run: pnpm e2e "$CELL_ID" release --device "$UDID" --output e2e-output $UPDATE_BASELINES
 
+      - name: Start the OTA server and run the OTA flows
+        if: matrix.cell.ota == true
+        run: |
+          npx hot-updater db generate scripts/ota/hotUpdater.mts --yes
+          npx hot-updater db migrate scripts/ota/hotUpdater.mts
+          node scripts/ota/server.mts &
+          for _ in $(seq 1 30); do
+            if curl -sf http://localhost:3000/hot-updater/version; then
+              break
+            fi
+            sleep 1
+          done
+          pnpm e2e "$CELL_ID" ota --device "$UDID" --output e2e-output ${{ inputs.update-baselines && '--update-baselines' || '' }}
+          kill %1 2>/dev/null || true
+
       - name: Build Debug
         working-directory: ${{ matrix.cell.folder }}
         run: |

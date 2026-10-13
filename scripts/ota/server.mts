@@ -3,7 +3,7 @@
 /**
  * A fully local Hot Updater server for the OTA end-to-end tests. Uses SQLite on disk for the
  * database, a local directory for storage, and `clientAccess: "public"` so the app needs no API
- * key. Run it with `node scripts/ota/server.mjs`; it listens on port 3000.
+ * key. Run it with `node scripts/ota/server.mts`; it listens on port 3000.
  *
  * Sources: https://hot-updater.dev/docs/custom/quick-start (Hono + Kysely + SQLite)
  * and https://hot-updater.dev/docs/storage-adapters/custom-storage (storage adapter contract).
@@ -12,34 +12,16 @@ import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 
 import { serve } from '@hono/node-server'
-import { createHotUpdater } from '@hot-updater/server'
-import { kyselyAdapter } from '@hot-updater/server/adapters/kysely'
-import Database from 'better-sqlite3'
 import { Hono } from 'hono'
-import { Kysely, SqliteDialect } from 'kysely'
 
-import { localStorage } from './local-storage.mjs'
+import { hotUpdater } from './hotUpdater.mts'
 
-const root = path.resolve(import.meta.dirname, '..')
-const dataDir = path.join(root, '.hot-updater-data')
-const storageDir = path.join(dataDir, 'storage')
+const root = path.resolve(import.meta.dirname, '..', '..')
+const storageDir = path.join(root, '.hot-updater-data', 'storage')
 
-mkdirSync(dataDir, { recursive: true })
 mkdirSync(storageDir, { recursive: true })
 
-const db = new Kysely({
-	dialect: new SqliteDialect({ database: new Database(path.join(dataDir, 'database.db')) }),
-})
-
 const PORT = Number(process.env['HOT_UPDATER_PORT'] ?? 3000)
-const HOST = `http://localhost:${PORT}`
-
-const hotUpdater = createHotUpdater({
-	clientAccess: 'public',
-	database: kyselyAdapter({ db, provider: 'sqlite' }),
-	plugins: [],
-	storage: localStorage({ baseUrl: `${HOST}/storage`, directory: storageDir }),
-})
 
 const app = new Hono()
 
