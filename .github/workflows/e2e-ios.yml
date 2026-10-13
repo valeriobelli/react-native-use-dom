@@ -221,7 +221,7 @@ jobs:
         if: matrix.cell.ota == true
         run: |
           npx hot-updater db generate scripts/ota/hotUpdater.mts --yes
-          npx hot-updater db migrate scripts/ota/hotUpdater.mts
+          echo "yes" | npx hot-updater db migrate scripts/ota/hotUpdater.mts
           node scripts/ota/server.mts &
           for _ in $(seq 1 30); do
             if curl -sf http://localhost:3000/hot-updater/version; then
