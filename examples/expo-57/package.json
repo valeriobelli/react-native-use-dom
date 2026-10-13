@@ -11,6 +11,7 @@
 	"dependencies": {
 		"@hot-updater/react-native": "^1.0.1",
 		"@react-native-use-dom/example-app": "workspace:*",
+		"@react-native-use-dom/ota-app": "workspace:*",
 		"expo": "57.0.27",
 		"react": "19.2.3",
 		"react-dom": "19.2.3",

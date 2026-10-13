@@ -8,7 +8,7 @@ import { Button, StyleSheet, View } from 'react-native'
 
 const hotUpdater: OtaHotUpdater = HotUpdater.init({
 	baseURL: 'http://localhost:3000/hot-updater',
-}) as OtaHotUpdater
+})
 
 const GREETING = 'Built-in greeting'
 
