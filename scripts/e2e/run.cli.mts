@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Runs one directory of Argent flows: `node scripts/e2e/run.cli.mts <app> <release|dev> [--device <id>]
- * [--update-baselines]`, which runs `argent flow run .argent/flows/<app>/<kind>`. Every flag after the two
- * arguments goes to `argent flow run` unchanged.
+ * Runs one directory of Argent flows: `node scripts/e2e/run.cli.mts <app> <release|dev|ota>
+ * [--device <id>] [--update-baselines]`, which runs `argent flow run .argent/flows/<app>/<kind>`.
+ * Every flag after the two arguments goes to `argent flow run` unchanged.
  */
 
 import { spawnSync } from 'node:child_process'
@@ -15,7 +15,7 @@ const KINDS = ['release', 'dev', 'ota']
 const [app, kind, ...flags] = process.argv.slice(2)
 
 if (app === undefined || kind === undefined) {
-	fail('usage: pnpm e2e <app> <release|dev> [--device <id>] [--update-baselines]')
+	fail('usage: pnpm e2e <app> <release|dev|ota> [--device <id>] [--update-baselines]')
 }
 
 if (!KINDS.includes(kind)) {
@@ -24,10 +24,13 @@ if (!KINDS.includes(kind)) {
 
 const directory = path.posix.join('.argent/flows', app, kind)
 
-// The OTA scripts read these to pick the build plugin and platform. The app id encodes the kind
-// (bare or expo), and the platform comes from the device the flows run on.
+// The OTA scripts read these to pick the build plugin and platform. The app id encodes the build
+// (bare or expo), and the device id encodes the platform: Android devices are emulator-<port>.
 const build = app.startsWith('expo') ? 'expo' : 'bare'
-const env: Record<string, string> = { ...process.env, HOT_UPDATER_BUILD: build }
+const deviceIndex = flags.indexOf('--device')
+const device = deviceIndex === -1 ? undefined : flags[deviceIndex + 1]
+const platform = device?.startsWith('emulator-') ? 'android' : 'ios'
+const env: Record<string, string> = { ...process.env, HOT_UPDATER_BUILD: build, HOT_UPDATER_PLATFORM: platform }
 
 const result = spawnSync('argent', ['flow', 'run', directory, ...flags], {
 	cwd: REPOSITORY_ROOT,

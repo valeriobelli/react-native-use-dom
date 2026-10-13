@@ -10,11 +10,11 @@
 				"runner": "xcode-27"
 			},
 			"kind": "bare",
-			"ota": false,
 			"reactNative": "0.85.3",
 			"role": "blocking",
 			"slug": "bare085",
-			"support": "End of Cycle"
+			"support": "End of Cycle",
+			"ota": false
 		},
 		{
 			"appName": "BareExample086",
@@ -26,11 +26,11 @@
 				"runner": "xcode-27"
 			},
 			"kind": "bare",
-			"ota": false,
 			"reactNative": "0.86.3",
 			"role": "blocking",
 			"slug": "bare086",
-			"support": "Active"
+			"support": "Active",
+			"ota": false
 		},
 		{
 			"appName": "BareExample",
@@ -42,11 +42,11 @@
 				"runner": "xcode-27"
 			},
 			"kind": "bare",
-			"ota": true,
 			"reactNative": "0.87.1",
 			"role": "blocking",
 			"slug": "bare087",
-			"support": "Active"
+			"support": "Active",
+			"ota": true
 		},
 		{
 			"appName": "BareExample088",
@@ -58,11 +58,11 @@
 				"runner": "xcode-27"
 			},
 			"kind": "bare",
-			"ota": false,
-			"reactNative": "0.88.0-rc.5",
+			"reactNative": "0.88.0-rc.4",
 			"role": "blocking",
 			"slug": "bare088",
-			"support": "Future"
+			"support": "Future",
+			"ota": false
 		},
 		{
 			"appName": "ExpoExample56",
@@ -74,44 +74,44 @@
 				"runner": "macos-26"
 			},
 			"kind": "expo",
-			"ota": false,
 			"reactNative": "0.85.3",
 			"role": "blocking",
 			"slug": "expo56",
-			"support": "End of Cycle"
+			"support": "End of Cycle",
+			"ota": false
 		},
 		{
 			"appName": "ReactNativeUseDomExpoExample",
 			"bundleId": "dev.reactnativeusedom.expo57",
-			"expo": "57.0.28",
+			"expo": "57.0.27",
 			"folder": "examples/expo-57",
 			"id": "expo-57",
 			"ios": {
 				"runner": "xcode-27"
 			},
 			"kind": "expo",
-			"ota": true,
 			"reactNative": "0.86.3",
 			"role": "blocking",
 			"slug": "expo57",
-			"support": "Active"
+			"support": "Active",
+			"ota": true
 		},
 		{
 			"appName": "ExpoExample58",
 			"bundleId": "dev.reactnativeusedom.expo58",
-			"expo": "58.0.7",
+			"expo": "58.0.6",
 			"folder": "examples/expo-58",
 			"id": "expo-58",
 			"ios": {
 				"runner": "xcode-27"
 			},
 			"kind": "expo",
-			"ota": false,
-			"reactNative": "0.88.0-rc.4",
+			"reactNative": "0.88.0-rc.3",
 			"role": "blocking",
 			"slug": "expo58",
-			"support": "Future"
+			"support": "Future",
+			"ota": false
 		}
 	],
-	"generatedAt": "2026-10-13"
+	"generatedAt": "2026-10-09"
 }

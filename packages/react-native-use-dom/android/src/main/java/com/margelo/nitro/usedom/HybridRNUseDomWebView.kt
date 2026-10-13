@@ -132,7 +132,12 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
   }
 
   override fun reload() {
-    onMain { webView.reload() }
+    onMain {
+      // A failed load must not silence the next one: this is one of the two entry points that
+      // start a load from scratch (the page-not-found error flow re-renders the component).
+      loadFailed = false
+      webView.reload()
+    }
   }
 
   // Page
@@ -168,6 +173,11 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
 
   private fun load() {
     needsLoad = false
+    // A failed load must not silence the next one: only load() and reload() start a load from
+    // scratch. onPageStarted cannot reset the flag, because a 404 from shouldInterceptRequest makes
+    // the WebView restart the load after onReceivedHttpError, which would clear it before
+    // onPageFinished reads it.
+    loadFailed = false
     webView.loadUrl(source)
   }
 

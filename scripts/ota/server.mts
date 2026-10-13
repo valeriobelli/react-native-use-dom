@@ -37,12 +37,17 @@ app.get('/storage/*', (c) => {
 	return c.body(readFileSync(file), 200, { 'cache-control': 'no-cache', 'content-type': guessMime(key) })
 })
 
-// oxlint-disable-next-line no-deprecated -- app.mount is deprecated in Hono v5; the server runs on v4.
-app.mount('/hot-updater', hotUpdater.handlers.client)
+// The admin handler is mounted before the client handler: the client mount at `/hot-updater` also
+// matches `/hot-updater/admin/*`, so the more specific path has to win by being registered first,
+// or the deploy CLI cannot reach the admin API.
 // oxlint-disable-next-line no-deprecated -- app.mount is deprecated in Hono v5; the server runs on v4.
 app.mount('/hot-updater/admin', hotUpdater.handlers.admin)
+// oxlint-disable-next-line no-deprecated -- app.mount is deprecated in Hono v5; the server runs on v4.
+app.mount('/hot-updater', hotUpdater.handlers.client)
 
-serve({ fetch: app.fetch, port: PORT })
+// The server has no authentication and must never leave the machine: only loopback. The iOS
+// simulator reaches it through localhost, and the Android emulator through `adb reverse`.
+serve({ fetch: app.fetch, hostname: '[IP_ADDRESS]', port: PORT })
 
 function guessMime(key: string): string {
 	const ext = path.extname(key).slice(1).toLowerCase()
