@@ -34,7 +34,7 @@ app.get('/storage/*', (c) => {
 		return c.notFound()
 	}
 
-	return c.body(readFileSync(file), 200, { 'cache-control': 'no-cache', 'content-type': guessMime(key) })
+	return c.body(readFileSync(file), 200, { 'cache-control': 'no-cache', 'content-type': guessMime({ key }) })
 })
 
 // The admin handler is mounted before the client handler: the client mount at `/hot-updater` also
@@ -49,7 +49,7 @@ app.mount('/hot-updater', hotUpdater.handlers.client)
 // simulator reaches it through localhost, and the Android emulator through `adb reverse`.
 serve({ fetch: app.fetch, hostname: '[IP_ADDRESS]', port: PORT })
 
-function guessMime(key: string): string {
+function guessMime({ key }: { key: string }): string {
 	const ext = path.extname(key).slice(1).toLowerCase()
 
 	const types: Record<string, string> = {

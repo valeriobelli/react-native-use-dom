@@ -22,21 +22,21 @@ export interface LocalStorageOptions {
 export const localStorage = ({ directory, baseUrl }: LocalStorageOptions) => {
 	mkdirSync(directory, { recursive: true })
 
-	const keyOf = (storageUri: string) => parseStorageUri(storageUri, PROTOCOL).key
-	const filePath = (key: string) => path.join(directory, key)
+	const keyOf = ({ storageUri }: { storageUri: string }) => parseStorageUri(storageUri, PROTOCOL).key
+	const filePath = ({ key }: { key: string }) => path.join(directory, key)
 
 	return createStorageAdapter({
 		delete({ storageUri }) {
-			rmSync(filePath(keyOf(storageUri)), { force: true })
+			rmSync(filePath({ key: keyOf({ storageUri }) }), { force: true })
 
 			return Promise.resolve({ deleted: true as const })
 		},
 		exists({ storageUri }) {
-			return Promise.resolve({ exists: existsSync(filePath(keyOf(storageUri))) })
+			return Promise.resolve({ exists: existsSync(filePath({ key: keyOf({ storageUri }) })) })
 		},
 		get({ storageUri }) {
-			const key = keyOf(storageUri)
-			const file = filePath(key)
+			const key = keyOf({ storageUri })
+			const file = filePath({ key })
 
 			if (!existsSync(file)) {
 				return Promise.resolve({ response: null })
@@ -54,12 +54,12 @@ export const localStorage = ({ directory, baseUrl }: LocalStorageOptions) => {
 			})
 		},
 		getDownloadUrl({ storageUri }) {
-			return Promise.resolve({ url: `${baseUrl}/${keyOf(storageUri)}` })
+			return Promise.resolve({ url: `${baseUrl}/${keyOf({ storageUri })}` })
 		},
 		name: 'localStorage',
 		protocol: PROTOCOL,
 		async put({ body, key }) {
-			const file = filePath(key)
+			const file = filePath({ key })
 
 			mkdirSync(path.dirname(file), { recursive: true })
 

@@ -1,15 +1,11 @@
-import { existsSync } from 'node:fs'
-
 import { bare } from '@hot-updater/bare'
 import { standaloneRepository } from '@hot-updater/standalone'
 import { defineConfig } from 'hot-updater'
 
-import { localStorage } from '../../scripts/ota/local-storage.mjs'
+import { localStorage } from '../../scripts/ota/local-storage.mts'
 
-if (existsSync('.env.hotupdater') === true) {
-	process.loadEnvFile('.env.hotupdater')
-}
-
+// The test config needs no credentials: the server runs on loopback with clientAccess "public",
+// and the admin token is the fixed test value. No .env.hotupdater is loaded or required.
 const adminToken = process.env.HOT_UPDATER_ADMIN_TOKEN ?? 'test-admin'
 
 export default defineConfig({

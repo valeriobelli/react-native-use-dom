@@ -150,7 +150,7 @@ export function buildMatrix(sources: MatrixSources): { cells: MatrixCell[]; gene
 
 	const cells = [...bare, ...expo, ...floorCells(sources, supportOf)]
 
-	markOtaCells(cells)
+	markOtaCells({ cells })
 
 	return { cells, generatedAt: sources.date }
 }
@@ -181,9 +181,9 @@ function floorCells(sources: MatrixSources, supportOf: Map<string, string>): Mat
  * level is not `Future` — runs the OTA end-to-end scenario. Derived from the matrix, never set by hand:
  * when the matrix rolls, the host moves to the next stable cell automatically.
  *
- * @param cells the cells of the matrix, sorted by version within each kind
+ * @param options `cells` are the cells of the matrix, sorted by version within each kind
  */
-function markOtaCells(cells: MatrixCell[]): void {
+function markOtaCells({ cells }: { cells: MatrixCell[] }): void {
 	for (const kind of ['bare', 'expo'] as const) {
 		const stable = cells.filter((cell) => cell.kind === kind && cell.role === 'blocking' && cell.support !== 'Future')
 

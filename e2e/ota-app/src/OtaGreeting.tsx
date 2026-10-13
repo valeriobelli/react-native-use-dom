@@ -23,6 +23,7 @@ const CONTAINER_STYLE = { font: '16px system-ui', padding: 8 }
 export default function OtaGreeting({ greeting }: { greeting: string; dom?: DomProps }) {
 	// A lazy initializer reads localStorage before the first paint, without an effect.
 	const [stored] = useState<string>(() => {
+		// `!== null`, not a truthiness check: an empty string is a stored value that must round-trip.
 		const existing = domStorage.getItem('ota-test-value')
 
 		if (existing !== null) {
