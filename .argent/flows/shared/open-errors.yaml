@@ -1,0 +1,17 @@
+# Opens the Errors screen and waits for its first case.
+# On expo-56's macos-26 runner the app has stopped answering for more than 15 seconds just after the
+# tap, and a busy runner has also lost the tap itself. An await keeps reading the screen while the app
+# doesn't answer, so the flow waits for the screen to settle and only then taps again if the Errors
+# screen has not opened.
+executionPrerequisite: The example app's first screen is ready.
+steps:
+  # A tap reads the screen within 3 seconds and fails, while an await reads it again until its timeout,
+  # so the tap only comes once the app answers.
+  - await: { visible: { id: open-errors }, timeout: 30000 }
+  - tap: { id: open-errors }
+  - await: { idle: true, stableFor: 1000, timeout: 60000 }
+  - when: { hidden: { id: error-non-serializable-prop } }
+    steps:
+      - await: { visible: { id: open-errors }, timeout: 30000 }
+      - tap: { id: open-errors }
+  - await: { visible: { id: error-non-serializable-prop }, timeout: 30000 }
