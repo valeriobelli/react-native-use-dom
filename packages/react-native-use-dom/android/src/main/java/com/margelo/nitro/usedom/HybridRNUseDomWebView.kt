@@ -94,6 +94,10 @@ class HybridRNUseDomWebView(val context: ThemedReactContext) : HybridRNUseDomWeb
       webView.scrollEnabled = value
     }
 
+  // Android keyboards draw their own suggestion strip inside the input method, so there is no bar
+  // above the keyboard that belongs to the app.
+  override var hideKeyboardAccessoryView: Boolean = false
+
   override var inspectable: Boolean = false
     set(value) {
       field = value

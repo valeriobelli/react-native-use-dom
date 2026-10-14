@@ -58,6 +58,8 @@ namespace margelo::nitro::usedom {
     void setInjectedObjectJson(const std::string& injectedObjectJson) override;
     bool getScrollEnabled() override;
     void setScrollEnabled(bool scrollEnabled) override;
+    bool getHideKeyboardAccessoryView() override;
+    void setHideKeyboardAccessoryView(bool hideKeyboardAccessoryView) override;
     bool getInspectable() override;
     void setInspectable(bool inspectable) override;
     std::function<void(const std::string& /* message */)> getOnMessage() override;

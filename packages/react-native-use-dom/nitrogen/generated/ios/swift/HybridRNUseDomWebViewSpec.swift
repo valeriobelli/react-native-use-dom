@@ -14,6 +14,7 @@ public protocol HybridRNUseDomWebViewSpec_protocol: HybridObject, HybridView {
   var pagesDirectory: String { get set }
   var injectedObjectJson: String { get set }
   var scrollEnabled: Bool { get set }
+  var hideKeyboardAccessoryView: Bool { get set }
   var inspectable: Bool { get set }
   var onMessage: (_ message: String) -> Void { get set }
   var onLoadEnd: () -> Void { get set }

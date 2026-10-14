@@ -48,6 +48,7 @@ namespace margelo::nitro::usedom::views {
     nitro::ReactProp<std::string> pagesDirectory;
     nitro::ReactProp<std::string> injectedObjectJson;
     nitro::ReactProp<bool> scrollEnabled;
+    nitro::ReactProp<bool> hideKeyboardAccessoryView;
     nitro::ReactProp<bool> inspectable;
     nitro::ReactProp<std::function<void(const std::string& /* message */)>> onMessage;
     nitro::ReactProp<std::function<void()>> onLoadEnd;
@@ -61,6 +62,7 @@ namespace margelo::nitro::usedom::views {
              pagesDirectory.hasSameValue(other.pagesDirectory) &&
              injectedObjectJson.hasSameValue(other.injectedObjectJson) &&
              scrollEnabled.hasSameValue(other.scrollEnabled) &&
+             hideKeyboardAccessoryView.hasSameValue(other.hideKeyboardAccessoryView) &&
              inspectable.hasSameValue(other.inspectable) &&
              onMessage.hasSameValue(other.onMessage) &&
              onLoadEnd.hasSameValue(other.onLoadEnd) &&
@@ -75,6 +77,7 @@ namespace margelo::nitro::usedom::views {
              pagesDirectory.isProvided() ||
              injectedObjectJson.isProvided() ||
              scrollEnabled.isProvided() ||
+             hideKeyboardAccessoryView.isProvided() ||
              inspectable.isProvided() ||
              onMessage.isProvided() ||
              onLoadEnd.isProvided() ||

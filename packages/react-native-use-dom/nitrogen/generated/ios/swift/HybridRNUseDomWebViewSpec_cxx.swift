@@ -165,6 +165,17 @@ open class HybridRNUseDomWebViewSpec_cxx {
     }
   }
   
+  public final var hideKeyboardAccessoryView: Bool {
+    @inline(__always)
+    get {
+      return self.__implementation.hideKeyboardAccessoryView
+    }
+    @inline(__always)
+    set {
+      self.__implementation.hideKeyboardAccessoryView = newValue
+    }
+  }
+  
   public final var inspectable: Bool {
     @inline(__always)
     get {

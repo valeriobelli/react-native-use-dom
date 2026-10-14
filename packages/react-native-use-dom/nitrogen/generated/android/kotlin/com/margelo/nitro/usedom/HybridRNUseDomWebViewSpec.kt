@@ -55,6 +55,12 @@ abstract class HybridRNUseDomWebViewSpec: HybridView() {
   @get:Keep
   @set:DoNotStrip
   @set:Keep
+  abstract var hideKeyboardAccessoryView: Boolean
+  
+  @get:DoNotStrip
+  @get:Keep
+  @set:DoNotStrip
+  @set:Keep
   abstract var inspectable: Boolean
   
   abstract var onMessage: (message: String) -> Unit

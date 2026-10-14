@@ -1,0 +1,13 @@
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px;
+	font: 14px/1.5 system-ui;
+	color: #1c1c1e;
+}
+
+.field input {
+	padding: 8px;
+	font: 16px system-ui;
+}

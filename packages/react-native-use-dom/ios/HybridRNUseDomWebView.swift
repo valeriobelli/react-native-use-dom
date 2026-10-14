@@ -68,6 +68,10 @@ class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
     didSet { onMain { $0.webView.scrollView.isScrollEnabled = $0.scrollEnabled } }
   }
 
+  var hideKeyboardAccessoryView: Bool = false {
+    didSet { onMain { $0.applyKeyboardAccessoryView() } }
+  }
+
   var inspectable: Bool = false {
     didSet {
       onMain { owner in
@@ -164,6 +168,29 @@ class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
     controller.addUserScript(WKUserScript(source: script, injectionTime: .atDocumentStart, forMainFrameOnly: true))
   }
 
+  /// The bar belongs to WebKit's content view, the first responder for the page's inputs, and WebKit
+  /// has no public switch for it. So the content view's class is swapped for a subclass without one,
+  /// the way react-native-webview does it. If WebKit ever renames that view, the bar simply stays.
+  private func applyKeyboardAccessoryView() {
+    guard
+      let contentView = webView.scrollView.subviews.first(where: {
+        NSStringFromClass(type(of: $0)).hasPrefix("WKContent")
+      })
+    else { return }
+    let current: AnyClass = type(of: contentView)
+    let isSwapped = NSStringFromClass(current).hasSuffix(NoKeyboardAccessory.suffix)
+    if hideKeyboardAccessoryView, !isSwapped, let subclass = NoKeyboardAccessory.subclass(of: current) {
+      object_setClass(contentView, subclass)
+    } else if !hideKeyboardAccessoryView, isSwapped, let original = class_getSuperclass(current) {
+      object_setClass(contentView, original)
+    } else {
+      return
+    }
+    // UIKit reads the accessory view when a responder takes focus, so a field that already has it
+    // would keep the old bar until it lost focus.
+    if contentView.isFirstResponder { contentView.reloadInputViews() }
+  }
+
   /// Props arrive on the main thread from React, but methods can be called from the JS thread.
   private func onMain(_ body: @escaping (HybridRNUseDomWebView) -> Void) {
     if Thread.isMainThread {
@@ -180,6 +207,33 @@ class HybridRNUseDomWebView: HybridRNUseDomWebViewSpec {
 private func jsString(_ value: String) -> String {
   let data = try! JSONSerialization.data(withJSONObject: value, options: [.fragmentsAllowed])
   return String(decoding: data, as: UTF8.self)
+}
+
+/// Subclasses of WebKit's content view that show no bar above the keyboard, created at runtime
+/// because the content view's class is private.
+private enum NoKeyboardAccessory {
+  static let suffix = "_RNUseDomNoKeyboardAccessory"
+
+  static func subclass(of base: AnyClass) -> AnyClass? {
+    let name = NSStringFromClass(base) + suffix
+    // A class pair can be registered only once per process, and every view shares it.
+    if let existing = NSClassFromString(name) { return existing }
+    let selector = #selector(getter: UIResponder.inputAccessoryView)
+    guard
+      let subclass = objc_allocateClassPair(base, name, 0),
+      let inherited = class_getInstanceMethod(base, selector)
+    else { return nil }
+    let accessoryView: @convention(block) (UIResponder) -> UIView? = { responder in
+      // The iPad has no accessory bar but a shortcut bar, which these groups fill.
+      responder.inputAssistantItem.leadingBarButtonGroups = []
+      responder.inputAssistantItem.trailingBarButtonGroups = []
+      return nil
+    }
+    class_addMethod(
+      subclass, selector, imp_implementationWithBlock(accessoryView), method_getTypeEncoding(inherited))
+    objc_registerClassPair(subclass)
+    return subclass
+  }
 }
 
 /// The part of a URL that decides whether two pages are the same site, as the web defines it.

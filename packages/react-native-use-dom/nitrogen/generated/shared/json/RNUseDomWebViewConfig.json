@@ -8,6 +8,7 @@
     "pagesDirectory": true,
     "injectedObjectJson": true,
     "scrollEnabled": true,
+    "hideKeyboardAccessoryView": true,
     "inspectable": true,
     "onMessage": true,
     "onLoadEnd": true,

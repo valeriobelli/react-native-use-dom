@@ -46,6 +46,19 @@ export interface DomProps {
 	scrollEnabled?: boolean
 
 	/**
+	 * iOS only. Hides the bar iOS shows above the keyboard (‹ › and Done) while an input in the DOM
+	 * component has focus, and empties the iPad shortcut bar. Android ignores it, since its keyboards
+	 * have no such bar. It can change while the component is mounted.
+	 *
+	 * @default false
+	 * @example
+	 * ```tsx
+	 * <ChatInput dom={{ hideKeyboardAccessoryView: true }} />
+	 * ```
+	 */
+	hideKeyboardAccessoryView?: boolean
+
+	/**
 	 * Called when the DOM component tries to navigate away from its own page — a link with an
 	 * external `href`, a `window.location` assignment. The navigation is always blocked; this is
 	 * where an app opens the URL itself, in a browser or an in-app tab.

@@ -1,0 +1,28 @@
+# The bar above the keyboard is drawn by the system, outside every element a flow can find, so the
+# screenshots are the proof and they take the whole screen. Android has no such bar: its screenshots
+# show that the prop leaves its keyboard alone.
+executionPrerequisite: The example app has just launched.
+steps:
+  - echo: The keyboard accessory bar follows dom.hideKeyboardAccessoryView while the field has focus
+  - run: ready
+  # As in the errors flow: on a busy runner the app has stopped answering for seconds after the first
+  # screen settled, and an await reads the screen again until its timeout where a tap fails.
+  - await: { visible: { id: open-keyboard }, timeout: 30000 }
+  - tap: { id: open-keyboard }
+  - await: { visible: { id: field }, timeout: 30000 }
+  - when: { platform: android }
+    steps:
+      - await: { visible: { text: Focus me }, timeout: 15000 }
+  # A web view that has loaded has not always painted, and an idle wait can't tell a blank page from
+  # a painted one.
+  - wait: 5000
+  - tap: { id: field }
+  - await: { idle: true, stableFor: 1000, timeout: 30000 }
+  - snapshot: { name: accessory-shown }
+  # The field keeps its focus while the switch flips, which is the case a stale bar would show up in.
+  - tap: { id: hide-accessory }
+  - await: { idle: true, stableFor: 1000, timeout: 30000 }
+  - snapshot: { name: accessory-hidden }
+  - tap: { id: hide-accessory }
+  - await: { idle: true, stableFor: 1000, timeout: 30000 }
+  - snapshot: { name: accessory-restored }

@@ -240,6 +240,7 @@ function DomWebView({
 				pagesDirectory={pagesDirectory}
 				injectedObjectJson={injectedObjectJson}
 				scrollEnabled={dom.scrollEnabled ?? true}
+				hideKeyboardAccessoryView={dom.hideKeyboardAccessoryView ?? false}
 				inspectable={__DEV__}
 				style={webViewStyle}
 				hybridRef={callback((instance: RNUseDomWebViewMethods) => {
