@@ -12,24 +12,17 @@ import {
 import os from 'node:os'
 import path from 'node:path'
 
-import { getDefaultConfig } from '@react-native/metro-config'
 import { runBuild } from 'metro'
 import type { ConfigT } from 'metro-config'
-import { mergeConfig } from 'metro-config'
 
 import { OFFLINE_BUNDLE_DIR } from '../runtime/paths'
+import { fixtureConfig, RN_BABEL_PRESET } from './__fixtures__/workspace'
 import { domBundleFileName } from './bundle-file'
 import { WEB_TRANSFORMER_ENV } from './web-config'
 import { withDom } from './with-dom'
 
 jest.setTimeout(180_000)
 
-// The package's dependencies are links into the workspace's store, which Metro only follows into
-// folders it watches: the fixture is set up the way a workspace app is.
-const WORKSPACE_ROOT = path.resolve(__dirname, '..', '..', '..', '..')
-const RN_BABEL_PRESET = require.resolve('@react-native/babel-preset', {
-	paths: [require.resolve('@react-native/metro-config')],
-})
 // The library's plugin, as an app's babel.config.js adds it.
 const USE_DOM_BABEL_PLUGIN = require.resolve('../babel')
 const COMPONENT =
@@ -77,15 +70,7 @@ describe('a release build', () => {
 		const bundleOutput = path.join(projectRoot, 'build', 'assets', 'index.android.bundle')
 
 		process.argv = ['node', 'cli.js', 'bundle', '--bundle-output', bundleOutput, '--assets-dest', 'build/res']
-		const config = (await withDom(
-			mergeConfig(getDefaultConfig(projectRoot), {
-				cacheStores: [],
-				maxWorkers: 1,
-				reporter: { update: () => {} },
-				resolver: { useWatchman: false },
-				watchFolders: [projectRoot, WORKSPACE_ROOT],
-			}),
-		)) as ConfigT
+		const config = (await withDom(fixtureConfig({ projectRoot }))) as ConfigT
 
 		mkdirSync(path.dirname(bundleOutput), { recursive: true })
 

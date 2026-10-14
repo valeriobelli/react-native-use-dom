@@ -58,10 +58,13 @@ it('refuses a page without a component', async () => {
 it('serves a page that renders the component with the injected props', async () => {
 	const { dom } = await fixture.openPage()
 
-	const text = await waitFor('the component', () => dom.window.document.querySelector('#root')?.textContent)
+	try {
+		const text = await waitFor('the component', () => dom.window.document.querySelector('#root')?.textContent)
 
-	expect(text).toBe('hello dom')
-	dom.window.close()
+		expect(text).toBe('hello dom')
+	} finally {
+		dom.window.close()
+	}
 })
 
 it('builds the bundle for the web, with an inline source map', async () => {

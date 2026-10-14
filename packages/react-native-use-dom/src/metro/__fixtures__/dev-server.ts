@@ -3,22 +3,13 @@ import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
 
-import { getDefaultConfig } from '@react-native/metro-config'
 import { JSDOM, VirtualConsole } from 'jsdom'
 
 import { DEV_ENTRY_PATH, DEV_PAGE_PATH } from '../../runtime/paths'
 import { createDomDevServer } from '../dev-middleware'
 import { hostMetro } from '../host-metro'
 import { WEB_TRANSFORMER_ENV } from '../web-config'
-
-// React Native's preset, as an app's babel.config.js gets it.
-const RN_BABEL_PRESET = require.resolve('@react-native/babel-preset', {
-	paths: [require.resolve('@react-native/metro-config')],
-})
-
-// The package's dependencies are links into the workspace's store, which Metro only follows into
-// folders it watches: the fixture is set up the way a workspace app is.
-const WORKSPACE_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..')
+import { fixtureConfig, RN_BABEL_PRESET } from './workspace'
 
 export const HELLO = "export default function Hello(props) { return 'hello ' + props.name; }\n"
 export const BROKEN = 'export default function Hello( {\n'
@@ -136,12 +127,9 @@ function createProject(): string {
 
 /** The fixture's config as Metro loads it, which puts the project root first among the watch folders. */
 function projectConfig(projectRoot: string, reported: ReporterEvent[]): Parameters<typeof createDomDevServer>[0] {
-	return hostMetro().mergeConfig(getDefaultConfig(projectRoot), {
-		cacheStores: [],
-		maxWorkers: 1,
-		reporter: { update: (event: ReporterEvent) => reported.push(event) },
-		resolver: { useWatchman: false },
-		watchFolders: [projectRoot, WORKSPACE_ROOT],
+	return fixtureConfig({
+		overrides: { reporter: { update: (event: ReporterEvent) => reported.push(event) } },
+		projectRoot,
 	})
 }
 

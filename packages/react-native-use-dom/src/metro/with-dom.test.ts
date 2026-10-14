@@ -3,43 +3,23 @@ import type http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
 
-import { getDefaultConfig } from '@react-native/metro-config'
 import { runServer } from 'metro'
 import type { ConfigT, InputConfigT } from 'metro-config'
-import { mergeConfig } from 'metro-config'
 
 import { DEV_ENTRY_PATH, DEV_HOT_PATH, DEV_PAGE_PATH } from '../runtime/paths'
+import { fixtureConfig, RN_BABEL_PRESET, WORKSPACE_MODULES } from './__fixtures__/workspace'
 import { WEB_TRANSFORMER_ENV } from './web-config'
 import { withDom } from './with-dom'
 
 jest.setTimeout(120_000)
 
-// The package's dependencies are links into the workspace's store, which Metro only follows into
-// folders it watches: the fixture is set up the way a workspace app is.
-const WORKSPACE_ROOT = path.resolve(__dirname, '..', '..', '..', '..')
-const RN_BABEL_PRESET = require.resolve('@react-native/babel-preset', {
-	paths: [require.resolve('@react-native/metro-config')],
-})
 const ENHANCED_HEADER = 'x-enhanced-by-project'
 
 let projectRoot: string
 
-/** The fixture's config as Metro loads it, which puts the project root first among the watch folders. */
+/** The fixture's config, served on a free port. */
 function projectConfig(overrides: InputConfigT = {}): ConfigT {
-	return mergeConfig(
-		getDefaultConfig(projectRoot),
-		{
-			cacheStores: [],
-			maxWorkers: 1,
-			reporter: { update: () => {} },
-			// Metro keeps its file map in the OS temp folder across runs, which a stale copy can break.
-			resetCache: true,
-			resolver: { useWatchman: false },
-			server: { port: 0 },
-			watchFolders: [projectRoot, WORKSPACE_ROOT],
-		},
-		overrides,
-	)
+	return fixtureConfig({ overrides: { ...overrides, server: { port: 0, ...overrides.server } }, projectRoot })
 }
 
 /** A project's own middleware, the kind apps add through `enhanceMiddleware`. */
@@ -93,7 +73,7 @@ describe('withDom', () => {
 		const config = (await withDom(make())) as ConfigT
 
 		expect(config.resolver.useWatchman).toBe(false)
-		expect(config.watchFolders).toEqual([projectRoot, WORKSPACE_ROOT])
+		expect(config.watchFolders).toEqual([projectRoot, WORKSPACE_MODULES])
 		expect(config.server.enhanceMiddleware).toEqual(expect.any(Function))
 	})
 
