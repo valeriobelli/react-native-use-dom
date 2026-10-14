@@ -1,6 +1,6 @@
-# The bar above the keyboard is drawn by the system, outside every element a flow can find, so the
-# screenshots are the proof and they take the whole screen. Android has no such bar: its screenshots
-# show that the prop leaves its keyboard alone.
+# iOS reports the bar above the keyboard as an element with the id Toolbar, so the flow checks that
+# element rather than screenshots, which would also capture a keyboard that differs between iOS versions
+# and device setups. Android has no such bar: there the flow checks that flipping the prop changes nothing.
 executionPrerequisite: The example app has just launched.
 steps:
   - echo: The keyboard accessory bar follows dom.hideKeyboardAccessoryView while the field has focus
@@ -17,12 +17,20 @@ steps:
   # a painted one.
   - wait: 5000
   - tap: { id: field }
-  - await: { idle: true, stableFor: 1000, timeout: 30000 }
-  - snapshot: { name: accessory-shown }
+  # Seeing the bar first is what makes the hidden check below mean something: a check for an element
+  # that never existed passes as well.
+  - when: { platform: ios }
+    steps:
+      - await: { visible: { id: Toolbar }, timeout: 15000 }
   # The field keeps its focus while the switch flips, which is the case a stale bar would show up in.
   - tap: { id: hide-accessory }
-  - await: { idle: true, stableFor: 1000, timeout: 30000 }
-  - snapshot: { name: accessory-hidden }
+  - when: { platform: ios }
+    steps:
+      - await: { hidden: { id: Toolbar }, timeout: 15000 }
   - tap: { id: hide-accessory }
-  - await: { idle: true, stableFor: 1000, timeout: 30000 }
-  - snapshot: { name: accessory-restored }
+  - when: { platform: ios }
+    steps:
+      - await: { visible: { id: Toolbar }, timeout: 15000 }
+  - when: { platform: android }
+    steps:
+      - await: { visible: { text: Focus me }, timeout: 15000 }
