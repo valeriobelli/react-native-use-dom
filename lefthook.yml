@@ -13,6 +13,8 @@ pre-commit:
     - name: zizmor
       glob: '.github/**'
       run: zizmor --offline .github
+    - name: knip
+      run: pnpm exec knip
 
 commit-msg:
   jobs:

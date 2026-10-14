@@ -15,7 +15,7 @@ import path from 'node:path'
 export type AddToProject = (project: string, target: string) => void
 
 /** The file a template that supports scenes ships, and that the patch adds to the others. */
-export const SCENE_DELEGATE = 'SceneDelegate.swift'
+const SCENE_DELEGATE = 'SceneDelegate.swift'
 
 /** The `AppDelegate.swift` of a scene-based app: it only hands the launch over to the scene. */
 export const APP_DELEGATE = `import UIKit

@@ -6,7 +6,7 @@
  */
 
 /** The support levels a React Native release can carry, as the support table spells them. */
-export const SUPPORT_LEVELS = ['Future', 'Active', 'End of Cycle', 'Unsupported']
+const SUPPORT_LEVELS = new Set(['Future', 'Active', 'End of Cycle', 'Unsupported'])
 
 /**
  * The per-cell overrides, read from `e2e/matrix.overrides.json`: the derived values that differ
@@ -61,7 +61,7 @@ export function parseSupportTable(markdown: string): SupportTableRow[] {
 
 		const support = cells[supportColumn]!
 
-		if (!SUPPORT_LEVELS.includes(support)) {
+		if (!SUPPORT_LEVELS.has(support)) {
 			throw new Error(`the support table holds '${support}', which is not a known support level`)
 		}
 

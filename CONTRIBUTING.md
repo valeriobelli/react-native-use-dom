@@ -19,7 +19,7 @@ build, so run `pnpm build` again after changing it.
 
 ## Git hooks
 
-- **pre-commit** checks the staged files with `oxlint` and `oxfmt --check`, and audits
+- **pre-commit** checks the staged files with `oxlint`, `oxfmt --check`, `knip`, and audits
   `.github` with `zizmor` when a file there is staged.
 - **commit-msg** checks the message follows [Conventional Commits](https://www.conventionalcommits.org/)
   with commitlint's `@commitlint/config-conventional`.
@@ -32,6 +32,7 @@ These are the checks CI runs:
 pnpm lint
 pnpm format:check
 pnpm typecheck
+pnpm exec knip       # unused files, exports and dependencies
 pnpm test
 zizmor .github
 ```

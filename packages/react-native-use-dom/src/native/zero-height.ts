@@ -5,7 +5,7 @@ import type { LayoutChangeEvent, ViewStyle } from 'react-native'
 export type ZeroHeightCheck = 'checking' | 'zero' | 'sized'
 
 /** Outlines the view and gives it some height, so that it can be found on screen. */
-export const ZERO_HEIGHT_DEBUG_STYLE: ViewStyle = { borderColor: 'red', borderWidth: 1, minHeight: 40 }
+const ZERO_HEIGHT_DEBUG_STYLE: ViewStyle = { borderColor: 'red', borderWidth: 1, minHeight: 40 }
 
 /**
  * The check after a layout `height` tall. A view sized to its content is skipped: it is 0 tall until

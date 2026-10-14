@@ -61,4 +61,4 @@ function isExpoGo(): boolean {
 	return (globalThis as ExpoGlobal).expo?.modules?.ExponentConstants?.appOwnership === 'expo'
 }
 
-export type { DomLoadErrorPayload, RNUseDomWebViewMethods, RNUseDomWebViewProps }
+export type { DomLoadErrorPayload, RNUseDomWebViewMethods }
