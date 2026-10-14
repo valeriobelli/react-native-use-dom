@@ -29,7 +29,7 @@ export const RELEASE_SCENARIOS = [
 export const DEV_SCENARIO = 'fast-refresh'
 
 /** The shared scenario only OTA cells run, against a release build with a local update server. */
-export const OTA_SCENARIO = 'ota'
+const OTA_SCENARIO = 'ota'
 
 /** The directory, under `.argent/flows/`, that holds the scenarios the wrappers run. */
 const SHARED_DIRECTORY = 'shared'
@@ -45,7 +45,7 @@ export type FlowCell = Pick<MatrixCell, 'bundleId' | 'id' | 'ota' | 'slug'>
  * @param cell the cell the wrapper launches
  * @param scenario the shared scenario the wrapper runs
  */
-export function wrapper(cell: FlowCell, scenario: string): string {
+function wrapper(cell: FlowCell, scenario: string): string {
 	const launch = `steps:
   - launch: { ios: ${cell.bundleId}, android: ${cell.bundleId} }
   - run: ../../shared/${scenario}

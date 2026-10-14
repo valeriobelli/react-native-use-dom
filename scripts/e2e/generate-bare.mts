@@ -216,7 +216,7 @@ export type RunInit = (cell: MatrixCell, root: string) => void
  * @param root the repository root
  * @param cell the cell the folder renders
  */
-export function wireFolder(root: string, cell: MatrixCell): void {
+function wireFolder(root: string, cell: MatrixCell): void {
 	const folder = path.join(root, cell.folder)
 
 	for (const name of TEMPLATE_PATHS) {

@@ -21,7 +21,7 @@ export function withInput(greeting: string): string {
 }
 
 /** The stylesheet the fixture's component can import, as `./styles.css`. */
-export const STYLESHEET = 'styles.css'
+const STYLESHEET = 'styles.css'
 
 /** {@link withInput}, styled by {@link STYLESHEET}. */
 export function withStylesheet(greeting: string): string {
@@ -32,7 +32,7 @@ export function withStylesheet(greeting: string): string {
 export const PUBLIC_IMAGE = 'logo.svg'
 export const PUBLIC_IMAGE_SOURCE = '<svg xmlns="http://www.w3.org/2000/svg"/>'
 
-export interface ReporterEvent {
+interface ReporterEvent {
 	type: string
 }
 

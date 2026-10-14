@@ -10,7 +10,7 @@ import { readWebViewGlobal, type InjectedPayload } from './injected-payload'
 export { readInjectedPayload, type InjectedPayload } from './injected-payload'
 
 /** A method exposed to the native side through `useDOMImperativeHandle`. */
-export type HandleMethod = (...args: never[]) => unknown
+type HandleMethod = (...args: never[]) => unknown
 
 export interface DomBridge {
 	readonly instanceId: string

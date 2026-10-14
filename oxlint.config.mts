@@ -25,7 +25,7 @@ export default defineConfig({
 	},
 	overrides: [
 		{
-			files: ['oxlint.config.mts', 'oxfmt.config.mts', 'commitlint.config.mjs'],
+			files: ['oxlint.config.mts', 'oxfmt.config.mts', 'commitlint.config.mjs', 'knip.config.ts'],
 			rules: {
 				'import/no-default-export': 'off',
 			},

@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, rmSync } from 'node:fs'
 import path from 'node:path'
 
 /** The text the example app's `Missing` DOM component renders, so its page can be found by content. */
-export const MISSING_PAGE_MARKER = 'use-dom-e2e-missing-page'
+const MISSING_PAGE_MARKER = 'use-dom-e2e-missing-page'
 
 /** One file of a page folder, by name and contents. */
 export interface PageFile {

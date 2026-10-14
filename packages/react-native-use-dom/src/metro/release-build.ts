@@ -14,7 +14,7 @@ type Graph = SerializerArgs[2]
 const USE_DOM_PROLOGUE = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*(['"])use dom\1/u
 
 /** The DOM components a native bundle renders, in the order the graph holds them. */
-export function findDomComponents(graph: Graph): string[] {
+function findDomComponents(graph: Graph): string[] {
 	const components: string[] = []
 
 	for (const [filePath, module] of graph.dependencies) {

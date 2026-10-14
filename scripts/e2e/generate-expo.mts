@@ -139,7 +139,7 @@ export type RunInit = (cell: MatrixCell, root: string) => void
  * @param cell the cell the folder renders, with the exact `expo` version it pins
  * @param metadata what the cell's `expo` version publishes
  */
-export function wireFolder(root: string, cell: MatrixCell & { expo: string }, metadata: ExpoMetadata): void {
+function wireFolder(root: string, cell: MatrixCell & { expo: string }, metadata: ExpoMetadata): void {
 	const folder = path.join(root, cell.folder)
 
 	for (const name of TEMPLATE_PATHS) {
