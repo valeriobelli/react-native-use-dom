@@ -126,8 +126,10 @@ jobs:
         # has exceeded even here. In the foreground the CLI records the server at once and waits for it
         # without a limit, so it runs in the background and the loop waits for it to answer.
         # `server status` exits 0 even when the server does not answer: its JSON says whether it runs.
+        # Only `--detach` writes ~/.argent/tool-server.log; in the foreground the server logs to the CLI's
+        # output, so that output is kept for the failure artifact.
         run: |
-          nohup pnpm exec argent server start > /dev/null 2>&1 &
+          nohup pnpm exec argent server start > argent-server.log 2>&1 &
           for _ in $(seq 1 60); do
             if pnpm exec argent server status --json | grep -q '"running": true'; then
               exit 0
@@ -289,6 +291,8 @@ jobs:
           path: .argent/flows/${{ matrix.cell.id }}/*/__baselines__
 
       - name: Upload the logs and flow output
+        # The simulator writes the crash reports of its apps and services to the host's DiagnosticReports:
+        # an app that stops answering Argent mid-flow has often crashed.
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -298,5 +302,6 @@ jobs:
             metro.log
             xcodebuild-release.log
             xcodebuild-debug.log
-            ~/.argent/tool-server.log
+            argent-server.log
+            ~/Library/Logs/DiagnosticReports/*.ips
           if-no-files-found: warn

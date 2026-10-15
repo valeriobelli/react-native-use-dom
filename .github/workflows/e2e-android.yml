@@ -171,10 +171,11 @@ jobs:
           # `argent server start --detach` kills the server when it doesn't answer within 15 seconds, which
           # a busy runner can exceed. As in the iOS workflow, `argent server start` runs without it as a
           # background job, which waits for the server with no limit, and the loop waits for `server status`.
+          # In the foreground the server logs to the CLI's output rather than ~/.argent/tool-server.log.
           script: |
             adb shell settings put global hide_error_dialogs 1
             nohup adb logcat -v time > logcat.txt 2>&1 &
-            nohup pnpm exec argent server start > /dev/null 2>&1 &
+            nohup pnpm exec argent server start > argent-server.log 2>&1 &
             for _ in $(seq 60); do pnpm exec argent server status --json | grep -q '"running": true' && break; sleep 2; done; pnpm exec argent server status --json | grep -q '"running": true'
             adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
             pnpm e2e "$CELL_ID" release --device emulator-5554 --output e2e-output $UPDATE_BASELINES || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
@@ -206,5 +207,5 @@ jobs:
             screen.png
             ui.xml
             metro.log
-            ~/.argent/tool-server.log
+            argent-server.log
           if-no-files-found: warn
