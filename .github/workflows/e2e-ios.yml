@@ -176,7 +176,20 @@ jobs:
           key: pods-${{ matrix.cell.id }}-${{ steps.xcode.outputs.version }}-${{ hashFiles(format('{0}/ios/Podfile.lock', matrix.cell.folder)) || hashFiles('pnpm-lock.yaml') }}
       - name: Install the pods
         working-directory: ${{ matrix.cell.folder }}/ios
-        run: bundle exec pod install
+        # CocoaPods now and then fails with "pathname contains null byte" on a path that exists, and the same
+        # install passes when run again: https://github.com/CocoaPods/CocoaPods/issues/12798. Only that error is
+        # retried; any other fails the step at once.
+        run: |
+          for attempt in 1 2 3; do
+            if bundle exec pod install 2>&1 | tee "$RUNNER_TEMP/pod-install.log"; then
+              exit 0
+            fi
+            if ! grep -q 'pathname contains null byte' "$RUNNER_TEMP/pod-install.log"; then
+              exit 1
+            fi
+            echo "::warning::pod install hit the CocoaPods null byte error on attempt $attempt."
+          done
+          exit 1
 
       - name: Build Release
         working-directory: ${{ matrix.cell.folder }}
