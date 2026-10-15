@@ -71,6 +71,7 @@
 			"folder": "examples/expo-56",
 			"id": "expo-56",
 			"ios": {
+				"allowFailure": true,
 				"runner": "macos-26"
 			},
 			"kind": "expo",

@@ -119,6 +119,11 @@ iOS and Android, on each pull request and push to `main`. Its `e2e-result` job p
 and it is the status check that branch protection requires on `main`. The other job names follow the matrix, so
 adding or removing a cell needs no change to branch protection.
 
+A cell whose iOS job fails for reasons of its runner rather than of the library can be let fail without blocking
+the merge: `"ios": { "allowFailure": true }` in its entry of `e2e/matrix.overrides.json`, then `pnpm e2e:matrix`.
+Its job still runs and shows its failure. `expo-56` is such a cell: only the `macos-26` runner has the Xcode 26 it
+builds with, and the simulator there often stops answering Argent.
+
 The floor cell (role `floor`) runs every night, or by hand from Actions → E2E → Run workflow with
 **include-floor** checked. Its failure marks that run red and blocks nothing. The matrix has a floor cell only once
 React Native stops supporting the oldest version of the peer range, `FLOOR_MINOR` in `scripts/e2e/floor.mts`.

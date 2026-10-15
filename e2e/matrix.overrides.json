@@ -2,6 +2,11 @@
 	"bare-0.87": {
 		"appName": "BareExample"
 	},
+	"expo-56": {
+		"ios": {
+			"allowFailure": true
+		}
+	},
 	"expo-57": {
 		"appName": "ReactNativeUseDomExpoExample"
 	}

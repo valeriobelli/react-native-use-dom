@@ -243,6 +243,25 @@ test('the source readers reject shapes they do not recognize', () => {
 	expect(() => cellOverrides({ 'expo-56': { ios: { runner: 26 } } })).toThrow('which is not a string')
 	expect(() => cellOverrides({ 'expo-56': { ios: { xcode: 26 } } })).toThrow('which is not a string')
 	expect(() => cellOverrides({ 'expo-56': 'macos-26' })).toThrow('is not an object')
+	expect(() => cellOverrides({ 'expo-56': { ios: { allowFailure: 'yes' } } })).toThrow('which is not a boolean')
+})
+
+test('only an override lets an iOS cell fail without blocking', () => {
+	expect(cellOverrides({ 'expo-56': { ios: { allowFailure: true } } })).toEqual({
+		'expo-56': { ios: { allowFailure: true } },
+	})
+
+	expect(cellOverrides({ 'expo-56': { ios: { allowFailure: false } } })).toEqual({ 'expo-56': {} })
+
+	expect(buildFixtureMatrix().cells.filter((cell) => cell.ios.allowFailure)).toEqual([])
+
+	const { cells } = buildFixtureMatrix({
+		overrides: { ...overrides, 'expo-56': { ios: { allowFailure: true } } },
+	})
+
+	expect(cells.filter((cell) => cell.ios.allowFailure).map((cell) => `${cell.id} ${cell.ios.runner}`)).toEqual([
+		'expo-56 macos-26',
+	])
 })
 
 test('only an override gives a cell an Xcode version', () => {

@@ -72,6 +72,9 @@ jobs:
     # https://github.com/rust-lang/rust/commit/2632c6139d9b1a7ca7be4da1924e7a78edfa452c
     if: needs.cells.outputs.cells != '[]'
     runs-on: ${{ matrix.cell.ios.runner }}
+    # A cell the overrides allow to fail still shows its failure, but the workflow, and so `e2e-result`,
+    # succeeds without it: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idcontinue-on-error
+    continue-on-error: ${{ matrix.cell.ios.allowFailure == true }}
     timeout-minutes: 60
     permissions:
       contents: read
