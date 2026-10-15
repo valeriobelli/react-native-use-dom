@@ -4,8 +4,13 @@
 	"description": "Render real React DOM components inside React Native with the 'use dom' directive. No Expo required.",
 	"keywords": [
 		"dom",
+		"dom-components",
+		"expo",
+		"expo-dom-components",
 		"metro",
 		"nitro",
+		"nitro-modules",
+		"react-dom",
 		"react-native",
 		"use dom",
 		"webview"
