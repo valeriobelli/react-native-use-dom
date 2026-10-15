@@ -92,10 +92,30 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # The action's own cache saves the store from every job under a key of its own, so it is off, and the
+      # store is cached here instead: every branch restores it, and only main saves it. A pull request reads
+      # the caches of the default branch: https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         with:
-          cache: true
-          require-lockfile: true
+          cache: false
+          install: false
+      - name: Find the pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Restore the pnpm store
+        id: pnpm-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-${{ runner.arch }}-
+      - run: pnpm install --frozen-lockfile
+      - name: Save the pnpm store
+        if: ${{ github.ref == 'refs/heads/main' && steps.pnpm-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
 
       - run: pnpm build
 
@@ -109,7 +129,10 @@ jobs:
         working-directory: ${{ matrix.cell.folder }}
         run: pnpm exec expo prebuild --clean --platform android
 
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      # Only main saves the Gradle cache, after a build that passed; other branches restore main's.
+      - name: Restore the Gradle cache
+        id: gradle-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.gradle/caches
@@ -156,6 +179,15 @@ jobs:
             echo "::warning::Gradle could not download a dependency on attempt $attempt."
           done
           exit 1
+
+      - name: Save the Gradle cache
+        if: ${{ github.ref == 'refs/heads/main' && steps.gradle-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ steps.gradle-cache.outputs.cache-primary-key }}
 
       - name: Start the OTA server for the OTA cell
         # The OTA cell runs the `ota` flow against a local Hot Updater server. The server runs on the

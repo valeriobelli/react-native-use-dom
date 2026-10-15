@@ -111,12 +111,30 @@ jobs:
             exit 1
           fi
           sudo xcode-select --switch "$XCODE_APP"
+      # The action's own cache saves the store from every job under a key of its own, so it is off, and the
+      # store is cached here instead: every branch restores it, and only main saves it. A pull request reads
+      # the caches of the default branch: https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         with:
-          # Keyed on the hash of `pnpm-lock.yaml`. The action installs the dependencies itself, so the store
-          # has to come back before it runs, which a separate cache step cannot do.
-          cache: true
-          require-lockfile: true
+          cache: false
+          install: false
+      - name: Find the pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Restore the pnpm store
+        id: pnpm-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-${{ runner.arch }}-
+      - run: pnpm install --frozen-lockfile
+      - name: Save the pnpm store
+        if: ${{ github.ref == 'refs/heads/main' && steps.pnpm-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
       - run: pnpm build
       - name: Start the Argent tools server
         # The flow runner spawns the server itself and gives it 15 seconds to answer. Once the builds and
@@ -167,13 +185,17 @@ jobs:
         run: |
           xcodebuild -version
           echo "version=$(xcodebuild -version | tr '\n' ' ' | tr -c 'A-Za-z0-9._-' '-')" >> "$GITHUB_OUTPUT"
-      - name: Cache the pods
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Restore the pods
+        # Only main saves the pods, once they install; other branches restore main's, and `pod install`
+        # brings pods restored from an older key up to date.
+        id: pods-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ matrix.cell.folder }}/ios/Pods
           # An Expo example has no committed `Podfile.lock`, so its key falls back to the lockfile of the
           # workspace, which pins the versions the generated `Podfile` resolves.
           key: pods-${{ matrix.cell.id }}-${{ steps.xcode.outputs.version }}-${{ hashFiles(format('{0}/ios/Podfile.lock', matrix.cell.folder)) || hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pods-${{ matrix.cell.id }}-${{ steps.xcode.outputs.version }}-
       - name: Install the pods
         working-directory: ${{ matrix.cell.folder }}/ios
         # CocoaPods now and then fails with "pathname contains null byte" on a path that exists, and the same
@@ -190,6 +212,12 @@ jobs:
             echo "::warning::pod install hit the CocoaPods null byte error on attempt $attempt."
           done
           exit 1
+      - name: Save the pods
+        if: ${{ github.ref == 'refs/heads/main' && steps.pods-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ matrix.cell.folder }}/ios/Pods
+          key: ${{ steps.pods-cache.outputs.cache-primary-key }}
 
       - name: Build Release
         working-directory: ${{ matrix.cell.folder }}
