@@ -32,6 +32,7 @@ export function DomOptionsAreTyped() {
 				onClick={onClick}
 				dom={{
 					backgroundColor: 'transparent',
+					hideKeyboardAccessoryView: true,
 					matchContents: true,
 					onError: (error) => error.message,
 					onLoad: () => {},

@@ -90,6 +90,15 @@ namespace margelo::nitro::usedom {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jboolean /* scrollEnabled */)>("setScrollEnabled");
     method(_javaPart, scrollEnabled);
   }
+  bool JHybridRNUseDomWebViewSpec::getHideKeyboardAccessoryView() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jboolean()>("getHideKeyboardAccessoryView");
+    auto __result = method(_javaPart);
+    return static_cast<bool>(__result);
+  }
+  void JHybridRNUseDomWebViewSpec::setHideKeyboardAccessoryView(bool hideKeyboardAccessoryView) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jboolean /* hideKeyboardAccessoryView */)>("setHideKeyboardAccessoryView");
+    method(_javaPart, hideKeyboardAccessoryView);
+  }
   bool JHybridRNUseDomWebViewSpec::getInspectable() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jboolean()>("getInspectable");
     auto __result = method(_javaPart);

@@ -4,9 +4,10 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 
 import Demo from './src/Demo'
 import Errors from './src/Errors'
+import Keyboard from './src/Keyboard'
 import ViewOptions from './src/ViewOptions'
 
-type Screen = 'demo' | 'errors' | 'viewOptions'
+type Screen = 'demo' | 'errors' | 'viewOptions' | 'keyboard'
 
 export default function App() {
 	const [screen, setScreen] = useState<Screen>('demo')
@@ -17,6 +18,10 @@ export default function App() {
 
 	const openViewOptions = useCallback(() => {
 		setScreen('viewOptions')
+	}, [])
+
+	const openKeyboard = useCallback(() => {
+		setScreen('keyboard')
 	}, [])
 
 	const back = useCallback(() => {
@@ -30,10 +35,12 @@ export default function App() {
 				<View style={styles.navigation}>
 					<Button testID="open-errors" title="Errors" onPress={openErrors} />
 					<Button testID="open-view-options" title="View options" onPress={openViewOptions} />
+					<Button testID="open-keyboard" title="Keyboard" onPress={openKeyboard} />
 				</View>
 				{screen === 'demo' && <Demo />}
 				{screen === 'errors' && <Errors onBack={back} />}
 				{screen === 'viewOptions' && <ViewOptions onBack={back} />}
+				{screen === 'keyboard' && <Keyboard onBack={back} />}
 			</SafeAreaView>
 		</SafeAreaProvider>
 	)

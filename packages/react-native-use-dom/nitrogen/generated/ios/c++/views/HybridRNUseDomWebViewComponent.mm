@@ -122,6 +122,12 @@ using namespace margelo::nitro::usedom::views;
           : !newViewProps.scrollEnabled.hasSameValue(oldViewProps->scrollEnabled)) {
       swiftPart.setScrollEnabled(newViewProps.scrollEnabled.get());
     }
+    // hideKeyboardAccessoryView: boolean
+    if (oldViewProps == nullptr
+          ? newViewProps.hideKeyboardAccessoryView.isProvided()
+          : !newViewProps.hideKeyboardAccessoryView.hasSameValue(oldViewProps->hideKeyboardAccessoryView)) {
+      swiftPart.setHideKeyboardAccessoryView(newViewProps.hideKeyboardAccessoryView.get());
+    }
     // inspectable: boolean
     if (oldViewProps == nullptr
           ? newViewProps.inspectable.isProvided()

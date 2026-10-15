@@ -1,0 +1,36 @@
+# iOS reports the bar above the keyboard as an element with the id Toolbar, so the flow checks that
+# element rather than screenshots, which would also capture a keyboard that differs between iOS versions
+# and device setups. Android has no such bar: there the flow checks that flipping the prop changes nothing.
+executionPrerequisite: The example app has just launched.
+steps:
+  - echo: The keyboard accessory bar follows dom.hideKeyboardAccessoryView while the field has focus
+  - run: ready
+  # As in the errors flow: on a busy runner the app has stopped answering for seconds after the first
+  # screen settled, and an await reads the screen again until its timeout where a tap fails.
+  - await: { visible: { id: open-keyboard }, timeout: 30000 }
+  - tap: { id: open-keyboard }
+  - await: { visible: { id: field }, timeout: 30000 }
+  - when: { platform: android }
+    steps:
+      - await: { visible: { text: Focus me }, timeout: 15000 }
+  # A web view that has loaded has not always painted, and an idle wait can't tell a blank page from
+  # a painted one.
+  - wait: 5000
+  - tap: { id: field }
+  # Seeing the bar first is what makes the hidden check below mean something: a check for an element
+  # that never existed passes as well.
+  - when: { platform: ios }
+    steps:
+      - await: { visible: { id: Toolbar }, timeout: 15000 }
+  # The field keeps its focus while the switch flips, which is the case a stale bar would show up in.
+  - tap: { id: hide-accessory }
+  - when: { platform: ios }
+    steps:
+      - await: { hidden: { id: Toolbar }, timeout: 15000 }
+  - tap: { id: hide-accessory }
+  - when: { platform: ios }
+    steps:
+      - await: { visible: { id: Toolbar }, timeout: 15000 }
+  - when: { platform: android }
+    steps:
+      - await: { visible: { text: Focus me }, timeout: 15000 }

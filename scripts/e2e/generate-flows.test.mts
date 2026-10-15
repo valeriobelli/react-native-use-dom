@@ -25,6 +25,7 @@ test('a bare cell gets its shared release wrappers, one dev wrapper and an ota w
 	expect([...files.keys()]).toEqual([
 		'bare-0.87/release/bare087-errors.yaml',
 		'bare-0.87/release/bare087-first-render.yaml',
+		'bare-0.87/release/bare087-keyboard.yaml',
 		'bare-0.87/release/bare087-native-action.yaml',
 		'bare-0.87/release/bare087-navigation-blocked.yaml',
 		'bare-0.87/release/bare087-page-not-found.yaml',

@@ -76,16 +76,17 @@ Declaring `dom` is what lets native code pass it with type checking.
 
 ## The `dom` prop
 
-| Option                | Type                     | Default   | Behaviour                                                                                                     |
-| --------------------- | ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------- |
-| `matchContents`       | `boolean`                | `false`   | Sizes the view's height to the rendered content. See [Sizing](./sizing.md).                                   |
-| `style`               | `StyleProp<ViewStyle>`   |           | Style of the native view. A size here wins over the content's own size.                                       |
-| `backgroundColor`     | `string`                 | `'white'` | Shows before the first paint and where the page is transparent. A `backgroundColor` in `style` wins.          |
-| `scrollEnabled`       | `boolean`                | `true`    | Lets the user scroll the content. Turn it off so that drags reach a native `ScrollView` around the component. |
-| `onNavigationBlocked` | `(url: string) => void`  |           | Called when the page tries to navigate away, through a link or `window.location`. See below.                  |
-| `onLoad`              | `() => void`             |           | Called once the component has mounted and painted for the first time.                                         |
-| `onError`             | `(error: Error) => void` |           | Called when the component fails to load or throws an error it doesn't catch.                                  |
-| `testID`              | `string`                 |           | The native view's `testID`, for end-to-end tests.                                                             |
+| Option                      | Type                     | Default   | Behaviour                                                                                                                                                   |
+| --------------------------- | ------------------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `matchContents`             | `boolean`                | `false`   | Sizes the view's height to the rendered content. See [Sizing](./sizing.md).                                                                                 |
+| `style`                     | `StyleProp<ViewStyle>`   |           | Style of the native view. A size here wins over the content's own size.                                                                                     |
+| `backgroundColor`           | `string`                 | `'white'` | Shows before the first paint and where the page is transparent. A `backgroundColor` in `style` wins.                                                        |
+| `scrollEnabled`             | `boolean`                | `true`    | Lets the user scroll the content. Turn it off so that drags reach a native `ScrollView` around the component.                                               |
+| `hideKeyboardAccessoryView` | `boolean`                | `false`   | iOS only. Hides the bar above the keyboard (‹ › and Done) while an input in the component has focus, and empties the iPad shortcut bar. Android ignores it. |
+| `onNavigationBlocked`       | `(url: string) => void`  |           | Called when the page tries to navigate away, through a link or `window.location`. See below.                                                                |
+| `onLoad`                    | `() => void`             |           | Called once the component has mounted and painted for the first time.                                                                                       |
+| `onError`                   | `(error: Error) => void` |           | Called when the component fails to load or throws an error it doesn't catch.                                                                                |
+| `testID`                    | `string`                 |           | The native view's `testID`, for end-to-end tests.                                                                                                           |
 
 ```tsx
 <Hello name="world" dom={{ matchContents: true, backgroundColor: 'transparent' }} />

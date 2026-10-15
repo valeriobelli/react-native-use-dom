@@ -96,6 +96,12 @@ namespace margelo::nitro::usedom {
     inline void setScrollEnabled(bool scrollEnabled) noexcept override {
       _swiftPart.setScrollEnabled(std::forward<decltype(scrollEnabled)>(scrollEnabled));
     }
+    inline bool getHideKeyboardAccessoryView() noexcept override {
+      return _swiftPart.getHideKeyboardAccessoryView();
+    }
+    inline void setHideKeyboardAccessoryView(bool hideKeyboardAccessoryView) noexcept override {
+      _swiftPart.setHideKeyboardAccessoryView(std::forward<decltype(hideKeyboardAccessoryView)>(hideKeyboardAccessoryView));
+    }
     inline bool getInspectable() noexcept override {
       return _swiftPart.getInspectable();
     }

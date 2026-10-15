@@ -17,6 +17,7 @@ import type { MatrixCell } from './matrix.mts'
 export const RELEASE_SCENARIOS = [
 	'errors',
 	'first-render',
+	'keyboard',
 	'native-action',
 	'navigation-blocked',
 	'page-not-found',

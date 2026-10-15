@@ -24,6 +24,7 @@ namespace margelo::nitro::usedom::views {
     pagesDirectory(nitro::ReactProp<std::string>::fromRawValue("RNUseDomWebView", "pagesDirectory", rawProps, sourceProps.pagesDirectory)),
     injectedObjectJson(nitro::ReactProp<std::string>::fromRawValue("RNUseDomWebView", "injectedObjectJson", rawProps, sourceProps.injectedObjectJson)),
     scrollEnabled(nitro::ReactProp<bool>::fromRawValue("RNUseDomWebView", "scrollEnabled", rawProps, sourceProps.scrollEnabled)),
+    hideKeyboardAccessoryView(nitro::ReactProp<bool>::fromRawValue("RNUseDomWebView", "hideKeyboardAccessoryView", rawProps, sourceProps.hideKeyboardAccessoryView)),
     inspectable(nitro::ReactProp<bool>::fromRawValue("RNUseDomWebView", "inspectable", rawProps, sourceProps.inspectable)),
     onMessage(nitro::ReactProp<std::function<void(const std::string& /* message */)>>::fromRawValue("RNUseDomWebView", "onMessage", rawProps, sourceProps.onMessage)),
     onLoadEnd(nitro::ReactProp<std::function<void()>>::fromRawValue("RNUseDomWebView", "onLoadEnd", rawProps, sourceProps.onLoadEnd)),
@@ -37,6 +38,7 @@ namespace margelo::nitro::usedom::views {
       case hashString("pagesDirectory"): return true;
       case hashString("injectedObjectJson"): return true;
       case hashString("scrollEnabled"): return true;
+      case hashString("hideKeyboardAccessoryView"): return true;
       case hashString("inspectable"): return true;
       case hashString("onMessage"): return true;
       case hashString("onLoadEnd"): return true;

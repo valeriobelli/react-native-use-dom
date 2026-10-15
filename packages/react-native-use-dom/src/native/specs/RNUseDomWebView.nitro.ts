@@ -44,6 +44,12 @@ export interface RNUseDomWebViewProps extends HybridViewProps {
 	/** Whether the user can scroll the content, rather than the surrounding native scroll view. */
 	scrollEnabled: boolean
 
+	/**
+	 * Whether to hide the bar iOS shows above the keyboard while an input in the page has focus, and
+	 * the iPad shortcut bar. Android has no such bar, so it ignores this.
+	 */
+	hideKeyboardAccessoryView: boolean
+
 	/** Whether to expose the page to Safari Web Inspector and Chrome DevTools. */
 	inspectable: boolean
 

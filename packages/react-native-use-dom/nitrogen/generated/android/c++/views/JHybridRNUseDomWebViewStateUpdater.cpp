@@ -74,6 +74,11 @@ void JHybridRNUseDomWebViewStateUpdater::updateViewProps(jni::alias_ref<jni::JCl
     hybridView->setScrollEnabled(newProps->scrollEnabled.get());
   }
   if (oldProps == nullptr
+        ? newProps->hideKeyboardAccessoryView.isProvided()
+        : !newProps->hideKeyboardAccessoryView.hasSameValue(oldProps->hideKeyboardAccessoryView)) {
+    hybridView->setHideKeyboardAccessoryView(newProps->hideKeyboardAccessoryView.get());
+  }
+  if (oldProps == nullptr
         ? newProps->inspectable.isProvided()
         : !newProps->inspectable.hasSameValue(oldProps->inspectable)) {
     hybridView->setInspectable(newProps->inspectable.get());

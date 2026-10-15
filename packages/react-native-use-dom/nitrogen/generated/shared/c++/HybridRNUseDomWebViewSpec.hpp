@@ -55,6 +55,8 @@ namespace margelo::nitro::usedom {
       virtual void setInjectedObjectJson(const std::string& injectedObjectJson) = 0;
       virtual bool getScrollEnabled() = 0;
       virtual void setScrollEnabled(bool scrollEnabled) = 0;
+      virtual bool getHideKeyboardAccessoryView() = 0;
+      virtual void setHideKeyboardAccessoryView(bool hideKeyboardAccessoryView) = 0;
       virtual bool getInspectable() = 0;
       virtual void setInspectable(bool inspectable) = 0;
       virtual std::function<void(const std::string& /* message */)> getOnMessage() = 0;
