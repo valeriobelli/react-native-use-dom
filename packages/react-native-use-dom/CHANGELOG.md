@@ -1,5 +1,21 @@
 # react-native-use-dom
 
+## 0.2.0
+
+### Minor Changes
+
+- [#105](https://github.com/valeriobelli/react-native-use-dom/pull/105) [`2a4ecd0`](https://github.com/valeriobelli/react-native-use-dom/commit/2a4ecd0d772eaf052006aa6b134880d00dbbfb2d) Thanks [@valeriobelli](https://github.com/valeriobelli)! - Add `dom.hideKeyboardAccessoryView`, which hides the bar iOS shows above the keyboard while an input in a DOM
+  component has focus, and empties the iPad shortcut bar, like react-native-webview's prop of the same name. It
+  is iOS only: Android ignores it.
+
+### Patch Changes
+
+- [#102](https://github.com/valeriobelli/react-native-use-dom/pull/102) [`80f58ed`](https://github.com/valeriobelli/react-native-use-dom/commit/80f58ed44a44cc1f08744d825f0ccdf7cda17f42) Thanks [@valeriobelli](https://github.com/valeriobelli)! - The package depends on `react-refresh` `^0.19.0` instead of exactly `0.14.2`. The repository also checks
+  for unused files, exports and dependencies with knip, in CI and before a commit.
+
+- [#108](https://github.com/valeriobelli/react-native-use-dom/pull/108) [`dcdcfc3`](https://github.com/valeriobelli/react-native-use-dom/commit/dcdcfc3a0f20ae378e6459402d61a15a91a60e18) Thanks [@valeriobelli](https://github.com/valeriobelli)! - The npm keywords include `dom-components`, `expo`, `expo-dom-components`, `nitro-modules` and `react-dom`, so
+  the package shows up when people search npm and React Native Directory for those terms.
+
 ## 0.1.0
 
 ### Minor Changes
