@@ -72,6 +72,9 @@ jobs:
     # https://github.com/rust-lang/rust/commit/2632c6139d9b1a7ca7be4da1924e7a78edfa452c
     if: needs.cells.outputs.cells != '[]'
     runs-on: ${{ matrix.cell.ios.runner }}
+    # A cell the overrides allow to fail still shows its failure, but the workflow, and so `e2e-result`,
+    # succeeds without it: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idcontinue-on-error
+    continue-on-error: ${{ matrix.cell.ios.allowFailure == true }}
     timeout-minutes: 60
     permissions:
       contents: read
@@ -108,12 +111,30 @@ jobs:
             exit 1
           fi
           sudo xcode-select --switch "$XCODE_APP"
+      # The action's own cache saves the store from every job under a key of its own, so it is off, and the
+      # store is cached here instead: every branch restores it, and only main saves it. A pull request reads
+      # the caches of the default branch: https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         with:
-          # Keyed on the hash of `pnpm-lock.yaml`. The action installs the dependencies itself, so the store
-          # has to come back before it runs, which a separate cache step cannot do.
-          cache: true
-          require-lockfile: true
+          cache: false
+          install: false
+      - name: Find the pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Restore the pnpm store
+        id: pnpm-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-${{ runner.arch }}-
+      - run: pnpm install --frozen-lockfile
+      - name: Save the pnpm store
+        if: ${{ github.ref == 'refs/heads/main' && steps.pnpm-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
       - run: pnpm build
       - name: Start the Argent tools server
         # The flow runner spawns the server itself and gives it 15 seconds to answer. Once the builds and
@@ -123,8 +144,10 @@ jobs:
         # has exceeded even here. In the foreground the CLI records the server at once and waits for it
         # without a limit, so it runs in the background and the loop waits for it to answer.
         # `server status` exits 0 even when the server does not answer: its JSON says whether it runs.
+        # Only `--detach` writes ~/.argent/tool-server.log; in the foreground the server logs to the CLI's
+        # output, so that output is kept for the failure artifact.
         run: |
-          nohup pnpm exec argent server start > /dev/null 2>&1 &
+          nohup pnpm exec argent server start > argent-server.log 2>&1 &
           for _ in $(seq 1 60); do
             if pnpm exec argent server status --json | grep -q '"running": true'; then
               exit 0
@@ -162,16 +185,39 @@ jobs:
         run: |
           xcodebuild -version
           echo "version=$(xcodebuild -version | tr '\n' ' ' | tr -c 'A-Za-z0-9._-' '-')" >> "$GITHUB_OUTPUT"
-      - name: Cache the pods
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Restore the pods
+        # Only main saves the pods, once they install; other branches restore main's, and `pod install`
+        # brings pods restored from an older key up to date.
+        id: pods-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ matrix.cell.folder }}/ios/Pods
           # An Expo example has no committed `Podfile.lock`, so its key falls back to the lockfile of the
           # workspace, which pins the versions the generated `Podfile` resolves.
           key: pods-${{ matrix.cell.id }}-${{ steps.xcode.outputs.version }}-${{ hashFiles(format('{0}/ios/Podfile.lock', matrix.cell.folder)) || hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pods-${{ matrix.cell.id }}-${{ steps.xcode.outputs.version }}-
       - name: Install the pods
         working-directory: ${{ matrix.cell.folder }}/ios
-        run: bundle exec pod install
+        # CocoaPods now and then fails with "pathname contains null byte" on a path that exists, and the same
+        # install passes when run again: https://github.com/CocoaPods/CocoaPods/issues/12798. Only that error is
+        # retried; any other fails the step at once.
+        run: |
+          for attempt in 1 2 3; do
+            if bundle exec pod install 2>&1 | tee "$RUNNER_TEMP/pod-install.log"; then
+              exit 0
+            fi
+            if ! grep -q 'pathname contains null byte' "$RUNNER_TEMP/pod-install.log"; then
+              exit 1
+            fi
+            echo "::warning::pod install hit the CocoaPods null byte error on attempt $attempt."
+          done
+          exit 1
+      - name: Save the pods
+        if: ${{ github.ref == 'refs/heads/main' && steps.pods-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ matrix.cell.folder }}/ios/Pods
+          key: ${{ steps.pods-cache.outputs.cache-primary-key }}
 
       - name: Build Release
         working-directory: ${{ matrix.cell.folder }}
@@ -286,6 +332,8 @@ jobs:
           path: .argent/flows/${{ matrix.cell.id }}/*/__baselines__
 
       - name: Upload the logs and flow output
+        # The simulator writes the crash reports of its apps and services to the host's DiagnosticReports:
+        # an app that stops answering Argent mid-flow has often crashed.
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -295,5 +343,6 @@ jobs:
             metro.log
             xcodebuild-release.log
             xcodebuild-debug.log
-            ~/.argent/tool-server.log
+            argent-server.log
+            ~/Library/Logs/DiagnosticReports/*.ips
           if-no-files-found: warn

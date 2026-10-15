@@ -72,6 +72,10 @@ jobs:
       # Where the emulator lists the emulators it runs, which Argent's simulator server reads to find
       # them. Argent's own emulator job sets it too: on a runner it is otherwise unset.
       XDG_RUNTIME_DIR: /tmp/xdg-runtime
+      # The emulator, read both by the step that installs its system image and by the emulator action.
+      EMULATOR_API_LEVEL: 36
+      EMULATOR_TARGET: google_apis
+      EMULATOR_ARCH: x86_64
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -88,10 +92,30 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # The action's own cache saves the store from every job under a key of its own, so it is off, and the
+      # store is cached here instead: every branch restores it, and only main saves it. A pull request reads
+      # the caches of the default branch: https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         with:
-          cache: true
-          require-lockfile: true
+          cache: false
+          install: false
+      - name: Find the pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Restore the pnpm store
+        id: pnpm-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-${{ runner.arch }}-
+      - run: pnpm install --frozen-lockfile
+      - name: Save the pnpm store
+        if: ${{ github.ref == 'refs/heads/main' && steps.pnpm-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
 
       - run: pnpm build
 
@@ -105,7 +129,10 @@ jobs:
         working-directory: ${{ matrix.cell.folder }}
         run: pnpm exec expo prebuild --clean --platform android
 
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      # Only main saves the Gradle cache, after a build that passed; other branches restore main's.
+      - name: Restore the Gradle cache
+        id: gradle-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.gradle/caches
@@ -113,9 +140,54 @@ jobs:
           key: gradle-${{ matrix.cell.id }}-${{ hashFiles(format('{0}/android/**/*.gradle*', matrix.cell.folder), 'pnpm-lock.yaml') }}
           restore-keys: gradle-${{ matrix.cell.id }}-
 
+      - name: Install the NDK, the emulator and its system image
+        # The emulator action installs the emulator and the system image with no retry, and Gradle downloads
+        # the NDK the app pins, which the runner image does not have. A download from Google's repository
+        # now and then fails ("Error on ZipFile unknown archive"), so they are installed here, where a failed
+        # download is retried, and the action and Gradle find them installed. They are not cached: the
+        # repository's caches already exceed their limit, and evict the pods and Gradle caches.
+        # The bare apps pin the NDK in `build.gradle`, the Expo apps take React Native's.
+        run: |
+          NDK=$(grep -ho 'ndkVersion *= *"[0-9.]*"' "$CELL_FOLDER/android/build.gradle" "$CELL_FOLDER/node_modules/react-native/gradle/libs.versions.toml" 2>/dev/null | head -n 1 | grep -o '[0-9][0-9.]*') || true
+          if [ -z "$NDK" ]; then
+            echo "The NDK version of $CELL_ID was not found." >&2
+            exit 1
+          fi
+          for attempt in 1 2 3; do
+            if "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$NDK" emulator "system-images;android-$EMULATOR_API_LEVEL;$EMULATOR_TARGET;$EMULATOR_ARCH" > /dev/null; then
+              exit 0
+            fi
+            echo "::warning::sdkmanager failed on attempt $attempt."
+            sleep 15
+          done
+          exit 1
+
       - name: Build the Release and Debug APKs
         working-directory: ${{ matrix.cell.folder }}/android
-        run: ./gradlew :app:assembleRelease :app:assembleDebug
+        # `bash` sets `pipefail`, so a build that fails behind `| tee` fails the attempt.
+        shell: bash
+        # A dependency or plugin that Gradle could not download fails the build ("Could not resolve"), and
+        # the same build passes when run again. Only such a failure is retried: Gradle reuses what it built.
+        run: |
+          for attempt in 1 2 3; do
+            if ./gradlew :app:assembleRelease :app:assembleDebug 2>&1 | tee "$RUNNER_TEMP/gradle.log"; then
+              exit 0
+            fi
+            if ! grep -qE 'Could not (resolve|GET|HEAD|download)|Read timed out|Connection reset|Remote host terminated' "$RUNNER_TEMP/gradle.log"; then
+              exit 1
+            fi
+            echo "::warning::Gradle could not download a dependency on attempt $attempt."
+          done
+          exit 1
+
+      - name: Save the Gradle cache
+        if: ${{ github.ref == 'refs/heads/main' && steps.gradle-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ steps.gradle-cache.outputs.cache-primary-key }}
 
       - name: Start the OTA server for the OTA cell
         # The OTA cell runs the `ota` flow against a local Hot Updater server. The server runs on the
@@ -157,9 +229,9 @@ jobs:
         env:
           UPDATE_BASELINES: ${{ inputs.update-baselines && '--update-baselines' || '' }}
         with:
-          api-level: 36
-          target: google_apis
-          arch: x86_64
+          api-level: ${{ env.EMULATOR_API_LEVEL }}
+          target: ${{ env.EMULATOR_TARGET }}
+          arch: ${{ env.EMULATOR_ARCH }}
           profile: pixel_7
           disable-animations: true
           # -grpc makes the emulator write the file (avd/running/pid_*.ini) that Argent's simulator server
@@ -171,12 +243,16 @@ jobs:
           # `argent server start --detach` kills the server when it doesn't answer within 15 seconds, which
           # a busy runner can exceed. As in the iOS workflow, `argent server start` runs without it as a
           # background job, which waits for the server with no limit, and the loop waits for `server status`.
+          # In the foreground the server logs to the CLI's output rather than ~/.argent/tool-server.log.
+          # Right after boot, while the emulator still applies its display settings, adb now and then loses it
+          # ("device 'emulator-5554' not found") or an install fails with no reason. An install waits for the
+          # emulator again and is retried.
           script: |
             adb shell settings put global hide_error_dialogs 1
             nohup adb logcat -v time > logcat.txt 2>&1 &
-            nohup pnpm exec argent server start > /dev/null 2>&1 &
+            nohup pnpm exec argent server start > argent-server.log 2>&1 &
             for _ in $(seq 60); do pnpm exec argent server status --json | grep -q '"running": true' && break; sleep 2; done; pnpm exec argent server status --json | grep -q '"running": true'
-            adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk"
+            for attempt in 1 2 3; do timeout 120 adb wait-for-device && adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/release/app-release.apk" && break; [ "$attempt" = 3 ] && exit 1; echo "::warning::adb install failed on attempt $attempt."; sleep 10; done
             pnpm e2e "$CELL_ID" release --device emulator-5554 --output e2e-output $UPDATE_BASELINES || { adb exec-out screencap -p > screen.png; adb shell uiautomator dump /sdcard/ui.xml; adb pull /sdcard/ui.xml ui.xml; exit 1; }
             if [ "$CELL_OTA" = true ]; then adb reverse tcp:3000 tcp:3000; fi
             if [ "$CELL_OTA" = true ]; then pnpm e2e "$CELL_ID" ota --device emulator-5554 --output e2e-output --update-baselines; fi
@@ -185,7 +261,7 @@ jobs:
             adb reverse tcp:8081 tcp:8081
             root=$(case "$CELL_ID" in expo-*) echo "$CELL_FOLDER/" ;; esac); curl -sf --max-time 600 -o /dev/null "http://localhost:8081/${root}index.bundle?platform=android&dev=true&minify=false"
             for c in Note Greeting Lines; do curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" --data-urlencode "dev=true" --data-urlencode "platform=web" --data-urlencode "transform.dom=$GITHUB_WORKSPACE/e2e/example-app/src/$c.tsx"; done
-            adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/debug/app-debug.apk"
+            for attempt in 1 2 3; do timeout 120 adb wait-for-device && adb install -r "$CELL_FOLDER/android/app/build/outputs/apk/debug/app-debug.apk" && break; [ "$attempt" = 3 ] && exit 1; echo "::warning::adb install failed on attempt $attempt."; sleep 10; done
             pnpm e2e "$CELL_ID" dev --device emulator-5554 --output e2e-output $UPDATE_BASELINES
 
       - name: Upload the new baselines
@@ -206,5 +282,5 @@ jobs:
             screen.png
             ui.xml
             metro.log
-            ~/.argent/tool-server.log
+            argent-server.log
           if-no-files-found: warn

@@ -14,7 +14,7 @@ const SUPPORT_LEVELS = new Set(['Future', 'Active', 'End of Cycle', 'Unsupported
  */
 export interface CellOverrides {
 	appName?: string
-	ios?: { runner?: string; xcode?: string }
+	ios?: { allowFailure?: boolean; runner?: string; xcode?: string }
 }
 
 /** One row of React Native's support table: the minor and the support level it carries. */
@@ -155,10 +155,20 @@ function cellOverride(id: string, entry: Record<string, unknown>): CellOverrides
 	}
 
 	if (typeof entry['ios'] === 'object' && entry['ios'] !== null) {
-		const { runner, xcode } = stringMap(entry['ios'] as Record<string, unknown>, `the ios override of ${id}`)
+		const { allowFailure, ...names } = entry['ios'] as Record<string, unknown>
 
-		if (runner !== undefined || xcode !== undefined) {
-			cell.ios = { ...(runner === undefined ? {} : { runner }), ...(xcode === undefined ? {} : { xcode }) }
+		if (allowFailure !== undefined && typeof allowFailure !== 'boolean') {
+			throw new TypeError(`the ios override of ${id} holds allowFailure, which is not a boolean`)
+		}
+
+		const { runner, xcode } = stringMap(names, `the ios override of ${id}`)
+
+		if (runner !== undefined || xcode !== undefined || allowFailure) {
+			cell.ios = {
+				...(allowFailure ? { allowFailure } : {}),
+				...(runner === undefined ? {} : { runner }),
+				...(xcode === undefined ? {} : { xcode }),
+			}
 		}
 	}
 
