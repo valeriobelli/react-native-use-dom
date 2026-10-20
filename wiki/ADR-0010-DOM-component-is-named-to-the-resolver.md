@@ -8,7 +8,7 @@ A release build writes one page per DOM component, and the pages import much of 
 
 ## Decision
 
-The component is named to Metro's resolver, as the resolver option `dom`, and never to its transformer. Every page then has the same entry module, which imports a fixed specifier that the web resolver answers with the component of the build. The resolver also checks that the component is inside the project, its watch folders or Metro's server root. The first page of a release build is built alone, so the others find the shared modules in the cache.
+The component is named to Metro's resolver, as the resolver option `dom`, and never to its transformer. Every page then has the same entry module, which imports a fixed specifier that the web resolver answers with the component of the build. The resolver first checks that the component is inside the project, its watch folders or Metro's server root, then resolves its path like any other import, so the project's resolver and `browser` fields still choose the file. The first page of a release build is built alone, so the others find the shared modules in the cache.
 
 ## Consequences
 

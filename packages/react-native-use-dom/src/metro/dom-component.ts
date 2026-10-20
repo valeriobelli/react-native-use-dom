@@ -1,6 +1,6 @@
 import path from 'node:path'
 
-import type { CustomResolutionContext, Resolution } from 'metro-resolver'
+import type { CustomResolutionContext } from 'metro-resolver'
 
 import { DomError, DomErrorCode } from '../runtime/errors'
 
@@ -33,7 +33,8 @@ export const DOM_RESOLVER_OPTION = 'dom'
 export const DOM_TRANSFORM_OPTIONS = { dom: 'true' } as const
 
 /**
- * Resolves the entry's import of {@link DOM_COMPONENT_SPECIFIER} to the component the build names.
+ * The path of the component the build names, which the entry's import of
+ * {@link DOM_COMPONENT_SPECIFIER} is resolved as.
  *
  * The component path arrives in a URL anyone who can reach the dev server can craft, so it is only
  * honoured for files Metro would serve anyway: the project, its watch folders and its server root.
@@ -41,13 +42,13 @@ export const DOM_TRANSFORM_OPTIONS = { dom: 'true' } as const
  *
  * @param allowedRoots - The directories a DOM component may be built from.
  */
-export function resolveDomComponent({
+export function domComponentPath({
 	allowedRoots,
 	context,
 }: {
 	allowedRoots: readonly string[]
 	context: CustomResolutionContext
-}): Resolution {
+}): string {
 	const requested = context.customResolverOptions[DOM_RESOLVER_OPTION]
 
 	if (typeof requested !== 'string' || !path.isAbsolute(requested)) {
@@ -72,7 +73,7 @@ export function resolveDomComponent({
 		)
 	}
 
-	return { filePath: componentPath, type: 'sourceFile' }
+	return componentPath
 }
 
 /** Whether the entry's import of the component is the one `moduleName` asks for. */

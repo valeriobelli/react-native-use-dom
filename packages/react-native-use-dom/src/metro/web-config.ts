@@ -4,7 +4,7 @@ import type { ConfigT } from 'metro-config'
 import type { CustomResolutionContext, CustomResolver, Resolution } from 'metro-resolver'
 
 import { DomError, DomErrorCode } from '../runtime/errors'
-import { isDomComponentImport, resolveDomComponent } from './dom-component'
+import { domComponentPath, isDomComponentImport } from './dom-component'
 import type { Metro } from './host-metro'
 
 /** The platform DOM bundles are built for. */
@@ -136,11 +136,12 @@ export function createWebResolver({
 	allowedRoots: readonly string[]
 	upstream: CustomResolver | null | undefined
 }): CustomResolver {
-	return (context, moduleName, platform) => {
-		// Before the project's resolver, which has no module of this name to find.
-		if (isDomComponentImport({ context, moduleName })) {
-			return resolveDomComponent({ allowedRoots, context })
-		}
+	return (context, requestedName, platform) => {
+		// The project's resolver has no module of the entry's name to find, but it still gets the
+		// component's path: a resolver or a `browser` field can map that file to another one.
+		const moduleName = isDomComponentImport({ context, moduleName: requestedName })
+			? domComponentPath({ allowedRoots, context })
+			: requestedName
 
 		if (REACT_NATIVE_SPECIFIER.test(moduleName)) {
 			throw reactNativeImport(context.originModulePath, moduleName)
