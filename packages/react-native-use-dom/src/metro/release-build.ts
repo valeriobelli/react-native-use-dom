@@ -3,6 +3,7 @@ import type { ConfigT } from 'metro-config'
 import { buildPages } from './build-pages'
 import type { BundleCommand } from './bundle-command'
 import { resolveOutputDirectory } from './bundle-command'
+import { domBundleFileName } from './bundle-file'
 import type { Metro } from './host-metro'
 import { hostMetro } from './host-metro'
 
@@ -10,15 +11,26 @@ type CustomSerializer = NonNullable<ConfigT['serializer']['customSerializer']>
 type SerializerArgs = Parameters<CustomSerializer>
 type Graph = SerializerArgs[2]
 
-/** A `'use dom'` directive at the top of a module, after any comments. */
-const USE_DOM_PROLOGUE = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*(['"])use dom\1/u
-
-/** The DOM components a native bundle renders, in the order the graph holds them. */
-function findDomComponents(graph: Graph): string[] {
+/**
+ * The DOM components a native bundle renders, in the order the graph holds them.
+ *
+ * Reads the code Metro already holds for each module rather than the source on disk: `getSource()`
+ * reads the file again, assets included. The Babel plugin replaces a `'use dom'` module with a call
+ * that names its page, `domBundleFileName(filePath)`, as a string literal. Neither a module that
+ * imports the component, nor the library's own proxy factory, contains that name, and a minifier
+ * keeps string literals.
+ */
+function findDomComponents({ graph }: { graph: Graph }): string[] {
 	const components: string[] = []
 
 	for (const [filePath, module] of graph.dependencies) {
-		if (USE_DOM_PROLOGUE.test(module.getSource().toString('utf8'))) {
+		const bundleFile = domBundleFileName(filePath)
+
+		const isProxy = module.output.some(
+			({ data, type }) => type === 'js/module' && (data as { code?: string }).code?.includes(bundleFile),
+		)
+
+		if (isProxy) {
 			components.push(filePath)
 		}
 	}
@@ -46,7 +58,7 @@ export function withReleaseBuild(
 		const [entryPoint, preModules, graph, options] = args
 		// Serializing, the bundler has loaded its Metro; the web build is made with the same one.
 		const metro = hostMetro()
-		const components = findDomComponents(graph)
+		const components = findDomComponents({ graph })
 
 		if (components.length > 0) {
 			const outputDirectory = resolveOutputDirectory(command, graph.transformOptions.platform ?? '')
