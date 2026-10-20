@@ -15,4 +15,4 @@ The component is named to Metro's resolver, as the resolver option `dom`, and ne
 - The cost of a release build grows with the code the components add, not with the number of components times the code they share.
 - Metro's resolver options are not an extension point it documents as a cache boundary. If a Metro release keyed the transform cache on them, the cost would return; a test reads Metro's source to catch that.
 - Other tools read `customTransformOptions.dom` too: Expo's Babel transformer treats it as a DOM component and applies its WebView preset. The library keeps it constant (`dom: 'true'` for every component), mirroring Expo's CLI, so Expo's output is unchanged and the transform cache stays shared between components.
-- Dev server URLs carry `resolver.dom` instead of `transform.dom`. The native view only sends `file=`, so nothing outside the library depends on it.
+- Dev server URLs carry the component in `resolver.dom`, and `transform.dom` is always `true`. The native view only sends `file=`, so only tools that build those URLs themselves, such as the e2e warm-up, have to follow.
