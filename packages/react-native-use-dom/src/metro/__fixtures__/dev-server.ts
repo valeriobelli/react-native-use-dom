@@ -225,7 +225,12 @@ export async function startDevFixture(): Promise<DevFixture> {
 			}
 		},
 		fetchBundle: () => {
-			const query = new URLSearchParams({ dev: 'true', platform: 'web', 'transform.dom': component })
+			const query = new URLSearchParams({
+				dev: 'true',
+				platform: 'web',
+				'resolver.dom': component,
+				'transform.dom': 'true',
+			})
 
 			return fetch(`${origin}${DEV_ENTRY_PATH}?${query.toString()}`)
 		},

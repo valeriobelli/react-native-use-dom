@@ -4,6 +4,7 @@ import type { ConfigT } from 'metro-config'
 import type { CustomResolutionContext, CustomResolver, Resolution } from 'metro-resolver'
 
 import { DomError, DomErrorCode } from '../runtime/errors'
+import { isDomComponentImport, resolveDomComponent } from './dom-component'
 import type { Metro } from './host-metro'
 
 /** The platform DOM bundles are built for. */
@@ -25,11 +26,9 @@ export interface WebTransformerSettings {
 	upstreamTransformerPath: string
 	/** Absolute path of the transform worker the project uses for its native bundle. */
 	upstreamWorkerPath: string
-	/** Directories a DOM component may be built from: the project root, its watch folders and Metro's server root. */
-	allowedRoots: readonly string[]
 }
 
-/** The package root, which Metro must watch because the generated entry lives in it. */
+/** The package root, which Metro must watch because the web entry it serves lives in it. */
 const PACKAGE_ROOT = path.resolve(__dirname, '..', '..')
 
 /** The Babel transformer that runs in front of the project's own for DOM bundles. */
@@ -72,7 +71,7 @@ export function createWebConfig(config: ConfigT, metro: Metro): ConfigT {
 		resolver: {
 			...config.resolver,
 			platforms: unique([...config.resolver.platforms, WEB_PLATFORM]),
-			resolveRequest: createWebResolver(config.resolver.resolveRequest),
+			resolveRequest: projectWebResolver(config),
 			resolverMainFields: ['browser', 'module', 'main'],
 			sourceExts: unique([...config.resolver.sourceExts, CSS_EXTENSION]),
 			// `browser` comes from `unstable_conditionsByPlatform.web`; a global list would also
@@ -129,8 +128,20 @@ export function readWebTransformerSettings(): WebTransformerSettings {
  * Wraps the project's resolver so that DOM bundles resolve the way a browser would, and so that
  * reaching `react-native` from one fails at build time rather than as a crash in the WebView.
  */
-export function createWebResolver(upstream: CustomResolver | null | undefined): CustomResolver {
+export function createWebResolver({
+	allowedRoots,
+	upstream,
+}: {
+	/** Directories a DOM component may be built from: the project root, its watch folders and Metro's server root. */
+	allowedRoots: readonly string[]
+	upstream: CustomResolver | null | undefined
+}): CustomResolver {
 	return (context, moduleName, platform) => {
+		// Before the project's resolver, which has no module of this name to find.
+		if (isDomComponentImport({ context, moduleName })) {
+			return resolveDomComponent({ allowedRoots, context })
+		}
+
 		if (REACT_NATIVE_SPECIFIER.test(moduleName)) {
 			throw reactNativeImport(context.originModulePath, moduleName)
 		}
@@ -181,9 +192,16 @@ function serverRoot(config: ConfigT): string[] {
 	return root === null || root === undefined ? [] : [root]
 }
 
+function projectWebResolver(config: ConfigT): CustomResolver {
+	return createWebResolver({ allowedRoots: componentRoots(config), upstream: config.resolver.resolveRequest })
+}
+
+function componentRoots(config: ConfigT): string[] {
+	return unique([config.projectRoot, ...config.watchFolders, ...serverRoot(config)])
+}
+
 function webTransformerSettings(config: ConfigT, metro: Metro): WebTransformerSettings {
 	return {
-		allowedRoots: unique([config.projectRoot, ...config.watchFolders, ...serverRoot(config)]),
 		upstreamTransformerPath: resolveUpstreamTransformer(config),
 		upstreamWorkerPath: metro.resolve(config.transformerPath),
 	}

@@ -4,15 +4,8 @@ import path from 'node:path'
 
 import type { BabelTransformer, BabelTransformerArgs, BabelTransformerCacheKeyOptions } from 'metro-babel-transformer'
 
-import { DomError, DomErrorCode } from '../runtime/errors'
-import type { WebTransformerSettings } from './web-config'
+import { DOM_COMPONENT_SPECIFIER, WEB_ENTRY_PATH } from './dom-component'
 import { readWebTransformerSettings } from './web-config'
-
-/** The file every DOM component bundle is requested with as its entry. */
-export const WEB_ENTRY_PATH = require.resolve('../web/entry')
-
-/** The key, set from the `transform.dom` bundle URL parameter, naming the component to build. */
-export const DOM_TRANSFORM_OPTION = 'dom'
 
 const MOUNT_MODULE_PATH = require.resolve('../web/mount')
 const DEV_CLIENT_MODULE_PATH = require.resolve('../web/dev-client')
@@ -36,7 +29,7 @@ export function transform(args: BabelTransformerArgs): ReturnType<BabelTransform
 	return upstream.transform({
 		...args,
 		plugins: isEntry || !shouldRefresh(args) ? args.plugins : withRefreshPlugin(args.plugins),
-		src: isEntry ? synthesizeEntry(args, settings) : args.src,
+		src: isEntry ? synthesizeEntry(args) : args.src,
 	})
 }
 
@@ -68,13 +61,14 @@ function withRefreshPlugin(plugins: BabelTransformerArgs['plugins']): BabelPlugi
 /**
  * The entry module that renders the requested component, replacing the stub's body. In development
  * it starts with the client for Fast Refresh, which has to run before React DOM loads.
+ *
+ * It depends on the build mode and on nothing else: the component is a fixed specifier that the
+ * resolver answers per build, so the transform is shared by every component.
  */
-function synthesizeEntry(args: BabelTransformerArgs, settings: WebTransformerSettings): string {
-	const componentPath = readRequestedComponent(args, settings)
-
+function synthesizeEntry(args: BabelTransformerArgs): string {
 	return [
 		...(args.options.dev ? [`import ${JSON.stringify(DEV_CLIENT_MODULE_PATH)};`] : []),
-		`import Component from ${JSON.stringify(componentPath)};`,
+		`import Component from ${JSON.stringify(DOM_COMPONENT_SPECIFIER)};`,
 		`import { mountDomComponent } from ${JSON.stringify(MOUNT_MODULE_PATH)};`,
 		// `StrictMode`'s double render is how a DOM component's effects get the same scrutiny native
 		// components already get in development. The flag is written into the entry, rather than read
@@ -82,44 +76,6 @@ function synthesizeEntry(args: BabelTransformerArgs, settings: WebTransformerSet
 		`mountDomComponent(Component, { strict: ${JSON.stringify(args.options.dev)} });`,
 		'',
 	].join('\n')
-}
-
-/**
- * The component path arrives in a URL anyone who can reach the dev server can craft, so it is
- * only honoured for files Metro would serve anyway: the project, its watch folders and its server root.
- */
-function readRequestedComponent(args: BabelTransformerArgs, settings: WebTransformerSettings): string {
-	const requested = args.options.customTransformOptions?.[DOM_TRANSFORM_OPTION]
-
-	if (typeof requested !== 'string' || !path.isAbsolute(requested)) {
-		throw new DomError(
-			DomErrorCode.UnknownDomComponent,
-			'A DOM component bundle was requested without naming its component.',
-			{
-				fix: 'DOM component pages are requested by the native view with the absolute path of the component. Load them through a DOM component rather than by URL.',
-			},
-		)
-	}
-
-	const componentPath = path.normalize(requested)
-
-	if (!settings.allowedRoots.some((root) => isInside(root, componentPath))) {
-		throw new DomError(
-			DomErrorCode.UnknownDomComponent,
-			`${componentPath} was requested as a DOM component, but it is outside the project, its watch folders and Metro's server root.`,
-			{
-				fix: 'Only files Metro serves can be DOM components. Move the component into the project, or add its directory to `watchFolders` in metro.config.js.',
-			},
-		)
-	}
-
-	return componentPath
-}
-
-function isInside(root: string, filePath: string): boolean {
-	const relative = path.relative(root, filePath)
-
-	return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative)
 }
 
 function loadTransformer(modulePath: string): BabelTransformer {
