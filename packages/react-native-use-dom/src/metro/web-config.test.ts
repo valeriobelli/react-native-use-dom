@@ -7,6 +7,7 @@ import { mergeConfig } from 'metro-config'
 import type { CustomResolutionContext, CustomResolver, Resolution } from 'metro-resolver'
 
 import { DomErrorCode } from '../runtime/errors'
+import { DOM_COMPONENT_SPECIFIER, WEB_ENTRY_PATH } from './dom-component'
 import { hostMetro } from './host-metro'
 import { createWebConfig, createWebResolver, readWebTransformerSettings, WEB_TRANSFORMER_ENV } from './web-config'
 
@@ -30,6 +31,32 @@ function fakeContext(resolveRequest: CustomResolver): CustomResolutionContext {
 		resolveRequest,
 	} as CustomResolutionContext
 }
+
+/** Metro's own resolver, reduced to finding the file it is given. */
+const resolveAsFile: CustomResolver = (_, moduleName) => ({ filePath: moduleName, type: 'sourceFile' })
+
+function domContext({
+	component,
+	origin = WEB_ENTRY_PATH,
+	resolveRequest = resolveAsFile,
+}: {
+	component?: string | undefined
+	origin?: string
+	resolveRequest?: CustomResolver
+}): CustomResolutionContext {
+	return {
+		customResolverOptions: component ? { dom: component } : {},
+		originModulePath: origin,
+		preferNativePlatform: true,
+		resolveRequest,
+	} as unknown as CustomResolutionContext
+}
+
+/** A project resolver that swaps a file for its web-only variant. */
+const toBrowserFile: CustomResolver = (_, moduleName) => ({
+	filePath: moduleName.replace(/\.tsx$/u, '.browser.tsx'),
+	type: 'sourceFile',
+})
 
 const aliasIntoReactNative = (): Resolution => ({
 	filePath: '/app/node_modules/react-native/index.js',
@@ -105,7 +132,6 @@ describe('createWebConfig', () => {
 		createWebConfig(project, hostMetro())
 
 		expect(readWebTransformerSettings()).toEqual({
-			allowedRoots: [FIXTURE_ROOT, EXTRA_WATCH_FOLDER],
 			upstreamTransformerPath: project.transformer.babelTransformerPath,
 			upstreamWorkerPath: require.resolve('metro-transform-worker', {
 				paths: [path.dirname(require.resolve('metro/package.json'))],
@@ -119,7 +145,12 @@ describe('createWebConfig', () => {
 
 		const web = createWebConfig(project, hostMetro())
 
-		expect(readWebTransformerSettings().allowedRoots).toEqual([FIXTURE_ROOT, EXTRA_WATCH_FOLDER, workspaceRoot])
+		const component = path.join(workspaceRoot, 'elsewhere', 'Chart.tsx')
+
+		expect(web.resolver.resolveRequest?.(domContext({ component }), DOM_COMPONENT_SPECIFIER, 'web')).toEqual({
+			filePath: component,
+			type: 'sourceFile',
+		})
 		expect(web.watchFolders).toEqual([FIXTURE_ROOT, EXTRA_WATCH_FOLDER, workspaceRoot, PACKAGE_ROOT])
 	})
 
@@ -141,7 +172,9 @@ describe('createWebConfig', () => {
 
 describe('createWebResolver', () => {
 	it.each(['react-native', 'react-native/Libraries/Image/Image'])('rejects %s', (moduleName) => {
-		expect(() => createWebResolver(null)(fakeContext(jest.fn()), moduleName, 'web')).toThrow(
+		expect(() =>
+			createWebResolver({ allowedRoots: [], upstream: null })(fakeContext(jest.fn()), moduleName, 'web'),
+		).toThrow(
 			expect.objectContaining({
 				code: DomErrorCode.ReactNativeImportInDom,
 				message: expect.stringContaining('/app/Chart.tsx'),
@@ -152,21 +185,98 @@ describe('createWebResolver', () => {
 	it('allows packages that only share the prefix', () => {
 		const next = jest.fn(() => resolved)
 
-		expect(createWebResolver(null)(fakeContext(next), 'react-native-web', 'web')).toBe(resolved)
+		expect(createWebResolver({ allowedRoots: [], upstream: null })(fakeContext(next), 'react-native-web', 'web')).toBe(
+			resolved,
+		)
 	})
 
 	it('rejects an alias that lands inside react-native', () => {
-		expect(() => createWebResolver(aliasIntoReactNative)(fakeContext(jest.fn()), 'rn-alias', 'web')).toThrow(
-			expect.objectContaining({ code: DomErrorCode.ReactNativeImportInDom }),
-		)
+		expect(() =>
+			createWebResolver({ allowedRoots: [], upstream: aliasIntoReactNative })(
+				fakeContext(jest.fn()),
+				'rn-alias',
+				'web',
+			),
+		).toThrow(expect.objectContaining({ code: DomErrorCode.ReactNativeImportInDom }))
 	})
 
 	it('delegates to the project resolver without the native platform preference', () => {
 		const upstream = jest.fn<Resolution, Parameters<CustomResolver>>(() => resolved)
 		const fallback = jest.fn()
 
-		expect(createWebResolver(upstream)(fakeContext(fallback), 'react-dom', 'web')).toBe(resolved)
+		expect(createWebResolver({ allowedRoots: [], upstream })(fakeContext(fallback), 'react-dom', 'web')).toBe(resolved)
 		expect(fallback).not.toHaveBeenCalled()
 		expect(upstream.mock.calls[0]?.[0].preferNativePlatform).toBe(false)
+	})
+
+	describe('the DOM component specifier', () => {
+		const allowedRoots = ['/app']
+		const component = '/app/src/Chart.tsx'
+
+		it('asks the project resolver for the component the build names', () => {
+			const upstream = jest.fn<Resolution, Parameters<CustomResolver>>(() => resolved)
+
+			const resolution = createWebResolver({ allowedRoots, upstream })(
+				domContext({ component }),
+				DOM_COMPONENT_SPECIFIER,
+				'web',
+			)
+
+			expect(resolution).toBe(resolved)
+			expect(upstream).toHaveBeenCalledWith(expect.objectContaining({ preferNativePlatform: false }), component, 'web')
+		})
+
+		it('builds the file the project resolver maps the component to', () => {
+			const browserComponent = '/app/src/Chart.browser.tsx'
+
+			const resolution = createWebResolver({ allowedRoots, upstream: toBrowserFile })(
+				domContext({ component }),
+				DOM_COMPONENT_SPECIFIER,
+				'web',
+			)
+
+			expect(resolution).toEqual({ filePath: browserComponent, type: 'sourceFile' })
+		})
+
+		it('rejects a component the project resolver maps into react-native', () => {
+			expect(() =>
+				createWebResolver({ allowedRoots, upstream: aliasIntoReactNative })(
+					domContext({ component }),
+					DOM_COMPONENT_SPECIFIER,
+					'web',
+				),
+			).toThrow(expect.objectContaining({ code: DomErrorCode.ReactNativeImportInDom }))
+		})
+
+		it.each([
+			['outside the allowed roots', '/elsewhere/Chart.tsx'],
+			['reaching out of a root', '/app/../elsewhere/Chart.tsx'],
+			['a root itself', '/app'],
+			['relative', 'src/Chart.tsx'],
+			['missing', undefined],
+		])('rejects a component that is %s, before any resolver sees it', (_, requested) => {
+			const upstream = jest.fn<Resolution, Parameters<CustomResolver>>(() => resolved)
+
+			expect(() =>
+				createWebResolver({ allowedRoots, upstream })(
+					domContext({ component: requested }),
+					DOM_COMPONENT_SPECIFIER,
+					'web',
+				),
+			).toThrow(expect.objectContaining({ code: DomErrorCode.UnknownDomComponent }))
+			expect(upstream).not.toHaveBeenCalled()
+		})
+
+		it('is left to the project resolver when another module imports it', () => {
+			const upstream = jest.fn<Resolution, Parameters<CustomResolver>>(() => resolved)
+
+			const resolution = createWebResolver({ allowedRoots, upstream })(
+				domContext({ component, origin: '/app/Chart.tsx' }),
+				DOM_COMPONENT_SPECIFIER,
+				'web',
+			)
+
+			expect(resolution).toBe(resolved)
+		})
 	})
 })

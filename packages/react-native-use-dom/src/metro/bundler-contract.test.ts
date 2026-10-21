@@ -83,6 +83,35 @@ describe('Metro modules outside its public API', () => {
 	})
 })
 
+describe('what Metro keys its caches on', () => {
+	// The DOM component travels as a resolver option because only transform options are part of the
+	// per-file transform cache key: naming it there would transform every shared module once per page.
+	it('hands custom resolver options to resolveRequest', () => {
+		expect(
+			breakage(
+				'ModuleResolution passes `customResolverOptions` to the resolver context',
+				'src/metro/dom-component.ts',
+				includesAll(
+					packageFile('metro', 'src/node-haste/DependencyGraph/ModuleResolution.js'),
+					'customResolverOptions',
+				),
+			),
+		).toBeUndefined()
+	})
+
+	it('keeps the component out of the transform cache key, which only a constant option is in', () => {
+		const source = packageFile('metro', 'src/DeltaBundler/Transformer.js')
+
+		expect(
+			breakage(
+				'the transformer keys its cache on `customTransformOptions` and not on `customResolverOptions`',
+				'src/metro/build-pages.ts',
+				[source.includes('customTransformOptions'), !source.includes('customResolverOptions')].every(Boolean),
+			),
+		).toBeUndefined()
+	})
+})
+
 describe('a Metro dev server', () => {
 	let projectRoot: string
 	let config: ConfigT

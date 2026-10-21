@@ -3,7 +3,7 @@ import { Platform, TurboModuleRegistry } from 'react-native'
 
 import { DomError, DomErrorCode } from '../runtime/errors'
 import type { NativePlatform } from '../runtime/paths'
-import { DEV_PAGE_PATH, OFFLINE_BUNDLE_DIR, OFFLINE_ORIGINS } from '../runtime/paths'
+import { DEV_PAGE_PATH, devEntryBundlePath, OFFLINE_BUNDLE_DIR, OFFLINE_ORIGINS } from '../runtime/paths'
 
 interface SourceCodeSpec extends TurboModule {
 	getConstants(): { scriptURL: string }
@@ -63,6 +63,20 @@ export interface DomSource {
 	 * in development, where the dev server serves the page.
 	 */
 	pagesDirectory: string
+}
+
+/**
+ * The development bundle of the component at `filePath`, the one its page loads, or `null` when the
+ * running bundle did not come from a dev server and the page is pre-built.
+ */
+export function devBundleUrl({ filePath }: { filePath: string }): string | null {
+	const devServer = devServerOrigin({ scriptUrl: readScriptUrl() })
+
+	if (!devServer) {
+		return null
+	}
+
+	return new URL(devEntryBundlePath({ dev: 'true', file: filePath }), devServer).href
 }
 
 /** Resolves the page the native view loads for a DOM component, and the folder it is served from. */

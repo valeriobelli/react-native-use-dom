@@ -35,15 +35,25 @@ export function fillParentStyle({ style }: { style: StyleProp<ViewStyle> }): Vie
 	return { flexGrow: 1, maxHeight: cap }
 }
 
+/** The fallback over a view that fills its parent: the view's size is known, so the fallback takes it. */
+const COVER = { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 } as const
+
+/** Clips a content-sized web view while it sits under a fallback shorter than itself. */
+const CLIP = { overflow: 'hidden' } as const
+
 export function useViewStyles({
 	componentName,
 	contentHeight,
+	covered,
 	dom,
 }: {
 	componentName: string
 	contentHeight: number | null
+	/** Whether `dom.fallback` is shown over the web view. */
+	covered: boolean
 	dom: DomProps
 }): {
+	fallbackStyle: StyleProp<ViewStyle>
 	onLayout: (event: LayoutChangeEvent) => void
 	style: StyleProp<ViewStyle>
 	webViewStyle: ViewStyle
@@ -54,15 +64,26 @@ export function useViewStyles({
 			{ backgroundColor: dom.backgroundColor ?? 'white' },
 			dom.style,
 			dom.matchContents ? null : fillParentStyle({ style: dom.style }),
+			dom.matchContents && covered ? CLIP : null,
 			debugStyle,
 		],
-		[dom.backgroundColor, dom.matchContents, dom.style, debugStyle],
+		[dom.backgroundColor, dom.matchContents, dom.style, covered, debugStyle],
 	)
 	// Sized inside the view's own style, so that its borders and padding add to the content's size.
-	const webViewStyle = useMemo(
-		() => (dom.matchContents ? { height: contentHeight ?? 0 } : FILL_PARENT),
-		[dom.matchContents, contentHeight],
-	)
+	// Under a fallback, a content-sized web view is taken out of the flow instead, so that the view is
+	// as tall as the fallback rather than as content it has not painted yet, while the web view keeps
+	// the size the content will have.
+	const webViewStyle = useMemo<ViewStyle>(() => {
+		if (!dom.matchContents) {
+			return FILL_PARENT
+		}
 
-	return { onLayout, style, webViewStyle }
+		const height = contentHeight ?? 0
+
+		return covered ? { height, left: 0, position: 'absolute', right: 0, top: 0 } : { height }
+	}, [dom.matchContents, contentHeight, covered])
+	// With `matchContents` the fallback stays in the flow, so the view takes its height.
+	const fallbackStyle = dom.matchContents ? null : COVER
+
+	return { fallbackStyle, onLayout, style, webViewStyle }
 }

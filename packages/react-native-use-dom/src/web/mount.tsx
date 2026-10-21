@@ -1,4 +1,4 @@
-import { StrictMode, useMemo, useSyncExternalStore } from 'react'
+import { StrictMode, useEffect, useMemo, useSyncExternalStore } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
 
@@ -74,6 +74,21 @@ function DomRoot({ bridge, component: Component }: DomRootProps): React.ReactEle
 	)
 	const actions = useMemo(() => createActionStubs(bridge, actionNames), [bridge, actionNames])
 	const merged = useMemo(() => ({ ...props, ...actions }), [props, actions])
+
+	// Effects run after the commit but can run before the browser paints it, and a frame's callbacks run
+	// before that frame paints: the content is on screen once the callbacks of the frame after run,
+	// which is what a native placeholder waits for.
+	useEffect(() => {
+		let frame = requestAnimationFrame(() => {
+			frame = requestAnimationFrame(() => {
+				bridge.reportMounted()
+			})
+		})
+
+		return () => {
+			cancelAnimationFrame(frame)
+		}
+	}, [bridge])
 
 	return <Component {...merged} />
 }

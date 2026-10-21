@@ -56,5 +56,9 @@ Errors the library raises carry a stable code, starting `ERR_USE_DOM_`. Look it 
 - **`ERR_USE_DOM_UNKNOWN_COMPONENT`.** The dev server builds pages only for files it serves. A DOM component
   outside the project needs its folder in `watchFolders`, unless Metro's server root already contains it: Expo
   sets the server root to the workspace root, so a workspace package in an Expo monorepo needs nothing.
+- **The first render of a component is slow.** The dev server builds a component the first time it is requested,
+  and starts its web bundler for the first one. That build is what the blank view waits for. Show something in
+  the meantime with `dom.fallback`. See
+  [Loading](./authoring.md#loading). Release builds embed their pages and skip this wait.
 - **The device can't load the page.** It loads from the dev server like the app's bundle. Check that the device
   reaches Metro, and on Android over USB run `adb reverse tcp:8081 tcp:8081`.

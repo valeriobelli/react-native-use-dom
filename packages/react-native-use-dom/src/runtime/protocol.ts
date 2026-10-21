@@ -31,6 +31,25 @@ export interface ReadyMessage {
 	protocolVersion: number
 }
 
+/**
+ * DOM → native: the component has rendered and the browser has painted it. Sent once per page load,
+ * after {@link ReadyMessage}, which only says that props can be received.
+ */
+interface MountedMessage {
+	type: 'mounted'
+	instanceId: string
+}
+
+/**
+ * DOM → native, in development: the dev server could not build the component, and the page shows the
+ * build error in its place. The page reloads once the build works again, so a {@link ReadyMessage}
+ * follows.
+ */
+interface BuildErrorMessage {
+	type: 'build-error'
+	instanceId: string
+}
+
 /** Native → DOM: the current value of every serializable prop. */
 export interface PropsMessage {
 	type: 'props'
@@ -89,6 +108,8 @@ export interface UncaughtErrorMessage {
 /** Anything the DOM runtime may send to the native side. */
 export type DomToNativeMessage =
 	| ReadyMessage
+	| MountedMessage
+	| BuildErrorMessage
 	| ActionCallMessage
 	| ResultMessage
 	| ResizeMessage

@@ -7,7 +7,7 @@ import Greeting from './Greeting'
 import Lines from './Lines'
 import Note from './Note'
 
-const greetingDom = { backgroundColor: '#f2f2f7' }
+const greetingDom = { backgroundColor: '#f2f2f7', fallback: <Text>Loading...</Text> }
 const NAMES = ['React Native', 'Metro'] as const
 
 /** The state the screen shows, and the callbacks its DOM components and buttons run. */

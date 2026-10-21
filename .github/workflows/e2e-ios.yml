@@ -315,7 +315,8 @@ jobs:
             curl -sf --max-time 600 -o /dev/null -G "http://localhost:8081/_dom/entry.bundle" \
               --data-urlencode "dev=true" \
               --data-urlencode "platform=web" \
-              --data-urlencode "transform.dom=$GITHUB_WORKSPACE/e2e/example-app/src/$component.tsx"
+              --data-urlencode "resolver.dom=$GITHUB_WORKSPACE/e2e/example-app/src/$component.tsx" \
+              --data-urlencode "transform.dom=true"
           done
       - name: Install the Debug build
         run: xcrun simctl install "$UDID" "$CELL_FOLDER/build/Build/Products/Debug-iphonesimulator/$CELL_APP.app"

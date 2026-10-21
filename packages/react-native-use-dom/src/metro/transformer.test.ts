@@ -4,7 +4,8 @@ import type { BabelTransformerArgs } from 'metro-babel-transformer'
 
 import { DomErrorCode } from '../runtime/errors'
 import { calls } from './__fixtures__/echo-transformer'
-import { getCacheKey, transform, WEB_ENTRY_PATH } from './transformer'
+import { DOM_COMPONENT_SPECIFIER, WEB_ENTRY_PATH } from './dom-component'
+import { getCacheKey, transform } from './transformer'
 import type { WebTransformerSettings } from './web-config'
 import { WEB_TRANSFORMER_ENV } from './web-config'
 
@@ -19,7 +20,6 @@ const RN_TRANSFORMER = require.resolve('@react-native/metro-babel-transformer', 
 
 function publishSettings(upstreamTransformerPath = ECHO_TRANSFORMER): void {
 	const settings: WebTransformerSettings = {
-		allowedRoots: [PROJECT_ROOT],
 		upstreamTransformerPath,
 		// The Babel transformer never reads it: the worker in front of it does.
 		upstreamWorkerPath: require.resolve('metro-transform-worker'),
@@ -96,39 +96,34 @@ describe('Fast Refresh instrumentation', () => {
 })
 
 describe('entry synthesis', () => {
-	it('replaces the entry stub with a module that mounts the requested component', () => {
-		transform(args(entryFilename, { customTransformOptions: { dom: COMPONENT } }))
+	it('replaces the entry stub with a module that mounts the component the resolver provides', () => {
+		transform(args(entryFilename))
 
 		const { src, plugins } = lastCall()
 
-		expect(src).toContain(`import Component from ${JSON.stringify(COMPONENT)};`)
+		expect(src).toContain(`import Component from ${JSON.stringify(DOM_COMPONENT_SPECIFIER)};`)
 		expect(src).toContain(`import { mountDomComponent } from ${JSON.stringify(require.resolve('../web/mount'))};`)
 		expect(src).toContain('mountDomComponent(Component, { strict: true });')
 		expect(plugins).toEqual([])
 	})
 
 	it('mounts without StrictMode in a release bundle', () => {
-		transform(args(entryFilename, { customTransformOptions: { dom: COMPONENT }, dev: false }))
+		transform(args(entryFilename, { dev: false }))
 
 		expect(lastCall().src).toContain('mountDomComponent(Component, { strict: false });')
 	})
 
-	it('passes other modules through unchanged', () => {
-		transform(args('Chart.tsx', { customTransformOptions: { dom: COMPONENT } }))
+	it('names no component, which is what lets every component share its transform', () => {
+		transform(args(entryFilename))
 
-		expect(lastCall().src).toBe('module.exports = 1;')
+		expect(lastCall().src).not.toContain(COMPONENT)
+		expect(lastCall().src).not.toContain('/elsewhere/')
 	})
 
-	it.each([
-		['outside the project', { customTransformOptions: { dom: '/etc/passwd' } }],
-		['escaping the project', { customTransformOptions: { dom: path.join(PROJECT_ROOT, '..', '..', 'web-config.ts') } }],
-		['relative', { customTransformOptions: { dom: 'Chart.tsx' } }],
-		['missing', {}],
-	])('rejects a component path %s', (_, options) => {
-		expect(() => transform(args(entryFilename, options))).toThrow(
-			expect.objectContaining({ code: DomErrorCode.UnknownDomComponent }),
-		)
-		expect(calls).toHaveLength(0)
+	it('passes other modules through unchanged', () => {
+		transform(args('Chart.tsx'))
+
+		expect(lastCall().src).toBe('module.exports = 1;')
 	})
 })
 

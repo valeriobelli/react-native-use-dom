@@ -103,9 +103,12 @@ describe('withDom', () => {
 			const file = path.join(projectRoot, 'Hello.js')
 			const page = await fetch(`${server.origin}${DEV_PAGE_PATH}?${new URLSearchParams({ file }).toString()}`)
 
-			expect(await page.text()).toContain(DEV_ENTRY_PATH)
+			const pageHtml = await page.text()
 
-			const query = new URLSearchParams({ dev: 'true', platform: 'web', 'transform.dom': file })
+			expect(pageHtml).toContain(DEV_ENTRY_PATH)
+			expect(pageHtml).toContain('transform.dom=true')
+
+			const query = new URLSearchParams({ dev: 'true', platform: 'web', 'resolver.dom': file, 'transform.dom': 'true' })
 			const dom = await fetch(`${server.origin}${DEV_ENTRY_PATH}?${query.toString()}`)
 
 			expect(dom.status).toBe(200)
@@ -123,7 +126,7 @@ describe('withDom', () => {
 			const file = path.join(projectRoot, 'Hello.js')
 
 			await fetch(`${server.origin}${DEV_PAGE_PATH}?${new URLSearchParams({ file }).toString()}`)
-			const domBundle = `${DEV_ENTRY_PATH}?${new URLSearchParams({ dev: 'true', platform: 'web', 'transform.dom': file }).toString()}`
+			const domBundle = `${DEV_ENTRY_PATH}?${new URLSearchParams({ dev: 'true', platform: 'web', 'resolver.dom': file, 'transform.dom': 'true' }).toString()}`
 
 			await (await fetch(`${server.origin}${domBundle}`)).text()
 			const nativeBundle = '/index.bundle?platform=ios&dev=true'

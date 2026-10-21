@@ -80,7 +80,7 @@ it('leaves the start-up banner to the dev server the developer started', () => {
 	expect(fixture.reported.map((event) => event.type)).not.toContain('dep_graph_loading')
 })
 
-it('shows a build error with its location, reports it, and reloads once it is fixed', async () => {
+it('shows a build error with its location, reports it to Metro and native, and reloads once it is fixed', async () => {
 	fixture.writeComponent(BROKEN)
 	fixture.reported.length = 0
 	// Metro sees the edit through its file watcher, a moment after it is written.
@@ -94,6 +94,8 @@ it('shows a build error with its location, reports it, and reloads once it is fi
 		)
 
 		expect(shown).toContain(`${fixture.component}:`)
+		expect(page.posted).toContainEqual({ instanceId: 'test', type: 'build-error' })
+		expect(page.posted).toContainEqual(expect.objectContaining({ instanceId: 'test', type: 'resize' }))
 		expect(fixture.reported.map((event) => event.type)).toContain('bundling_error')
 
 		fixture.writeComponent(HELLO)

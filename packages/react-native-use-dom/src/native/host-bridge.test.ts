@@ -198,6 +198,24 @@ describe('NativeDomBridge', () => {
 			expect(onReady).toHaveBeenCalledTimes(1)
 		})
 
+		it('reports when the component has painted', () => {
+			const onMounted = jest.fn()
+
+			bridge.setCallbacks({ onMounted })
+			fromDom({ instanceId: 'i1', type: 'mounted' })
+			expect(onMounted).toHaveBeenCalledTimes(1)
+		})
+
+		it('reports when the page shows a build error instead', () => {
+			const onBuildError = jest.fn()
+			const onMounted = jest.fn()
+
+			bridge.setCallbacks({ onBuildError, onMounted })
+			fromDom({ instanceId: 'i1', type: 'build-error' })
+			expect(onBuildError).toHaveBeenCalledTimes(1)
+			expect(onMounted).not.toHaveBeenCalled()
+		})
+
 		it('forwards a measured size', () => {
 			const onResize = jest.fn()
 

@@ -116,6 +116,7 @@ See [Sizing](https://github.com/valeriobelli/react-native-use-dom/blob/main/docs
 | `backgroundColor`     | `'white'` | Shows before the first paint and where the page is transparent.      |
 | `scrollEnabled`       | `true`    | Turn it off so that drags reach a native `ScrollView` around it.     |
 | `onNavigationBlocked` |           | Called with the URL when the page tries to navigate to another site. |
+| `fallback`            |           | Shown over the view until the component has painted.                 |
 | `onLoad`              |           | Called once the component has mounted and painted.                   |
 | `onError`             |           | Called when the component fails to load or throws.                   |
 | `testID`              |           | The native view's `testID`, for end-to-end tests.                    |

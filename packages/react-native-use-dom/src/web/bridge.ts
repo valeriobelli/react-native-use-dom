@@ -24,6 +24,8 @@ export interface DomBridge {
 	callAction(name: string, args: readonly unknown[]): Promise<Serializable>
 	/** Replaces the methods the native side may call through the component's ref. */
 	setHandle(methods: Record<string, HandleMethod> | null): void
+	/** Reports that the component has painted. Only the first call on a page is sent. */
+	reportMounted(): void
 	/** Reports the content's measured size, for `matchContents`. */
 	reportSize(width: number, height: number): void
 	/** Forwards a console call so it lands in the app's terminal. */
@@ -56,6 +58,7 @@ class WebDomBridge implements DomBridge {
 	#props: Record<string, Serializable>
 	#actionNames: readonly string[]
 	#handle: Record<string, HandleMethod> | null = null
+	#mounted = false
 
 	constructor(payload: InjectedPayload) {
 		this.instanceId = payload.instanceId
@@ -119,6 +122,16 @@ class WebDomBridge implements DomBridge {
 
 	setHandle(methods: Record<string, HandleMethod> | null): void {
 		this.#handle = methods
+	}
+
+	reportMounted(): void {
+		// Fast Refresh runs the root's effects again without reloading the page, which is not a new mount.
+		if (this.#mounted) {
+			return
+		}
+
+		this.#mounted = true
+		this.#post({ instanceId: this.instanceId, type: 'mounted' })
 	}
 
 	reportSize(width: number, height: number): void {

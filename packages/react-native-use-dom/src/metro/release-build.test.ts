@@ -28,6 +28,8 @@ const USE_DOM_BABEL_PLUGIN = require.resolve('../babel')
 const COMPONENT =
 	"'use dom';\nimport './Hello.css';\nexport default function Hello(props) { return <p>released {props.name}</p>; }\n"
 
+const WORLD = "'use dom';\nimport './Hello.css';\nexport default function World() { return <p>second page</p>; }\n"
+
 describe('a release build', () => {
 	let projectRoot: string
 	let argv: string[]
@@ -42,11 +44,16 @@ describe('a release build', () => {
 		)
 		writeFileSync(path.join(projectRoot, 'Hello.js'), COMPONENT)
 		writeFileSync(path.join(projectRoot, 'Hello.css'), 'p { color: rebeccapurple; }\n')
+		writeFileSync(path.join(projectRoot, 'World.js'), WORLD)
 		writeFileSync(path.join(projectRoot, 'Unused.js'), COMPONENT)
 		mkdirSync(path.join(projectRoot, 'public', 'fonts'), { recursive: true })
 		writeFileSync(path.join(projectRoot, 'public', 'logo.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>')
 		writeFileSync(path.join(projectRoot, 'public', 'fonts', 'Inter.woff2'), 'wOF2')
-		writeFileSync(path.join(projectRoot, 'index.js'), "global.hello = require('./Hello');\n")
+
+		writeFileSync(
+			path.join(projectRoot, 'index.js'),
+			"global.hello = require('./Hello');\nglobal.world = require('./World');\n",
+		)
 		mkdirSync(path.join(projectRoot, 'node_modules'))
 		symlinkSync(path.dirname(require.resolve('react/package.json')), path.join(projectRoot, 'node_modules', 'react'))
 		// What the plugin's proxies import, without the React Native the real one renders with.
@@ -89,8 +96,10 @@ describe('a release build', () => {
 		const pages = await bundleForAndroid()
 		const page = domBundleFileName(path.join(projectRoot, 'Hello.js'))
 		const script = page.replace(/\.html$/u, '.js')
+		const worldPage = domBundleFileName(path.join(projectRoot, 'World.js'))
+		const worldScript = worldPage.replace(/\.html$/u, '.js')
 
-		expect(readdirSync(pages).sort()).toEqual([page, script, 'fonts', 'logo.svg'].sort())
+		expect(readdirSync(pages).sort()).toEqual([page, script, worldPage, worldScript, 'fonts', 'logo.svg'].sort())
 		expect(readFileSync(path.join(pages, 'fonts', 'Inter.woff2'), 'utf8')).toBe('wOF2')
 		expect(readFileSync(path.join(pages, page), 'utf8')).toContain(`<script src="${script}"></script>`)
 
@@ -98,6 +107,10 @@ describe('a release build', () => {
 
 		expect(code).toContain('released')
 		expect(code).toContain('rebeccapurple')
+		// Each page builds from one entry module that every component shares, so it must not mount another's.
+		expect(code).not.toContain('second page')
+		expect(readFileSync(path.join(pages, worldScript), 'utf8')).toContain('second page')
+		expect(readFileSync(path.join(pages, worldScript), 'utf8')).not.toContain('released')
 		expect(code).not.toContain('sourceMappingURL')
 		expect(code).not.toContain('/_dom/')
 		expect(existsSync(path.join(pages, domBundleFileName(path.join(projectRoot, 'Unused.js'))))).toBe(false)

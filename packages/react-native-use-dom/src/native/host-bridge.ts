@@ -14,8 +14,12 @@ export interface HostBridgeCallbacks {
 	onConsole?: (level: ConsoleMessage['level'], args: readonly Serializable[]) => void
 	/** An error escaped the DOM component. */
 	onUncaughtError?: (error: Error) => void
-	/** The DOM runtime finished mounting and is ready to receive props. */
+	/** The DOM runtime started on a newly loaded page and is ready to receive props. */
 	onReady?: () => void
+	/** The DOM component rendered and painted for the first time on this page. */
+	onMounted?: () => void
+	/** In development, the page shows a build error instead of the DOM component. */
+	onBuildError?: () => void
 }
 
 /**
@@ -92,6 +96,12 @@ export class NativeDomBridge {
 		switch (message.type) {
 			case 'ready':
 				this.#callbacks.onReady?.()
+				break
+			case 'mounted':
+				this.#callbacks.onMounted?.()
+				break
+			case 'build-error':
+				this.#callbacks.onBuildError?.()
 				break
 			case 'action-call':
 				this.#runAction(message.callId, message.action, message.args)

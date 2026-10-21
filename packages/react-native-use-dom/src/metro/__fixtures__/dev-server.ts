@@ -40,6 +40,8 @@ export interface Page {
 	dom: JSDOM
 	/** Whether the page asked to be reloaded, which jsdom reports instead of navigating. */
 	reloaded(): boolean
+	/** What the page posted to the web view, parsed. */
+	posted: unknown[]
 }
 
 /** A project with one component, served by the DOM routes on a server of its own. */
@@ -136,6 +138,7 @@ function projectConfig(projectRoot: string, reported: ReporterEvent[]): Paramete
 async function loadPage(url: string): Promise<Page> {
 	const html = await (await fetch(url)).text()
 	let reloaded = false
+	const posted: unknown[] = []
 	const virtualConsole = new VirtualConsole()
 
 	virtualConsole.on('jsdomError', (error) => {
@@ -150,17 +153,21 @@ async function loadPage(url: string): Promise<Page> {
 			Object.assign(window, {
 				ReactNativeWebView: {
 					injectedObjectJson: () => JSON.stringify({ actions: [], instanceId: 'test', props: { name: 'dom' } }),
-					postMessage: () => {},
+					postMessage: (message: string) => {
+						posted.push(JSON.parse(message))
+					},
 				},
 				fetch: (input: string, init?: RequestInit) => fetch(new URL(input, url), init),
 			})
 		},
+		// A web view paints frames, and the page waits for one before it reports that it has mounted.
+		pretendToBeVisual: true,
 		runScripts: 'dangerously',
 		url,
 		virtualConsole,
 	})
 
-	return { dom, reloaded: () => reloaded }
+	return { dom, posted, reloaded: () => reloaded }
 }
 
 /** An HTTP server on a free local port, with the connections it has open. */
@@ -225,7 +232,12 @@ export async function startDevFixture(): Promise<DevFixture> {
 			}
 		},
 		fetchBundle: () => {
-			const query = new URLSearchParams({ dev: 'true', platform: 'web', 'transform.dom': component })
+			const query = new URLSearchParams({
+				dev: 'true',
+				platform: 'web',
+				'resolver.dom': component,
+				'transform.dom': 'true',
+			})
 
 			return fetch(`${origin}${DEV_ENTRY_PATH}?${query.toString()}`)
 		},

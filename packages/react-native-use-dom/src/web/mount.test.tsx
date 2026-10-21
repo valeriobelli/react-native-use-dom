@@ -31,6 +31,18 @@ function lastOfType<T extends DomToNativeMessage['type']>(
 	return matches.at(-1) as Extract<DomToNativeMessage, { type: T }> | undefined
 }
 
+function mountedReports({ instanceId }: { instanceId: string }): DomToNativeMessage[] {
+	return sent.filter((message) => message.instanceId === instanceId && message.type === 'mounted')
+}
+
+function nextFrame(): Promise<void> {
+	return new Promise((resolve) => {
+		requestAnimationFrame(() => {
+			resolve()
+		})
+	})
+}
+
 function flush(): Promise<void> {
 	return new Promise((resolve) => {
 		setTimeout(resolve, 0)
@@ -118,6 +130,26 @@ describe('mountDomComponent', () => {
 		})
 
 		expect(root().textContent).toBe('Hello')
+	})
+
+	it('reports the first paint once, after the frame that paints the component, even in Strict Mode', async () => {
+		// Its own instance id, since a root left mounted by an earlier test still paints a frame.
+		install({ actions: [], instanceId: 'painted', props: { title: 'Hello' } })
+
+		await act(async () => {
+			mountDomComponent(Greeting as never, { strict: true })
+		})
+
+		expect(mountedReports({ instanceId: 'painted' })).toEqual([])
+
+		await act(nextFrame)
+
+		// The frame's callbacks ran before it painted the component.
+		expect(mountedReports({ instanceId: 'painted' })).toEqual([])
+
+		await act(nextFrame)
+
+		expect(mountedReports({ instanceId: 'painted' })).toEqual([{ instanceId: 'painted', type: 'mounted' }])
 	})
 
 	it('re-renders on a prop change while keeping DOM state alive', async () => {

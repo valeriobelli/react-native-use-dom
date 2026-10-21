@@ -133,7 +133,7 @@ Breaking these fails the build or throws at runtime with an `ERR_USE_DOM_*` code
 
 `matchContents`, `style`, `backgroundColor` (default `'white'`; `'transparent'` to see through),
 `scrollEnabled` (default `true`), `onNavigationBlocked(url)` (links to another origin are blocked; open them with
-`Linking.openURL`), `onLoad()`, `onError(error)`, `testID`.
+`Linking.openURL`), `fallback` (a native element shown until the first paint), `onLoad()`, `onError(error)`, `testID`.
 
 ## Assets
 

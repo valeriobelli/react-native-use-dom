@@ -3,15 +3,15 @@ import path from 'node:path'
 
 import type { ConfigT } from 'metro-config'
 
-import { DEV_ENTRY_PATH, DEV_HOT_PATH, DEV_MOUNT_PATH, DEV_PAGE_PATH } from '../runtime/paths'
+import { DEV_ENTRY_PATH, DEV_HOT_PATH, DEV_MOUNT_PATH, DEV_PAGE_PATH, WEB_PLATFORM } from '../runtime/paths'
 import { servePage, servePublicFile } from './dev-files'
+import { WEB_ENTRY_PATH } from './dom-component'
 import type { Metro } from './host-metro'
 import type { HotSocketServer } from './hot-socket'
 import { createHotSocketServer } from './hot-socket'
-import { WEB_ENTRY_PATH } from './transformer'
 import type { UpgradeListener } from './upgrade-router'
 import { routeClose, routeUpgrade } from './upgrade-router'
-import { createWebConfig, WEB_PLATFORM } from './web-config'
+import { createWebConfig } from './web-config'
 
 /** A connect-style middleware, the shape `server.enhanceMiddleware` receives and returns. */
 export type Middleware = (req: IncomingMessage, res: ServerResponse, next: (error?: unknown) => void) => void

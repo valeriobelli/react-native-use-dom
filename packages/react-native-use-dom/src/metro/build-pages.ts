@@ -5,11 +5,11 @@ import type { ConfigT } from 'metro-config'
 import type Server from 'metro/private/Server'
 
 import { domBundleFileName } from './bundle-file'
+import { domBundleOptions, WEB_ENTRY_PATH } from './dom-component'
 import type { Metro } from './host-metro'
 import { renderPage } from './page'
 import { copyPublicDirectory, publicDirectory } from './public-directory'
-import { DOM_TRANSFORM_OPTION, WEB_ENTRY_PATH } from './transformer'
-import { createWebConfig, WEB_PLATFORM } from './web-config'
+import { createWebConfig } from './web-config'
 
 /**
  * Builds each component's page into `outputDirectory`, replacing whatever an earlier build left.
@@ -18,12 +18,17 @@ import { createWebConfig, WEB_PLATFORM } from './web-config'
  * the app has no dev server to reach. They carry no source map and nothing that points outside the
  * app. The project's `public` folder is copied next to them, for pages to load by relative URL.
  */
-export async function buildPages(
-	metro: Metro,
-	config: ConfigT,
-	components: readonly string[],
-	outputDirectory: string,
-): Promise<void> {
+export async function buildPages({
+	components,
+	config,
+	metro,
+	outputDirectory,
+}: {
+	components: readonly string[]
+	config: ConfigT
+	metro: Metro
+	outputDirectory: string
+}): Promise<void> {
 	const server = new metro.Server(createWebConfig(config, metro), { watch: false })
 
 	try {
@@ -32,29 +37,42 @@ export async function buildPages(
 		await mkdir(outputDirectory, { recursive: true })
 		// Before the pages, which take precedence over a public file of the same name.
 		await copyPublicDirectory(publicDirectory(config.projectRoot), outputDirectory)
-		const options = { ...metro.Server.DEFAULT_BUNDLE_OPTIONS }
+		const defaults = { ...metro.Server.DEFAULT_BUNDLE_OPTIONS }
 
-		await Promise.all(components.map((component) => buildPage(server, options, component, outputDirectory)))
+		// Metro does not de-duplicate transforms that are in flight, so builds started together all miss
+		// the cache on the modules they share. The first page transforms them; the others find them cached.
+		const [first, ...rest] = components
+
+		if (first) {
+			await buildPage({ component: first, defaults, outputDirectory, server })
+		}
+
+		await Promise.all(rest.map((component) => buildPage({ component, defaults, outputDirectory, server })))
 	} finally {
 		await server.end()
 	}
 }
 
-async function buildPage(
-	server: Server,
-	defaults: typeof Server.DEFAULT_BUNDLE_OPTIONS,
-	component: string,
-	outputDirectory: string,
-): Promise<void> {
+async function buildPage({
+	component,
+	defaults,
+	outputDirectory,
+	server,
+}: {
+	component: string
+	defaults: typeof Server.DEFAULT_BUNDLE_OPTIONS
+	outputDirectory: string
+	server: Server
+}): Promise<void> {
 	const page = domBundleFileName(component)
 	const script = page.replace(/\.html$/u, '.js')
+
 	const { code } = await server.build({
 		...defaults,
-		customTransformOptions: { [DOM_TRANSFORM_OPTION]: component },
+		...domBundleOptions({ component }),
 		dev: false,
 		entryFile: WEB_ENTRY_PATH,
 		minify: true,
-		platform: WEB_PLATFORM,
 	})
 
 	await Promise.all([

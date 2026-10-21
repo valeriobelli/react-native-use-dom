@@ -1,4 +1,4 @@
-import type { ComponentType, Ref } from 'react'
+import type { ComponentType, ReactNode, Ref } from 'react'
 import type { StyleProp, ViewStyle } from 'react-native'
 
 import type { Serializable } from '../runtime/serializable'
@@ -65,7 +65,24 @@ export interface DomProps {
 	 */
 	onNavigationBlocked?: (url: string) => void
 
-	/** Called once the DOM component has mounted and painted for the first time. */
+	/**
+	 * Shown over the native view until the DOM component has painted for the first time, and again
+	 * from when a reloaded page starts until it paints. It covers the time the web view takes to
+	 * start, and in development the time the dev server takes to build the component. With
+	 * `matchContents`, the view takes the fallback's height until the content's own is known. In
+	 * development, a build error replaces it.
+	 *
+	 * @example
+	 * ```tsx
+	 * <Chart data={points} dom={{ fallback: <ActivityIndicator /> }} />
+	 * ```
+	 */
+	fallback?: ReactNode
+
+	/**
+	 * Called once the DOM component has mounted and painted for the first time, and again after its
+	 * page reloads. Methods on its `ref` can be called from then on.
+	 */
 	onLoad?: () => void
 
 	/**

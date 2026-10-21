@@ -51,7 +51,12 @@ export function withReleaseBuild(
 		if (components.length > 0) {
 			const outputDirectory = resolveOutputDirectory(command, graph.transformOptions.platform ?? '')
 
-			await buildPages(metro, await resolveConfig(metro, options.projectRoot), components, outputDirectory)
+			await buildPages({
+				components,
+				config: await resolveConfig(metro, options.projectRoot),
+				metro,
+				outputDirectory,
+			})
 		}
 
 		if (upstream) {
