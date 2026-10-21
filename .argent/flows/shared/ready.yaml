@@ -12,6 +12,9 @@ steps:
   # the one signal iOS flows get that a web view has loaded, and it moves the elements under it. On a busy
   # runner the note has stayed without a height for more than 30 seconds.
   - await: { visible: { id: note }, timeout: 60000 }
+  # The greetings show a native fallback until their pages have painted: unlike their text, iOS flows
+  # can read it. Its timeout is the note's, since both wait for a web view to paint.
+  - await: { hidden: { text: Loading... }, timeout: 60000 }
   - when: { platform: android }
     steps:
       - await: { visible: { text: This note is a DOM component }, timeout: 15000 }
