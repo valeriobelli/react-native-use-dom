@@ -75,11 +75,14 @@ function DomRoot({ bridge, component: Component }: DomRootProps): React.ReactEle
 	const actions = useMemo(() => createActionStubs(bridge, actionNames), [bridge, actionNames])
 	const merged = useMemo(() => ({ ...props, ...actions }), [props, actions])
 
-	// Effects run after the commit but can run before the browser paints it; the next frame is the
-	// earliest point the content is on screen, which is what a native placeholder waits for.
+	// Effects run after the commit but can run before the browser paints it, and a frame's callbacks run
+	// before that frame paints: the content is on screen once the callbacks of the frame after run,
+	// which is what a native placeholder waits for.
 	useEffect(() => {
-		const frame = requestAnimationFrame(() => {
-			bridge.reportMounted()
+		let frame = requestAnimationFrame(() => {
+			frame = requestAnimationFrame(() => {
+				bridge.reportMounted()
+			})
 		})
 
 		return () => {

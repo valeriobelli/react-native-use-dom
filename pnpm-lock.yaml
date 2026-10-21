@@ -2124,16 +2124,9 @@ packages:
   '@expo/metro@58.0.0-rc.0':
     resolution: {integrity: sha512-9ZXNH/rppKQcoW0ycTSQqnKcjuYnutWf/6YkfAh1PBeWs+W1Nuc2uMTRM0qWNc9btbD4iHZKovru3gJqMgFzFQ==}
 
-  '@expo/osascript@2.7.1':
-    resolution: {integrity: sha512-Zn03EX6In7ts2lPUW2ESUSkEhEWQN1qqsiXjadtZMJOuZRkMiAg1ZQHuvz9DjByDWNJ2pBwAGyrts9lj9k389g==}
-    engines: {node: '>=12'}
-
   '@expo/osascript@2.8.1':
     resolution: {integrity: sha512-SCi+6q6uOkGhiAn6AIP/OPFgaIq/iKD2oYpnAOg2rShHStJ8ey7wyT127RbOaZXmlcY/62rHOX1WiiMnD8u/BA==}
     engines: {node: '>=12'}
-
-  '@expo/package-manager@1.13.1':
-    resolution: {integrity: sha512-y/K+CaYYpZpNGZhSX4HyLT/vyIunFjNfyoxNysPBCefeLKI/VCx6f9LNPzrxayr3rCYO5bl9O8H+HRQK265Nkg==}
 
   '@expo/package-manager@1.14.1':
     resolution: {integrity: sha512-aw/VqeDaZsn2G5FxJUfWgWkdcl4u/JsNhlQakAEUhu5++4AitDprw4Uc0PwerH76V8Y34U/nVypL+YTVs/pi2g==}
@@ -10914,8 +10907,8 @@ snapshots:
       '@expo/metro': 56.0.2(supports-color@8.1.1)
       '@expo/metro-config': 56.0.19(expo@56.0.23(@babel/core@7.29.7(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@6.0.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3))(supports-color@8.1.1)(typescript@6.0.3)
       '@expo/metro-file-map': 56.0.4(supports-color@8.1.1)
-      '@expo/osascript': 2.7.1
-      '@expo/package-manager': 1.13.1
+      '@expo/osascript': 2.8.1
+      '@expo/package-manager': 1.14.1
       '@expo/plist': 0.7.0
       '@expo/prebuild-config': 56.0.23(supports-color@8.1.1)(typescript@6.0.3)
       '@expo/require-utils': 56.1.7(supports-color@8.1.1)(typescript@6.0.3)
@@ -10986,13 +10979,13 @@ snapshots:
       '@expo/env': 2.4.3(supports-color@8.1.1)
       '@expo/image-utils': 0.11.6(supports-color@8.1.1)(typescript@6.0.3)
       '@expo/inline-modules': 0.1.7(supports-color@8.1.1)(typescript@6.0.3)
-      '@expo/json-file': 11.0.1
+      '@expo/json-file': 11.2.1
       '@expo/log-box': 57.0.4(dccdf34e9203a48c61bea2375870b508)
       '@expo/metro': 56.0.2(supports-color@8.1.1)
       '@expo/metro-config': 57.0.13(expo@57.0.27(@babel/core@7.29.7(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.2.0(supports-color@8.1.1)(typescript@6.0.3))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3))(supports-color@8.1.1)(typescript@6.0.3)
       '@expo/metro-file-map': 57.0.4(supports-color@8.1.1)
-      '@expo/osascript': 2.7.1
-      '@expo/package-manager': 1.13.1
+      '@expo/osascript': 2.8.1
+      '@expo/package-manager': 1.14.1
       '@expo/plist': 0.8.1
       '@expo/prebuild-config': 57.0.17(supports-color@8.1.1)(typescript@6.0.3)
       '@expo/require-utils': 57.0.6(supports-color@8.1.1)(typescript@6.0.3)
@@ -11225,7 +11218,7 @@ snapshots:
     dependencies:
       '@expo/config-plugins': 57.0.10(supports-color@8.1.1)(typescript@6.0.3)
       '@expo/config-types': 57.0.2
-      '@expo/json-file': 11.0.1
+      '@expo/json-file': 11.2.1
       '@expo/require-utils': 57.0.6(supports-color@8.1.1)(typescript@6.0.3)
       deepmerge: 4.3.1
       getenv: 2.0.0
@@ -11330,7 +11323,7 @@ snapshots:
 
   '@expo/fingerprint@0.19.10(supports-color@8.1.1)':
     dependencies:
-      '@expo/env': 2.4.3(supports-color@8.1.1)
+      '@expo/env': 2.5.1(supports-color@8.1.1)
       '@expo/spawn-async': 1.8.0
       arg: 5.0.2
       chalk: 4.1.2
@@ -11346,7 +11339,7 @@ snapshots:
 
   '@expo/fingerprint@0.20.13(supports-color@8.1.1)':
     dependencies:
-      '@expo/env': 2.4.3(supports-color@8.1.1)
+      '@expo/env': 2.5.1(supports-color@8.1.1)
       '@expo/spawn-async': 1.8.0
       arg: 5.0.2
       chalk: 4.1.2
@@ -11684,22 +11677,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@expo/osascript@2.7.1':
-    dependencies:
-      '@expo/spawn-async': 1.8.0
-
   '@expo/osascript@2.8.1':
     dependencies:
       '@expo/spawn-async': 1.8.0
-
-  '@expo/package-manager@1.13.1':
-    dependencies:
-      '@expo/json-file': 11.0.1
-      '@expo/spawn-async': 1.8.0
-      chalk: 4.1.2
-      npm-package-arg: 11.0.3
-      ora: 3.4.0
-      resolve-workspace-root: 2.0.1
 
   '@expo/package-manager@1.14.1':
     dependencies:
@@ -11750,7 +11730,7 @@ snapshots:
       '@expo/config-plugins': 57.0.10(supports-color@8.1.1)(typescript@6.0.3)
       '@expo/config-types': 57.0.2
       '@expo/image-utils': 0.11.6(supports-color@8.1.1)(typescript@6.0.3)
-      '@expo/json-file': 11.0.1
+      '@expo/json-file': 11.2.1
       '@react-native/normalize-colors': 0.86.3
       debug: 4.4.3(supports-color@8.1.1)
       expo-modules-autolinking: 57.0.14(supports-color@8.1.1)(typescript@6.0.3)

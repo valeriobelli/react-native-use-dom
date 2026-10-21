@@ -8,8 +8,9 @@ A DOM component paints some time after native code renders it. Its web view star
 
 ## Decision
 
-- The page reports `mounted` after the frame of its first commit, and `dom.onLoad` fires on it rather than when the web view finishes loading.
+- The page reports `mounted` from the frame after the one of its first commit, since a frame's callbacks run before it paints, and `dom.onLoad` fires on it rather than when the web view finishes loading.
 - `dom.fallback` is a native element shown over the view until `mounted`, and again from a reloaded page's `ready` until its next `mounted`, since the native view reports no load start. It covers the whole wait, the dev server's build included, and works in development and release.
+- In development, a page that shows a build error reports it, with its height, so that the error replaces `dom.fallback` and a view sized to its content shows it. `dom.onLoad` still waits for `mounted`.
 - Every component asks the dev server for its bundle as soon as native code imports it, from the dev server the app's bundle came from, so the build often finishes before a screen renders it.
 
 ## Consequences

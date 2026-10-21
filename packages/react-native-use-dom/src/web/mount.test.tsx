@@ -35,6 +35,14 @@ function mountedReports({ instanceId }: { instanceId: string }): DomToNativeMess
 	return sent.filter((message) => message.instanceId === instanceId && message.type === 'mounted')
 }
 
+function nextFrame(): Promise<void> {
+	return new Promise((resolve) => {
+		requestAnimationFrame(() => {
+			resolve()
+		})
+	})
+}
+
 function flush(): Promise<void> {
 	return new Promise((resolve) => {
 		setTimeout(resolve, 0)
@@ -124,7 +132,7 @@ describe('mountDomComponent', () => {
 		expect(root().textContent).toBe('Hello')
 	})
 
-	it('reports the first paint once, after the frame the component renders in, even in Strict Mode', async () => {
+	it('reports the first paint once, after the frame that paints the component, even in Strict Mode', async () => {
 		// Its own instance id, since a root left mounted by an earlier test still paints a frame.
 		install({ actions: [], instanceId: 'painted', props: { title: 'Hello' } })
 
@@ -134,11 +142,12 @@ describe('mountDomComponent', () => {
 
 		expect(mountedReports({ instanceId: 'painted' })).toEqual([])
 
-		await act(async () => {
-			await new Promise((resolve) => {
-				requestAnimationFrame(resolve)
-			})
-		})
+		await act(nextFrame)
+
+		// The frame's callbacks ran before it painted the component.
+		expect(mountedReports({ instanceId: 'painted' })).toEqual([])
+
+		await act(nextFrame)
 
 		expect(mountedReports({ instanceId: 'painted' })).toEqual([{ instanceId: 'painted', type: 'mounted' }])
 	})

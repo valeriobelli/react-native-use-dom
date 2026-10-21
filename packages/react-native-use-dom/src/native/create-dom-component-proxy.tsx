@@ -48,7 +48,7 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 
 		bridge.setActions(actions)
 
-		const { contentHeight, mounted } = useBridgeCallbacks({ actionNames, bridge, dom, props })
+		const { contentHeight, pageShown } = useBridgeCallbacks({ actionNames, bridge, dom, props })
 
 		// The payload the page reads before its first script runs, so the first paint already has
 		// real data. Frozen at mount: later changes travel as messages, which is what keeps a prop
@@ -68,7 +68,7 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 				componentName={componentName}
 				dom={dom}
 				contentHeight={contentHeight}
-				mounted={mounted}
+				pageShown={pageShown}
 				injectedObjectJson={injectedObjectJson}
 				{...page}
 				viewRef={view}
@@ -163,9 +163,9 @@ function useBridgeCallbacks({
 	bridge: NativeDomBridge
 	dom: DomProps
 	props: Record<string, Serializable>
-}): { contentHeight: number | null; mounted: boolean } {
+}): { contentHeight: number | null; pageShown: boolean } {
 	const [contentHeight, setContentHeight] = useState<number | null>(null)
-	const [mounted, setMounted] = useState(false)
+	const [pageShown, setPageShown] = useState(false)
 	const onConsole = useCallback((level: ConsoleMessage['level'], args: readonly Serializable[]) => {
 		console[level](...args)
 	}, [])
@@ -176,15 +176,20 @@ function useBridgeCallbacks({
 	}
 
 	bridge.setCallbacks({
+		// A build error takes the fallback's place, so that it is not hidden while the build fails, but
+		// the component has not loaded.
+		onBuildError: () => {
+			setPageShown(true)
+		},
 		onConsole,
 		onMounted: () => {
-			setMounted(true)
+			setPageShown(true)
 			dom.onLoad?.()
 		},
 		// The page can load before the first props message is sent, so it asks for them itself. A page
 		// that reports ready again has reloaded, and shows nothing until it mounts again.
 		onReady: () => {
-			setMounted(false)
+			setPageShown(false)
 			bridge.sendProps(props, actionNames)
 		},
 		...(dom.matchContents ? { onResize } : {}),
@@ -193,7 +198,7 @@ function useBridgeCallbacks({
 		},
 	})
 
-	return { contentHeight, mounted }
+	return { contentHeight, pageShown }
 }
 
 function reportUncaughtError({ dom, error }: { dom: DomProps; error: Error }): void {

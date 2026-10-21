@@ -40,6 +40,16 @@ interface MountedMessage {
 	instanceId: string
 }
 
+/**
+ * DOM → native, in development: the dev server could not build the component, and the page shows the
+ * build error in its place. The page reloads once the build works again, so a {@link ReadyMessage}
+ * follows.
+ */
+interface BuildErrorMessage {
+	type: 'build-error'
+	instanceId: string
+}
+
 /** Native → DOM: the current value of every serializable prop. */
 export interface PropsMessage {
 	type: 'props'
@@ -99,6 +109,7 @@ export interface UncaughtErrorMessage {
 export type DomToNativeMessage =
 	| ReadyMessage
 	| MountedMessage
+	| BuildErrorMessage
 	| ActionCallMessage
 	| ResultMessage
 	| ResizeMessage

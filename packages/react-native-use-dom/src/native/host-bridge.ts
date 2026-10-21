@@ -18,6 +18,8 @@ export interface HostBridgeCallbacks {
 	onReady?: () => void
 	/** The DOM component rendered and painted for the first time on this page. */
 	onMounted?: () => void
+	/** In development, the page shows a build error instead of the DOM component. */
+	onBuildError?: () => void
 }
 
 /**
@@ -97,6 +99,9 @@ export class NativeDomBridge {
 				break
 			case 'mounted':
 				this.#callbacks.onMounted?.()
+				break
+			case 'build-error':
+				this.#callbacks.onBuildError?.()
 				break
 			case 'action-call':
 				this.#runAction(message.callId, message.action, message.args)

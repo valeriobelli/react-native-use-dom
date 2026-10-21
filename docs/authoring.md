@@ -101,7 +101,7 @@ Until then the view shows only its `backgroundColor`.
 
 Pass `fallback` to show something in its place. It covers the view until the component has painted, and again
 while a reloaded page starts. With `matchContents`, the view is as tall as the fallback until the content's height
-is known.
+is known. In development, a build error replaces the fallback, and `onLoad` waits until the component builds and paints.
 
 ```tsx
 <Chart points={points} dom={{ fallback: <ActivityIndicator /> }} />

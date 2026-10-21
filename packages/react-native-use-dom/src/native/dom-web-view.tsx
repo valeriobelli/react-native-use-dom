@@ -14,7 +14,7 @@ interface DomWebViewProps {
 	dom: DomProps
 	contentHeight: number | null
 	injectedObjectJson: string
-	mounted: boolean
+	pageShown: boolean
 	pagesDirectory: string
 	source: string
 	viewRef: RefObject<RNUseDomWebViewMethods | null>
@@ -34,13 +34,13 @@ export function DomWebView({
 	contentHeight,
 	dom,
 	injectedObjectJson,
-	mounted,
+	pageShown,
 	pagesDirectory,
 	source,
 	viewRef,
 }: DomWebViewProps) {
 	const { RNUseDomWebView, callback } = loadNativeView()
-	const covered = Boolean(dom.fallback) && !mounted
+	const covered = Boolean(dom.fallback) && !pageShown
 	const { fallbackStyle, style, webViewStyle, onLayout } = useViewStyles({ componentName, contentHeight, covered, dom })
 
 	return (
