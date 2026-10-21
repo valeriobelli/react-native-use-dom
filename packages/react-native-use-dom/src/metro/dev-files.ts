@@ -1,10 +1,8 @@
 import type { ServerResponse } from 'node:http'
 
-import { DEV_BUNDLE_URL_ATTRIBUTE, DEV_ENTRY_PATH, DEV_MOUNT_PATH } from '../runtime/paths'
-import { DOM_RESOLVER_OPTION, DOM_TRANSFORM_OPTIONS } from './dom-component'
+import { DEV_BUNDLE_URL_ATTRIBUTE, DEV_MOUNT_PATH, devEntryBundlePath } from '../runtime/paths'
 import { inlineJson, renderPage } from './page'
 import { PUBLIC_DIRECTORY, publicDirectory, sendPublicFile } from './public-directory'
-import { WEB_PLATFORM } from './web-config'
 
 /** How often a page showing a build error checks whether the build works again. */
 const RETRY_INTERVAL_MS = 1000
@@ -22,15 +20,8 @@ export function servePage(url: URL, res: ServerResponse): void {
 		return
 	}
 
-	const bundleQuery = new URLSearchParams({
-		dev: url.searchParams.get('dev') ?? 'true',
-		platform: WEB_PLATFORM,
-		[`resolver.${DOM_RESOLVER_OPTION}`]: file,
-		...Object.fromEntries(Object.entries(DOM_TRANSFORM_OPTIONS).map(([key, value]) => [`transform.${key}`, value])),
-	})
-
 	res.writeHead(200, { 'Cache-Control': 'no-store', 'Content-Type': 'text/html; charset=UTF-8' })
-	res.end(renderDevPage(`${DEV_ENTRY_PATH}?${bundleQuery.toString()}`))
+	res.end(renderDevPage(devEntryBundlePath({ dev: url.searchParams.get('dev') ?? 'true', file })))
 }
 
 /**

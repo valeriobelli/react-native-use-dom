@@ -84,13 +84,31 @@ Declaring `dom` is what lets native code pass it with type checking.
 | `scrollEnabled`             | `boolean`                | `true`    | Lets the user scroll the content. Turn it off so that drags reach a native `ScrollView` around the component.                                               |
 | `hideKeyboardAccessoryView` | `boolean`                | `false`   | iOS only. Hides the bar above the keyboard (‹ › and Done) while an input in the component has focus, and empties the iPad shortcut bar. Android ignores it. |
 | `onNavigationBlocked`       | `(url: string) => void`  |           | Called when the page tries to navigate away, through a link or `window.location`. See below.                                                                |
-| `onLoad`                    | `() => void`             |           | Called once the component has mounted and painted for the first time.                                                                                       |
+| `fallback`                  | `ReactNode`              |           | Shown over the view until the component has painted. See [Loading](#loading).                                                                               |
+| `onLoad`                    | `() => void`             |           | Called once the component has mounted and painted for the first time, and again after its page reloads.                                                     |
 | `onError`                   | `(error: Error) => void` |           | Called when the component fails to load or throws an error it doesn't catch.                                                                                |
 | `testID`                    | `string`                 |           | The native view's `testID`, for end-to-end tests.                                                                                                           |
 
 ```tsx
 <Hello name="world" dom={{ matchContents: true, backgroundColor: 'transparent' }} />
 ```
+
+## Loading
+
+A DOM component needs a moment before its first paint: its web view starts and loads the page, and in development
+the dev server also builds the component, which takes longest for the first component after the dev server starts.
+Until then the view shows only its `backgroundColor`.
+
+Pass `fallback` to show something in its place. It covers the view until the component has painted, and again
+while a reloaded page starts. With `matchContents`, the view is as tall as the fallback until the content's height
+is known.
+
+```tsx
+<Chart points={points} dom={{ fallback: <ActivityIndicator /> }} />
+```
+
+The dev server starts building a component as soon as native code imports it, so it is
+often built by the time a screen renders it.
 
 ## Links and navigation
 

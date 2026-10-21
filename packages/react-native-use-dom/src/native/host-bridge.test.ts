@@ -198,6 +198,14 @@ describe('NativeDomBridge', () => {
 			expect(onReady).toHaveBeenCalledTimes(1)
 		})
 
+		it('reports when the component has painted', () => {
+			const onMounted = jest.fn()
+
+			bridge.setCallbacks({ onMounted })
+			fromDom({ instanceId: 'i1', type: 'mounted' })
+			expect(onMounted).toHaveBeenCalledTimes(1)
+		})
+
 		it('forwards a measured size', () => {
 			const onResize = jest.fn()
 

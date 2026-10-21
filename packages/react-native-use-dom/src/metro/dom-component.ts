@@ -3,6 +3,7 @@ import path from 'node:path'
 import type { CustomResolutionContext } from 'metro-resolver'
 
 import { DomError, DomErrorCode } from '../runtime/errors'
+import { DOM_RESOLVER_OPTION, DOM_TRANSFORM_OPTIONS, WEB_PLATFORM } from '../runtime/paths'
 
 /** The file every DOM component bundle is requested with as its entry. */
 export const WEB_ENTRY_PATH = require.resolve('../web/entry')
@@ -14,23 +15,22 @@ export const WEB_ENTRY_PATH = require.resolve('../web/entry')
 export const DOM_COMPONENT_SPECIFIER = 'react-native-use-dom/internal/dom-component'
 
 /**
- * The key, set from the `resolver.dom` bundle URL parameter, naming the component to build.
+ * The build options that make {@link WEB_ENTRY_PATH} the bundle of `component`.
  *
- * It travels as a resolver option, not a transform option: Metro keys the transform cache of every
- * file on the transform options, so a component named there would have each module that components
- * share transformed once per component.
+ * The component is named to the resolver, not to the transformer: a transform option is part of the
+ * cache key of every module, so each module the pages share would be transformed once per page.
  */
-export const DOM_RESOLVER_OPTION = 'dom'
-
-/**
- * The transform option Expo's own CLI sets on every DOM component build, with the same value for all of them.
- *
- * Expo's Babel transformer and `babel-preset-expo` read it to select the WebView preset, which
- * compiles for the Android WebView (`@expo/metro-config` `babel-transformer.js:92`, `babel-preset-expo`
- * `build/index.js:36-72`). The value never names a component, so it adds nothing to the transform cache key
- * that differs between components.
- */
-export const DOM_TRANSFORM_OPTIONS = { dom: 'true' } as const
+export function domBundleOptions({ component }: { component: string }): {
+	customResolverOptions: Record<string, string>
+	customTransformOptions: Record<string, string>
+	platform: string
+} {
+	return {
+		customResolverOptions: { [DOM_RESOLVER_OPTION]: component },
+		customTransformOptions: DOM_TRANSFORM_OPTIONS,
+		platform: WEB_PLATFORM,
+	}
+}
 
 /**
  * The path of the component the build names, which the entry's import of

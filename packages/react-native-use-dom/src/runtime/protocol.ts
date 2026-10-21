@@ -31,6 +31,15 @@ export interface ReadyMessage {
 	protocolVersion: number
 }
 
+/**
+ * DOM → native: the component has rendered and the browser has painted it. Sent once per page load,
+ * after {@link ReadyMessage}, which only says that props can be received.
+ */
+interface MountedMessage {
+	type: 'mounted'
+	instanceId: string
+}
+
 /** Native → DOM: the current value of every serializable prop. */
 export interface PropsMessage {
 	type: 'props'
@@ -89,6 +98,7 @@ export interface UncaughtErrorMessage {
 /** Anything the DOM runtime may send to the native side. */
 export type DomToNativeMessage =
 	| ReadyMessage
+	| MountedMessage
 	| ActionCallMessage
 	| ResultMessage
 	| ResizeMessage

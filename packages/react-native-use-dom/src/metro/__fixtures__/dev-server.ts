@@ -155,6 +155,8 @@ async function loadPage(url: string): Promise<Page> {
 				fetch: (input: string, init?: RequestInit) => fetch(new URL(input, url), init),
 			})
 		},
+		// A web view paints frames, and the page waits for one before it reports that it has mounted.
+		pretendToBeVisual: true,
 		runScripts: 'dangerously',
 		url,
 		virtualConsole,

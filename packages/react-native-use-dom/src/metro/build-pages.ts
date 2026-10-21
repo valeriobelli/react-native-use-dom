@@ -5,11 +5,11 @@ import type { ConfigT } from 'metro-config'
 import type Server from 'metro/private/Server'
 
 import { domBundleFileName } from './bundle-file'
-import { DOM_RESOLVER_OPTION, DOM_TRANSFORM_OPTIONS, WEB_ENTRY_PATH } from './dom-component'
+import { domBundleOptions, WEB_ENTRY_PATH } from './dom-component'
 import type { Metro } from './host-metro'
 import { renderPage } from './page'
 import { copyPublicDirectory, publicDirectory } from './public-directory'
-import { createWebConfig, WEB_PLATFORM } from './web-config'
+import { createWebConfig } from './web-config'
 
 /**
  * Builds each component's page into `outputDirectory`, replacing whatever an earlier build left.
@@ -69,14 +69,10 @@ async function buildPage({
 
 	const { code } = await server.build({
 		...defaults,
-		// The component is named to the resolver, not to the transformer: a transform option is part of
-		// the cache key of every module, so each module the pages share would be transformed once per page.
-		customResolverOptions: { [DOM_RESOLVER_OPTION]: component },
-		customTransformOptions: DOM_TRANSFORM_OPTIONS,
+		...domBundleOptions({ component }),
 		dev: false,
 		entryFile: WEB_ENTRY_PATH,
 		minify: true,
-		platform: WEB_PLATFORM,
 	})
 
 	await Promise.all([

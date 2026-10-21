@@ -4,11 +4,9 @@ import type { ConfigT } from 'metro-config'
 import type { CustomResolutionContext, CustomResolver, Resolution } from 'metro-resolver'
 
 import { DomError, DomErrorCode } from '../runtime/errors'
+import { WEB_PLATFORM } from '../runtime/paths'
 import { domComponentPath, isDomComponentImport } from './dom-component'
 import type { Metro } from './host-metro'
-
-/** The platform DOM bundles are built for. */
-export const WEB_PLATFORM = 'web'
 
 /**
  * The environment variable the web Babel transformer reads its settings from.

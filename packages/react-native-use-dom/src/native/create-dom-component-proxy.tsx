@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useId, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import type { ComponentType, RefObject, Ref } from 'react'
-import { View } from 'react-native'
+import type { ComponentType, Ref, RefObject } from 'react'
 
 import type { ConsoleMessage } from '../runtime/protocol'
 import { splitProps } from '../runtime/split-props'
+import { DomWebView } from './dom-web-view'
 import { NativeDomBridge } from './host-bridge'
-import { reportPageLoadError } from './page-load-error'
-import { resolveDomSource } from './source'
+import { devBundleUrl, resolveDomSource } from './source'
 import type { DomComponentHandle, DomProps, Serializable } from './types'
-import { useViewStyles } from './view-style'
-import { loadNativeView } from './web-view'
-import type { DomLoadErrorPayload, RNUseDomWebViewMethods } from './web-view'
+import { warmDomBundle } from './warm-bundle'
+import type { RNUseDomWebViewMethods } from './web-view'
 
 /** What identifies the `'use dom'` module a proxy renders, as the Babel plugin writes it. */
 export interface DomComponentProxyOptions {
@@ -39,15 +37,10 @@ interface ProxyProps {
 export function createDomComponentProxy(options: DomComponentProxyOptions): ComponentType<ProxyProps> {
 	const componentName = describeComponent(options.filePath)
 
+	startDevBuild({ filePath: options.filePath })
+
 	function DomComponent({ dom = NO_DOM_PROPS, ref, ...rest }: ProxyProps) {
-		const instanceId = useId()
-		const view = useRef<RNUseDomWebViewMethods | null>(null)
-		const bridge = useConstant(
-			() =>
-				new NativeDomBridge(instanceId, (eventName, payload) => {
-					view.current?.dispatchMessage(eventName, payload)
-				}),
-		)
+		const { bridge, view } = useNativeBridge()
 
 		const { data: props, actions } = splitProps(rest, componentName)
 		// Hermes has no `toSorted`, and `Object.keys` returns a fresh array, so sorting it in place is safe.
@@ -55,14 +48,14 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 
 		bridge.setActions(actions)
 
-		const [contentHeight, setContentHeight] = useState<number | null>(null)
-
-		useBridgeCallbacks(bridge, dom, props, actionNames, setContentHeight)
+		const { contentHeight, mounted } = useBridgeCallbacks({ actionNames, bridge, dom, props })
 
 		// The payload the page reads before its first script runs, so the first paint already has
 		// real data. Frozen at mount: later changes travel as messages, which is what keeps a prop
 		// change from reloading the WebView.
-		const injectedObjectJson = useConstant(() => JSON.stringify({ actions: actionNames, instanceId, props }))
+		const injectedObjectJson = useConstant(() =>
+			JSON.stringify({ actions: actionNames, instanceId: bridge.instanceId, props }),
+		)
 
 		useDomLifecycle(bridge, props, actionNames)
 		useImperativeHandle(ref, () => createHandleProxy(bridge), [bridge])
@@ -75,6 +68,7 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 				componentName={componentName}
 				dom={dom}
 				contentHeight={contentHeight}
+				mounted={mounted}
 				injectedObjectJson={injectedObjectJson}
 				{...page}
 				viewRef={view}
@@ -85,6 +79,19 @@ export function createDomComponentProxy(options: DomComponentProxyOptions): Comp
 	DomComponent.displayName = componentName
 
 	return DomComponent
+}
+
+/**
+ * Asks the dev server to build the component, unless its page is pre-built. Called when the component
+ * is imported rather than when it renders, so that the dev server is often done building it by the
+ * time a screen shows it.
+ */
+function startDevBuild({ filePath }: { filePath: string }): void {
+	const url = devBundleUrl({ filePath })
+
+	if (url) {
+		warmDomBundle({ url })
+	}
 }
 
 /**
@@ -115,6 +122,20 @@ function useDomLifecycle(
 	}, [bridge, JSON.stringify(props), actionNames])
 }
 
+/** The bridge to the page, and the native view it pushes messages into. */
+function useNativeBridge(): { bridge: NativeDomBridge; view: RefObject<RNUseDomWebViewMethods | null> } {
+	const instanceId = useId()
+	const view = useRef<RNUseDomWebViewMethods | null>(null)
+	const bridge = useConstant(
+		() =>
+			new NativeDomBridge(instanceId, (eventName, payload) => {
+				view.current?.dispatchMessage(eventName, payload)
+			}),
+	)
+
+	return { bridge, view }
+}
+
 /**
  * Computes a value once and keeps it for the component's whole lifetime.
  *
@@ -129,15 +150,22 @@ function useConstant<T>(create: () => T): T {
 
 /**
  * Keeps the bridge's callbacks pointing at the current render, so an action added or removed
- * between renders takes effect on the next message rather than the next mount.
+ * between renders takes effect on the next message rather than the next mount. Returns what the
+ * page has reported about itself.
  */
-function useBridgeCallbacks(
-	bridge: NativeDomBridge,
-	dom: DomProps,
-	props: Record<string, Serializable>,
-	actionNames: readonly string[],
-	setContentHeight: (height: number) => void,
-): void {
+function useBridgeCallbacks({
+	actionNames,
+	bridge,
+	dom,
+	props,
+}: {
+	actionNames: readonly string[]
+	bridge: NativeDomBridge
+	dom: DomProps
+	props: Record<string, Serializable>
+}): { contentHeight: number | null; mounted: boolean } {
+	const [contentHeight, setContentHeight] = useState<number | null>(null)
+	const [mounted, setMounted] = useState(false)
 	const onConsole = useCallback((level: ConsoleMessage['level'], args: readonly Serializable[]) => {
 		console[level](...args)
 	}, [])
@@ -148,25 +176,37 @@ function useBridgeCallbacks(
 	}
 
 	bridge.setCallbacks({
-		// The page can load before the first props message is sent, so it asks for them itself.
+		onConsole,
+		onMounted: () => {
+			setMounted(true)
+			dom.onLoad?.()
+		},
+		// The page can load before the first props message is sent, so it asks for them itself. A page
+		// that reports ready again has reloaded, and shows nothing until it mounts again.
 		onReady: () => {
+			setMounted(false)
 			bridge.sendProps(props, actionNames)
 		},
 		...(dom.matchContents ? { onResize } : {}),
-		onConsole,
 		onUncaughtError: (error) => {
-			if (dom.onError) {
-				dom.onError(error)
-
-				return
-			}
-
-			// Without an `onError` handler, an error that escaped the DOM component would otherwise
-			// leave nothing but a blank view.
-			// oxlint-disable-next-line no-console
-			console.error(error)
+			reportUncaughtError({ dom, error })
 		},
 	})
+
+	return { contentHeight, mounted }
+}
+
+function reportUncaughtError({ dom, error }: { dom: DomProps; error: Error }): void {
+	if (dom.onError) {
+		dom.onError(error)
+
+		return
+	}
+
+	// Without an `onError` handler, an error that escaped the DOM component would otherwise
+	// leave nothing but a blank view.
+	// oxlint-disable-next-line no-console
+	console.error(error)
 }
 
 /**
@@ -195,81 +235,4 @@ function describeComponent(filePath: string): string {
 	const fileName = filePath.split('/').pop() ?? filePath
 
 	return fileName.replace(/\.[^.]+$/u, '')
-}
-
-interface DomWebViewProps {
-	bridge: NativeDomBridge
-	componentName: string
-	dom: DomProps
-	contentHeight: number | null
-	injectedObjectJson: string
-	pagesDirectory: string
-	source: string
-	viewRef: RefObject<RNUseDomWebViewMethods | null>
-}
-
-/**
- * Renders the native view. Separated from the component above so that everything crossing into
- * Nitro — including the `callback(...)` wrapping every function prop needs — reads in one place.
- *
- * The style goes on a plain view around the WebView, which fills it: on Android, a Nitro view on
- * React Native 0.86 or newer receives none of the base view props, such as `backgroundColor`,
- * `opacity` or `testID` (https://github.com/margelo/nitro/issues/1656).
- */
-function DomWebView({
-	bridge,
-	componentName,
-	contentHeight,
-	dom,
-	injectedObjectJson,
-	pagesDirectory,
-	source,
-	viewRef,
-}: DomWebViewProps) {
-	const { RNUseDomWebView, callback } = loadNativeView()
-	const { style, webViewStyle, onLayout } = useViewStyles({ componentName, contentHeight, dom })
-
-	return (
-		<View
-			style={style}
-			{...(__DEV__ ? { onLayout } : {})}
-			{...(dom.testID === undefined ? {} : { testID: dom.testID })}
-		>
-			<RNUseDomWebView
-				source={source}
-				pagesDirectory={pagesDirectory}
-				injectedObjectJson={injectedObjectJson}
-				scrollEnabled={dom.scrollEnabled ?? true}
-				hideKeyboardAccessoryView={dom.hideKeyboardAccessoryView ?? false}
-				inspectable={__DEV__}
-				style={webViewStyle}
-				hybridRef={callback((instance: RNUseDomWebViewMethods) => {
-					holdNativeView(viewRef, instance)
-				})}
-				onMessage={callback((message: string) => {
-					bridge.receive(message)
-				})}
-				onLoadEnd={callback(() => {
-					dom.onLoad?.()
-				})}
-				onLoadError={callback((error: DomLoadErrorPayload) => {
-					reportPageLoadError({ onError: dom.onError, payload: error })
-				})}
-				onNavigationBlocked={callback((url: string) => {
-					dom.onNavigationBlocked?.(url)
-				})}
-			/>
-		</View>
-	)
-}
-
-/**
- * Stores the native view handle Nitro hands back.
- *
- * A module-level function rather than an inline assignment, because the handle is the one thing
- * this component holds that has nothing to do with rendering: it exists so that messages can be
- * pushed into the page between renders.
- */
-function holdNativeView(ref: RefObject<RNUseDomWebViewMethods | null>, instance: RNUseDomWebViewMethods): void {
-	ref.current = instance
 }

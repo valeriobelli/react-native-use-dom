@@ -81,7 +81,7 @@ export function Screen() {
 - When a method throws or rejects, the native call rejects with an `Error` carrying the same `message`, `name` and
   serializable own properties.
 - Calling a method the latest handle doesn't have rejects with `ERR_USE_DOM_UNKNOWN_HANDLE_METHOD`.
-- Call the methods once the component has loaded, which `dom.onLoad` reports, or in response to something the
+- Call the methods once the component has painted, which `dom.onLoad` reports, or in response to something the
   user did.
 - When the component unmounts, pending calls reject with `ERR_USE_DOM_BRIDGE_CLOSED`. Expect that when a screen is dismissed.
 - Every rendered instance has its own handle.

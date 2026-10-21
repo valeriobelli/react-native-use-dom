@@ -22,3 +22,4 @@ when to add a decision page and when to update the docs instead.
 - [ADR 0008: Supported React Native versions](ADR-0008-Supported-React-Native-versions.md): End of Cycle through Future, one example app per version.
 - [ADR 0009: Peer range starts at React Native 0.85](ADR-0009-Peer-range-starts-at-React-Native-0.85.md): peer range `>=0.85`, the oldest version React Native supports, checked nightly once it no longer is.
 - [ADR 0010: The DOM component is named to the resolver](ADR-0010-DOM-component-is-named-to-the-resolver.md): release builds transform the modules that pages share once, not once per component.
+- [ADR 0011: Loading states](ADR-0011-Loading-states.md): `dom.fallback` covers the view until the first paint, and `dom.onLoad` fires on it.

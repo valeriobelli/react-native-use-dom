@@ -76,7 +76,10 @@ describe('createDomBridge', () => {
 		bridge.dispose()
 	})
 
-	it('announces itself so the native side can re-send props', () => {
+	it('announces itself so the native side can re-send props, and reports its first paint only once', () => {
+		bridge.reportMounted()
+		bridge.reportMounted()
+		expect(sent.map(({ type }) => type)).toEqual(['ready', 'mounted'])
 		expect(sent[0]).toEqual({ instanceId: 'i1', protocolVersion: 1, type: 'ready' })
 	})
 

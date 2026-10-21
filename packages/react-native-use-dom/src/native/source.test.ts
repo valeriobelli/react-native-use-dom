@@ -1,6 +1,6 @@
 import { DomError, DomErrorCode } from '../runtime/errors'
-import { DEV_PAGE_PATH } from '../runtime/paths'
-import { resolveDomSource } from './source'
+import { DEV_ENTRY_PATH, DEV_PAGE_PATH } from '../runtime/paths'
+import { devBundleUrl, resolveDomSource } from './source'
 
 const native = { os: 'ios', scriptURL: '' }
 
@@ -86,5 +86,29 @@ describe('resolveDomSource', () => {
 
 		expect(thrown).toBeInstanceOf(DomError)
 		expect((thrown as DomError).code).toBe(DomErrorCode.MissingMetroConfig)
+	})
+})
+
+describe('devBundleUrl', () => {
+	it('names the bundle the page loads, on the dev server the app bundle came from', () => {
+		native.scriptURL = 'http://192.168.1.4:8081/index.bundle?platform=ios&dev=true'
+
+		const url = new URL(String(devBundleUrl({ filePath: FILE })))
+
+		expect(url.origin).toBe('http://192.168.1.4:8081')
+		expect(url.pathname).toBe(DEV_ENTRY_PATH)
+
+		expect(Object.fromEntries(url.searchParams)).toEqual({
+			dev: 'true',
+			platform: 'web',
+			'resolver.dom': FILE,
+			'transform.dom': 'true',
+		})
+	})
+
+	it('is null when the page is pre-built', () => {
+		native.scriptURL = 'file:///data/app/index.android.bundle'
+
+		expect(devBundleUrl({ filePath: FILE })).toBeNull()
 	})
 })
