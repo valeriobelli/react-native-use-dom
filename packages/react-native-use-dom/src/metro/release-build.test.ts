@@ -28,6 +28,12 @@ const USE_DOM_BABEL_PLUGIN = require.resolve('../babel')
 const COMPONENT =
 	"'use dom';\nimport './Hello.css';\nexport default function Hello(props) { return <p>released {props.name}</p>; }\n"
 
+// A 1x1 PNG, the smallest file Metro's asset pipeline accepts.
+const PIXEL = Buffer.from(
+	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+	'base64',
+)
+
 const WORLD = "'use dom';\nimport './Hello.css';\nexport default function World() { return <p>second page</p>; }\n"
 
 describe('a release build', () => {
@@ -46,13 +52,15 @@ describe('a release build', () => {
 		writeFileSync(path.join(projectRoot, 'Hello.css'), 'p { color: rebeccapurple; }\n')
 		writeFileSync(path.join(projectRoot, 'World.js'), WORLD)
 		writeFileSync(path.join(projectRoot, 'Unused.js'), COMPONENT)
+		writeFileSync(path.join(projectRoot, 'pixel.png'), PIXEL)
+		writeFileSync(path.join(projectRoot, 'registry.js'), 'exports.registerAsset = (asset) => asset;\n')
 		mkdirSync(path.join(projectRoot, 'public', 'fonts'), { recursive: true })
 		writeFileSync(path.join(projectRoot, 'public', 'logo.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>')
 		writeFileSync(path.join(projectRoot, 'public', 'fonts', 'Inter.woff2'), 'wOF2')
 
 		writeFileSync(
 			path.join(projectRoot, 'index.js'),
-			"global.hello = require('./Hello');\nglobal.world = require('./World');\n",
+			"global.hello = require('./Hello');\nglobal.world = require('./World');\nglobal.pixel = require('./pixel.png');\n",
 		)
 		mkdirSync(path.join(projectRoot, 'node_modules'))
 		symlinkSync(path.dirname(require.resolve('react/package.json')), path.join(projectRoot, 'node_modules', 'react'))
@@ -73,11 +81,16 @@ describe('a release build', () => {
 	})
 
 	/** Bundles the fixture the way `react-native bundle` does, with the arguments Gradle passes. */
-	async function bundleForAndroid(): Promise<string> {
+	async function bundleForAndroid({ minify = false }: { minify?: boolean } = {}): Promise<string> {
 		const bundleOutput = path.join(projectRoot, 'build', 'assets', 'index.android.bundle')
 
 		process.argv = ['node', 'cli.js', 'bundle', '--bundle-output', bundleOutput, '--assets-dest', 'build/res']
-		const config = (await withDom(fixtureConfig({ projectRoot }))) as ConfigT
+		const config = (await withDom(
+			fixtureConfig({
+				overrides: { transformer: { assetRegistryPath: path.join(projectRoot, 'registry.js') } },
+				projectRoot,
+			}),
+		)) as ConfigT
 
 		mkdirSync(path.dirname(bundleOutput), { recursive: true })
 
@@ -85,36 +98,40 @@ describe('a release build', () => {
 			bundleOut: bundleOutput,
 			dev: false,
 			entry: './index.js',
-			minify: false,
+			minify,
 			platform: 'android',
 		})
 
 		return path.join(path.dirname(bundleOutput), OFFLINE_BUNDLE_DIR)
 	}
 
-	it('embeds a page for each DOM component the app renders, none for the rest, and the public folder', async () => {
-		const pages = await bundleForAndroid()
-		const page = domBundleFileName(path.join(projectRoot, 'Hello.js'))
-		const script = page.replace(/\.html$/u, '.js')
-		const worldPage = domBundleFileName(path.join(projectRoot, 'World.js'))
-		const worldScript = worldPage.replace(/\.html$/u, '.js')
+	// A minifier renames and drops code, so the marker the build looks for has to survive it.
+	it.each([false, true])(
+		'embeds a page for each DOM component the app renders, none for the rest, and the public folder (minify: %s)',
+		async (minify) => {
+			const pages = await bundleForAndroid({ minify })
+			const page = domBundleFileName(path.join(projectRoot, 'Hello.js'))
+			const script = page.replace(/\.html$/u, '.js')
+			const worldPage = domBundleFileName(path.join(projectRoot, 'World.js'))
+			const worldScript = worldPage.replace(/\.html$/u, '.js')
 
-		expect(readdirSync(pages).sort()).toEqual([page, script, worldPage, worldScript, 'fonts', 'logo.svg'].sort())
-		expect(readFileSync(path.join(pages, 'fonts', 'Inter.woff2'), 'utf8')).toBe('wOF2')
-		expect(readFileSync(path.join(pages, page), 'utf8')).toContain(`<script src="${script}"></script>`)
+			expect(readdirSync(pages).sort()).toEqual([page, script, worldPage, worldScript, 'fonts', 'logo.svg'].sort())
+			expect(readFileSync(path.join(pages, 'fonts', 'Inter.woff2'), 'utf8')).toBe('wOF2')
+			expect(readFileSync(path.join(pages, page), 'utf8')).toContain(`<script src="${script}"></script>`)
 
-		const code = readFileSync(path.join(pages, script), 'utf8')
+			const code = readFileSync(path.join(pages, script), 'utf8')
 
-		expect(code).toContain('released')
-		expect(code).toContain('rebeccapurple')
-		// Each page builds from one entry module that every component shares, so it must not mount another's.
-		expect(code).not.toContain('second page')
-		expect(readFileSync(path.join(pages, worldScript), 'utf8')).toContain('second page')
-		expect(readFileSync(path.join(pages, worldScript), 'utf8')).not.toContain('released')
-		expect(code).not.toContain('sourceMappingURL')
-		expect(code).not.toContain('/_dom/')
-		expect(existsSync(path.join(pages, domBundleFileName(path.join(projectRoot, 'Unused.js'))))).toBe(false)
-	})
+			expect(code).toContain('released')
+			expect(code).toContain('rebeccapurple')
+			// Each page builds from one entry module that every component shares, so it must not mount another's.
+			expect(code).not.toContain('second page')
+			expect(readFileSync(path.join(pages, worldScript), 'utf8')).toContain('second page')
+			expect(readFileSync(path.join(pages, worldScript), 'utf8')).not.toContain('released')
+			expect(code).not.toContain('sourceMappingURL')
+			expect(code).not.toContain('/_dom/')
+			expect(existsSync(path.join(pages, domBundleFileName(path.join(projectRoot, 'Unused.js'))))).toBe(false)
+		},
+	)
 
 	it('replaces the pages an earlier build left', async () => {
 		const pages = await bundleForAndroid()
