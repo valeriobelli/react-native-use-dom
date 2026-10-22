@@ -34,6 +34,9 @@ const PIXEL = Buffer.from(
 	'base64',
 )
 
+// A page whose web build fails, while the native build only sees its proxy.
+const BROKEN = "'use dom';\nimport './Missing.css';\nexport default function Broken() { return null; }\n"
+
 const WORLD = "'use dom';\nimport './Hello.css';\nexport default function World() { return <p>second page</p>; }\n"
 
 describe('a release build', () => {
@@ -52,6 +55,8 @@ describe('a release build', () => {
 		writeFileSync(path.join(projectRoot, 'Hello.css'), 'p { color: rebeccapurple; }\n')
 		writeFileSync(path.join(projectRoot, 'World.js'), WORLD)
 		writeFileSync(path.join(projectRoot, 'Unused.js'), COMPONENT)
+		writeFileSync(path.join(projectRoot, 'Broken.js'), BROKEN)
+		writeFileSync(path.join(projectRoot, 'with-broken-page.js'), "global.broken = require('./Broken');\n")
 		writeFileSync(path.join(projectRoot, 'pixel.png'), PIXEL)
 		writeFileSync(path.join(projectRoot, 'registry.js'), 'exports.registerAsset = (asset) => asset;\n')
 		mkdirSync(path.join(projectRoot, 'public', 'fonts'), { recursive: true })
@@ -81,7 +86,10 @@ describe('a release build', () => {
 	})
 
 	/** Bundles the fixture the way `react-native bundle` does, with the arguments Gradle passes. */
-	async function bundleForAndroid({ minify = false }: { minify?: boolean } = {}): Promise<string> {
+	async function bundleForAndroid({
+		entry = './index.js',
+		minify = false,
+	}: { entry?: string; minify?: boolean } = {}): Promise<string> {
 		const bundleOutput = path.join(projectRoot, 'build', 'assets', 'index.android.bundle')
 
 		process.argv = ['node', 'cli.js', 'bundle', '--bundle-output', bundleOutput, '--assets-dest', 'build/res']
@@ -97,7 +105,7 @@ describe('a release build', () => {
 		await runBuild(config, {
 			bundleOut: bundleOutput,
 			dev: false,
-			entry: './index.js',
+			entry,
 			minify,
 			platform: 'android',
 		})
@@ -115,6 +123,9 @@ describe('a release build', () => {
 			const worldPage = domBundleFileName(path.join(projectRoot, 'World.js'))
 			const worldScript = worldPage.replace(/\.html$/u, '.js')
 
+			expect(readFileSync(path.join(path.dirname(pages), 'index.android.bundle'), 'utf8')).toContain(
+				'createDomComponentProxy',
+			)
 			expect(readdirSync(pages).sort()).toEqual([page, script, worldPage, worldScript, 'fonts', 'logo.svg'].sort())
 			expect(readFileSync(path.join(pages, 'fonts', 'Inter.woff2'), 'utf8')).toBe('wOF2')
 			expect(readFileSync(path.join(pages, page), 'utf8')).toContain(`<script src="${script}"></script>`)
@@ -141,5 +152,14 @@ describe('a release build', () => {
 		await bundleForAndroid()
 
 		expect(existsSync(path.join(pages, 'stale.html'))).toBe(false)
+	})
+
+	it('fails the bundle when a page fails to build', async () => {
+		const bundleOutput = path.join(projectRoot, 'build', 'assets', 'index.android.bundle')
+
+		rmSync(bundleOutput, { force: true })
+
+		await expect(bundleForAndroid({ entry: './with-broken-page.js' })).rejects.toThrow('Missing.css')
+		expect(existsSync(bundleOutput)).toBe(false)
 	})
 })
