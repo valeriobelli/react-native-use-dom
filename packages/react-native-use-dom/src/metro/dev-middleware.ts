@@ -3,7 +3,14 @@ import path from 'node:path'
 
 import type { ConfigT } from 'metro-config'
 
-import { DEV_ENTRY_PATH, DEV_HOT_PATH, DEV_MOUNT_PATH, DEV_PAGE_PATH, WEB_PLATFORM } from '../runtime/paths'
+import {
+	DEV_ENTRY_PATH,
+	DEV_HOT_PATH,
+	DEV_MAP_PATH,
+	DEV_MOUNT_PATH,
+	DEV_PAGE_PATH,
+	WEB_PLATFORM,
+} from '../runtime/paths'
 import { servePage, servePublicFile } from './dev-files'
 import { WEB_ENTRY_PATH } from './dom-component'
 import type { Metro } from './host-metro'
@@ -46,7 +53,8 @@ const ENTRY_BUNDLE_PATH = WEB_ENTRY_PATH.replace(/\.[^./\\]+$/u, '.bundle')
  * `GET /_dom/index.html?file=<component>` answers with the page the native view loads, which in
  * turn loads `/_dom/entry.bundle`: the component's bundle, built by a second Metro instance
  * configured for the web from `config`. That instance starts on the first bundle request, so apps
- * that render no DOM component never pay for it.
+ * that render no DOM component never pay for it. `/_dom/entry.map`, with the same query, answers
+ * with the bundle's source map.
  *
  * Any other `/_dom/<path>` answers with the file at `<path>` in the project's `public` folder, so
  * that a page can load it by a relative URL, as it does in a release build.
@@ -122,7 +130,7 @@ function routeServer(
 	routeClose(server, stopHot)
 }
 
-/** Answers a `/_dom` request: the page, the entry bundle, a file of the public folder, or nothing. */
+/** Answers a `/_dom` request: the page, the entry bundle or its map, a file of the public folder, or nothing. */
 function routeRequest(
 	config: ConfigT,
 	getBundler: () => Promise<WebBundler>,
@@ -143,7 +151,7 @@ function routeRequest(
 		return
 	}
 
-	if (url.pathname === DEV_ENTRY_PATH) {
+	if (url.pathname === DEV_ENTRY_PATH || url.pathname === DEV_MAP_PATH) {
 		void forwardBundleRequest(getBundler, url, req, res, next)
 
 		return
@@ -231,13 +239,15 @@ function toPosix(filePath: string): string {
 	return filePath.split(path.sep).join('/')
 }
 
-/** Source maps are inlined: the page has no route to fetch a separate one from. */
+/**
+ * The map is not inlined: it would make the bundle several times larger on every load and hot
+ * reload. Metro answers the map of the same build for the same query on a `.map` path.
+ */
 function toWebBundleUrl(url: URL, bundleEntry: string): string {
 	const query = new URLSearchParams(url.search)
 
 	query.set('bundleEntry', bundleEntry)
 	query.set('platform', WEB_PLATFORM)
-	query.set('inlineSourceMap', 'true')
 
 	return `${url.pathname}?${query.toString()}`
 }

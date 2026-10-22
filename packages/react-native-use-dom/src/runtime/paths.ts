@@ -31,6 +31,9 @@ export const DEV_PAGE_PATH = `/${DEV_MOUNT_PATH}/index.html`
 /** The generated entry module every DOM component's development bundle starts from. */
 export const DEV_ENTRY_PATH = `/${DEV_MOUNT_PATH}/entry.bundle`
 
+/** The source map of a development bundle, requested with the same query as the bundle. */
+export const DEV_MAP_PATH = `/${DEV_MOUNT_PATH}/entry.map`
+
 /** The platform DOM component bundles are built for. */
 export const WEB_PLATFORM = 'web'
 

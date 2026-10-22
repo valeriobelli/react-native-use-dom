@@ -1,6 +1,12 @@
 import type { ServerResponse } from 'node:http'
 
-import { DEV_BUNDLE_URL_ATTRIBUTE, DEV_MOUNT_PATH, devEntryBundlePath } from '../runtime/paths'
+import {
+	DEV_BUNDLE_URL_ATTRIBUTE,
+	DEV_ENTRY_PATH,
+	DEV_MAP_PATH,
+	DEV_MOUNT_PATH,
+	devEntryBundlePath,
+} from '../runtime/paths'
 import { POST_MESSAGE_GLOBAL } from '../runtime/protocol'
 import { inlineJson, renderPage } from './page'
 import { PUBLIC_DIRECTORY, publicDirectory, sendPublicFile } from './public-directory'
@@ -51,6 +57,7 @@ function loaderScript(bundleUrl: string): string {
 	return `
 (function () {
 	var bundleUrl = ${inlineJson(bundleUrl)};
+	var mapUrl = new URL(${inlineJson(DEV_MAP_PATH + bundleUrl.slice(DEV_ENTRY_PATH.length))}, location.href).href;
 	function describe(body) {
 		try {
 			var error = JSON.parse(body);
@@ -83,7 +90,10 @@ function loaderScript(bundleUrl: string): string {
 				if (!res.ok) return showError(describe(body));
 				var script = document.createElement('script');
 				script.setAttribute(${inlineJson(DEV_BUNDLE_URL_ATTRIBUTE)}, bundleUrl);
-				script.text = body;
+				// Metro's own comment names a path on the dev server that builds for native. A later
+				// comment takes precedence (ECMA-426 JavaScriptExtractSourceMapURL), and an absolute
+				// URL resolves the same against the page and against the bundle's sourceURL.
+				script.text = body + '\\n//# sourceMappingURL=' + mapUrl;
 				document.head.appendChild(script);
 			});
 		})

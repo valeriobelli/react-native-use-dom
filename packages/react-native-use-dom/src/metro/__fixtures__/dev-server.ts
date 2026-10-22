@@ -5,7 +5,7 @@ import path from 'node:path'
 
 import { JSDOM, VirtualConsole } from 'jsdom'
 
-import { DEV_ENTRY_PATH, DEV_PAGE_PATH } from '../../runtime/paths'
+import { DEV_ENTRY_PATH, DEV_MAP_PATH, DEV_PAGE_PATH } from '../../runtime/paths'
 import { createDomDevServer } from '../dev-middleware'
 import { hostMetro } from '../host-metro'
 import { WEB_TRANSFORMER_ENV } from '../web-config'
@@ -55,6 +55,8 @@ export interface DevFixture {
 	writeStylesheet(css: string): void
 	pageUrl(): string
 	fetchBundle(): Promise<Response>
+	/** Requests the source map of the bundle `fetchBundle` requests. */
+	fetchMap(): Promise<Response>
 	/** Loads the page the way the native view does: the native side injects props before any script runs. */
 	openPage(): Promise<Page>
 	/** Cuts every connection to the server, websockets included, the way a dev server that stops does. */
@@ -199,6 +201,14 @@ export async function startDevFixture(): Promise<DevFixture> {
 	})
 	const origin = `http://127.0.0.1:${(httpServer.address() as { port: number }).port}`
 
+	const bundleQuery = (): string =>
+		new URLSearchParams({
+			dev: 'true',
+			platform: 'web',
+			'resolver.dom': component,
+			'transform.dom': 'true',
+		}).toString()
+
 	const pageUrl = (): string => {
 		const query = new URLSearchParams({ dev: 'true', file: component, platform: 'web' })
 
@@ -231,16 +241,8 @@ export async function startDevFixture(): Promise<DevFixture> {
 				socket.destroy()
 			}
 		},
-		fetchBundle: () => {
-			const query = new URLSearchParams({
-				dev: 'true',
-				platform: 'web',
-				'resolver.dom': component,
-				'transform.dom': 'true',
-			})
-
-			return fetch(`${origin}${DEV_ENTRY_PATH}?${query.toString()}`)
-		},
+		fetchBundle: () => fetch(`${origin}${DEV_ENTRY_PATH}?${bundleQuery()}`),
+		fetchMap: () => fetch(`${origin}${DEV_MAP_PATH}?${bundleQuery()}`),
 		openPage: () => loadPage(pageUrl()),
 		origin,
 		pageUrl,

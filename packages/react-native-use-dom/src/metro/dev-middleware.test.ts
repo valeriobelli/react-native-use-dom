@@ -1,4 +1,4 @@
-import { DEV_HOT_PATH, DEV_PAGE_PATH } from '../runtime/paths'
+import { DEV_BUNDLE_URL_ATTRIBUTE, DEV_HOT_PATH, DEV_MAP_PATH, DEV_PAGE_PATH } from '../runtime/paths'
 import type { DevFixture } from './__fixtures__/dev-server'
 import {
 	BROKEN,
@@ -67,12 +67,37 @@ it('serves a page that renders the component with the injected props', async () 
 	}
 })
 
-it('builds the bundle for the web, with an inline source map', async () => {
+it('builds the bundle for the web, without an inline source map', async () => {
 	const bundle = await (await fixture.fetchBundle()).text()
 
 	expect(bundle).toContain('mountDomComponent')
 	expect(bundle).not.toContain('react-native/Libraries')
-	expect(bundle).toContain('//# sourceMappingURL=data:application/json')
+	expect(bundle).not.toContain('sourceMappingURL=data:')
+})
+
+it("serves the bundle's source map, which maps back to the component", async () => {
+	const response = await fixture.fetchMap()
+	const map = (await response.json()) as { sections: { map: { sources: string[] } }[] }
+
+	expect(response.ok).toBe(true)
+	expect(map.sections.flatMap((section) => section.map.sources)).toContain(fixture.component)
+})
+
+it('runs the bundle with a source map comment that names the map route', async () => {
+	const { dom } = await fixture.openPage()
+
+	try {
+		const script = await waitFor('the bundle to run', () =>
+			dom.window.document.querySelector<HTMLScriptElement>(`script[${DEV_BUNDLE_URL_ATTRIBUTE}]`),
+		)
+		const mapUrl = new URL(script.text.split('//# sourceMappingURL=').at(-1)!.trim())
+
+		expect(mapUrl.origin).toBe(fixture.origin)
+		expect(mapUrl.pathname).toBe(DEV_MAP_PATH)
+		expect((await fetch(mapUrl)).ok).toBe(true)
+	} finally {
+		dom.window.close()
+	}
 })
 
 it('leaves the start-up banner to the dev server the developer started', () => {
