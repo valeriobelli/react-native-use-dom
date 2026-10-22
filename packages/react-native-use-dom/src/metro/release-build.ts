@@ -60,21 +60,26 @@ export function withReleaseBuild(
 		const metro = hostMetro()
 		const components = findDomComponents({ graph })
 
-		if (components.length > 0) {
-			const outputDirectory = resolveOutputDirectory(command, graph.transformOptions.platform ?? '')
+		const serialize = () =>
+			upstream
+				? upstream(...args)
+				: Promise.resolve(metro.bundleToString(metro.baseJSBundle(entryPoint, preModules, graph, options)).code)
 
-			await buildPages({
-				components,
-				config: await resolveConfig(metro, options.projectRoot),
-				metro,
-				outputDirectory,
-			})
+		if (components.length === 0) {
+			return serialize()
 		}
 
-		if (upstream) {
-			return upstream(...args)
-		}
+		const outputDirectory = resolveOutputDirectory(command, graph.transformOptions.platform ?? '')
 
-		return metro.bundleToString(metro.baseJSBundle(entryPoint, preModules, graph, options)).code
+		const pages = resolveConfig(metro, options.projectRoot).then((config) =>
+			buildPages({ components, config, metro, outputDirectory }),
+		)
+
+		// The serializer runs while the pages build rather than after them. The bundle is still handed
+		// back only once its pages are written, and not at all if one of them fails. Called from a promise,
+		// a serializer that throws rejects like one that rejects, and a failing page is still reported.
+		const [, bundle] = await Promise.all([pages, Promise.resolve().then(serialize)])
+
+		return bundle
 	}
 }
