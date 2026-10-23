@@ -18,9 +18,15 @@ steps:
   - wait: 5000
   - tap: { id: field }
   # Seeing the bar first is what makes the hidden check below mean something: a check for an element
-  # that never existed passes as well.
+  # that never existed passes as well. A slow runner has lost this tap and left the field without focus,
+  # and a flow can't retry an await, so the tap is repeated while the bar is missing. A second tap on a
+  # focused field keeps its focus.
   - when: { platform: ios }
     steps:
+      - wait: 5000
+      - when: { hidden: { id: Toolbar } }
+        steps:
+          - tap: { id: field }
       - await: { visible: { id: Toolbar }, timeout: 15000 }
   # The field keeps its focus while the switch flips, which is the case a stale bar would show up in.
   - tap: { id: hide-accessory }

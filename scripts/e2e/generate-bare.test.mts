@@ -21,7 +21,7 @@ function cell(id: string, reactNative: string, role = 'blocking'): MatrixCell {
 		expo: null,
 		folder: `examples/${id}`,
 		id,
-		ios: { runner: 'xcode-27' },
+		ios: { runner: 'xcode-27', xcode: '27.0' },
 		kind: 'bare',
 		ota: false,
 		reactNative,

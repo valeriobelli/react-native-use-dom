@@ -7,7 +7,8 @@
 			"folder": "examples/bare-0.85",
 			"id": "bare-0.85",
 			"ios": {
-				"runner": "xcode-27"
+				"runner": "xcode-27",
+				"xcode": "27.0"
 			},
 			"kind": "bare",
 			"ota": false,
@@ -23,7 +24,8 @@
 			"folder": "examples/bare-0.86",
 			"id": "bare-0.86",
 			"ios": {
-				"runner": "xcode-27"
+				"runner": "xcode-27",
+				"xcode": "27.0"
 			},
 			"kind": "bare",
 			"ota": false,
@@ -39,7 +41,8 @@
 			"folder": "examples/bare-0.87",
 			"id": "bare-0.87",
 			"ios": {
-				"runner": "xcode-27"
+				"runner": "xcode-27",
+				"xcode": "27.0"
 			},
 			"kind": "bare",
 			"ota": true,
@@ -55,7 +58,8 @@
 			"folder": "examples/bare-0.88",
 			"id": "bare-0.88",
 			"ios": {
-				"runner": "xcode-27"
+				"runner": "xcode-27",
+				"xcode": "27.0"
 			},
 			"kind": "bare",
 			"ota": false,
@@ -72,7 +76,8 @@
 			"id": "expo-56",
 			"ios": {
 				"allowFailure": true,
-				"runner": "macos-26"
+				"runner": "macos-26",
+				"xcode": "26.6"
 			},
 			"kind": "expo",
 			"ota": false,
@@ -88,7 +93,8 @@
 			"folder": "examples/expo-57",
 			"id": "expo-57",
 			"ios": {
-				"runner": "xcode-27"
+				"runner": "xcode-27",
+				"xcode": "27.0"
 			},
 			"kind": "expo",
 			"ota": true,
@@ -104,7 +110,8 @@
 			"folder": "examples/expo-58",
 			"id": "expo-58",
 			"ios": {
-				"runner": "xcode-27"
+				"runner": "xcode-27",
+				"xcode": "27.0"
 			},
 			"kind": "expo",
 			"ota": false,

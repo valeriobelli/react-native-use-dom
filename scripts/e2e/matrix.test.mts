@@ -63,7 +63,7 @@ test('the matrix covers the supported window', () => {
 				expo: null,
 				folder: 'examples/bare-0.85',
 				id: 'bare-0.85',
-				ios: { runner: 'xcode-27' },
+				ios: { runner: 'xcode-27', xcode: '27.0' },
 				kind: 'bare',
 				ota: false,
 				reactNative: '0.85.3',
@@ -77,7 +77,7 @@ test('the matrix covers the supported window', () => {
 				expo: null,
 				folder: 'examples/bare-0.86',
 				id: 'bare-0.86',
-				ios: { runner: 'xcode-27' },
+				ios: { runner: 'xcode-27', xcode: '27.0' },
 				kind: 'bare',
 				ota: false,
 				reactNative: '0.86.3',
@@ -91,7 +91,7 @@ test('the matrix covers the supported window', () => {
 				expo: null,
 				folder: 'examples/bare-0.87',
 				id: 'bare-0.87',
-				ios: { runner: 'xcode-27' },
+				ios: { runner: 'xcode-27', xcode: '27.0' },
 				kind: 'bare',
 				ota: true,
 				reactNative: '0.87.1',
@@ -105,7 +105,7 @@ test('the matrix covers the supported window', () => {
 				expo: null,
 				folder: 'examples/bare-0.88',
 				id: 'bare-0.88',
-				ios: { runner: 'xcode-27' },
+				ios: { runner: 'xcode-27', xcode: '27.0' },
 				kind: 'bare',
 				ota: false,
 				reactNative: '0.88.0-rc.3',
@@ -119,7 +119,7 @@ test('the matrix covers the supported window', () => {
 				expo: '56.0.23',
 				folder: 'examples/expo-56',
 				id: 'expo-56',
-				ios: { runner: 'macos-26' },
+				ios: { runner: 'macos-26', xcode: '26.6' },
 				kind: 'expo',
 				ota: false,
 				reactNative: '0.85.3',
@@ -133,7 +133,7 @@ test('the matrix covers the supported window', () => {
 				expo: '57.0.26',
 				folder: 'examples/expo-57',
 				id: 'expo-57',
-				ios: { runner: 'xcode-27' },
+				ios: { runner: 'xcode-27', xcode: '27.0' },
 				kind: 'expo',
 				ota: true,
 				reactNative: '0.86.3',
@@ -147,7 +147,7 @@ test('the matrix covers the supported window', () => {
 				expo: '58.0.2',
 				folder: 'examples/expo-58',
 				id: 'expo-58',
-				ios: { runner: 'xcode-27' },
+				ios: { runner: 'xcode-27', xcode: '27.0' },
 				kind: 'expo',
 				ota: false,
 				reactNative: '0.88.0-rc.3',
@@ -177,7 +177,7 @@ test('the floor gets a nightly cell of its own only once react native stops supp
 			expo: null,
 			folder: 'examples/bare-0.85',
 			id: 'bare-0.85',
-			ios: { runner: 'xcode-27' },
+			ios: { runner: 'xcode-27', xcode: '27.0' },
 			kind: 'bare',
 			ota: false,
 			reactNative: '0.85.3',
@@ -264,7 +264,7 @@ test('only an override lets an iOS cell fail without blocking', () => {
 	])
 })
 
-test('only an override gives a cell an Xcode version', () => {
+test("a cell selects its runner's pinned Xcode unless an override names another", () => {
 	expect(cellOverrides({ 'bare-0.85': { ios: { runner: 'macos-26', xcode: '26.3' } } })).toEqual({
 		'bare-0.85': { ios: { runner: 'macos-26', xcode: '26.3' } },
 	})
@@ -273,13 +273,17 @@ test('only an override gives a cell an Xcode version', () => {
 		'bare-0.85': { ios: { xcode: '26.3' } },
 	})
 
-	expect(buildFixtureMatrix().cells.filter((cell) => cell.ios.xcode !== undefined)).toEqual([])
+	expect(new Set(buildFixtureMatrix().cells.map((cell) => `${cell.ios.runner} ${cell.ios.xcode}`))).toEqual(
+		new Set(['xcode-27 27.0', 'macos-26 26.6']),
+	)
 
 	const { cells } = buildFixtureMatrix({
 		overrides: { ...overrides, 'bare-0.85': { ios: { runner: 'macos-26', xcode: '26.3' } } },
 	})
 
-	expect(cells.filter((cell) => cell.ios.xcode !== undefined).map((cell) => `${cell.id} ${cell.ios.runner}`)).toEqual([
-		'bare-0.85 macos-26',
-	])
+	expect(cells.find((cell) => cell.id === 'bare-0.85')?.ios).toEqual({ runner: 'macos-26', xcode: '26.3' })
+
+	expect(() =>
+		buildFixtureMatrix({ overrides: { ...overrides, 'bare-0.85': { ios: { runner: 'macos-27' } } } }),
+	).toThrow('bare-0.85 builds on macos-27, which has no pinned Xcode')
 })

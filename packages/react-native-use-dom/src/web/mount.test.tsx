@@ -35,12 +35,41 @@ function mountedReports({ instanceId }: { instanceId: string }): DomToNativeMess
 	return sent.filter((message) => message.instanceId === instanceId && message.type === 'mounted')
 }
 
-function nextFrame(): Promise<void> {
-	return new Promise((resolve) => {
-		requestAnimationFrame(() => {
-			resolve()
-		})
+/**
+ * Holds animation frames until the test paints one. jsdom runs them from a 16 ms timer, which a slow
+ * runner has fired again while an `act` waited, so a test could not see the state between two frames.
+ */
+function holdFrames(): { paintFrame: () => void; release: () => void } {
+	const pending = new Map<number, FrameRequestCallback>()
+	let lastHandle = 0
+	const request = jest.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+		lastHandle += 1
+		pending.set(lastHandle, callback)
+
+		return lastHandle
 	})
+	const cancel = jest.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation((handle) => {
+		if (handle) {
+			pending.delete(handle)
+		}
+	})
+
+	return {
+		// A callback a frame requests runs in the next one, as in a browser.
+		paintFrame: () => {
+			const due = [...pending]
+
+			pending.clear()
+
+			due.forEach(([, callback]) => {
+				callback(performance.now())
+			})
+		},
+		release: () => {
+			request.mockRestore()
+			cancel.mockRestore()
+		},
+	}
 }
 
 function flush(): Promise<void> {
@@ -136,20 +165,26 @@ describe('mountDomComponent', () => {
 		// Its own instance id, since a root left mounted by an earlier test still paints a frame.
 		install({ actions: [], instanceId: 'painted', props: { title: 'Hello' } })
 
-		await act(async () => {
-			mountDomComponent(Greeting as never, { strict: true })
-		})
+		const { paintFrame, release } = holdFrames()
 
-		expect(mountedReports({ instanceId: 'painted' })).toEqual([])
+		try {
+			await act(async () => {
+				mountDomComponent(Greeting as never, { strict: true })
+			})
 
-		await act(nextFrame)
+			expect(mountedReports({ instanceId: 'painted' })).toEqual([])
 
-		// The frame's callbacks ran before it painted the component.
-		expect(mountedReports({ instanceId: 'painted' })).toEqual([])
+			act(paintFrame)
 
-		await act(nextFrame)
+			// The frame's callbacks ran before it painted the component.
+			expect(mountedReports({ instanceId: 'painted' })).toEqual([])
 
-		expect(mountedReports({ instanceId: 'painted' })).toEqual([{ instanceId: 'painted', type: 'mounted' }])
+			act(paintFrame)
+
+			expect(mountedReports({ instanceId: 'painted' })).toEqual([{ instanceId: 'painted', type: 'mounted' }])
+		} finally {
+			release()
+		}
 	})
 
 	it('re-renders on a prop change while keeping DOM state alive', async () => {

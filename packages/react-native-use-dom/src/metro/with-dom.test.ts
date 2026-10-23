@@ -61,7 +61,9 @@ beforeAll(() => {
 })
 
 afterAll(() => {
-	rmSync(projectRoot, { force: true, recursive: true })
+	// A closed server can still be writing its file map cache into the project, and the removal then
+	// fails with ENOTEMPTY. Node retries on that error.
+	rmSync(projectRoot, { force: true, maxRetries: 5, recursive: true })
 	delete process.env[WEB_TRANSFORMER_ENV]
 })
 
