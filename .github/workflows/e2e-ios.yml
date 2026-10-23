@@ -89,7 +89,6 @@ jobs:
       CELL_APP: ${{ matrix.cell.appName }}
       CELL_BUNDLE_ID: ${{ matrix.cell.bundleId }}
       CELL_KIND: ${{ matrix.cell.kind }}
-      CELL_XCODE: ${{ matrix.cell.ios.xcode }}
     defaults:
       run:
         # Unlike the default shell, `bash` sets `pipefail`, so a build that fails behind `| tee` fails its
@@ -99,18 +98,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # e2e/matrix.json pins the Xcode of every cell, so a runner image that changes its default Xcode
+      # or adds a simulator runtime does not change what the cell builds and boots.
       - name: Select the Xcode version
-        # Only a cell that names one: the others build with the runner's default Xcode. The paths come from
-        # https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md
-        if: matrix.cell.ios.xcode
-        run: |
-          XCODE_APP="/Applications/Xcode_${CELL_XCODE}.app"
-          if [ ! -d "$XCODE_APP" ]; then
-            echo "$XCODE_APP is not installed on this runner." >&2
-            ls -d /Applications/Xcode*.app >&2
-            exit 1
-          fi
-          sudo xcode-select --switch "$XCODE_APP"
+        uses: mobiledevops/xcode-select-version-action@7b50160de7c8bd6a8c4ee2c2e6b5ee0983886c0b # v1.1.0
+        with:
+          xcode-select-version: ${{ matrix.cell.ios.xcode }}
       # The action's own cache saves the store from every job under a key of its own, so it is off, and the
       # store is cached here instead: every branch restores it, and only main saves it. A pull request reads
       # the caches of the default branch: https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
@@ -161,10 +154,13 @@ jobs:
         # reliably on it. It boots now, in the background, so that work runs while the app builds.
         run: |
           xcrun simctl list runtimes
-          # The newest iOS runtime the runner has: iOS 27.0 on xcode-27, the newest iOS 26 on macos-26.
-          RUNTIME=$(xcrun simctl list runtimes --json | jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | sort_by(.version | split(".") | map(tonumber)) | last | .identifier')
+          # The runtime of the selected Xcode's simulator SDK, not the newest one: runtimes are shared by
+          # every Xcode on the runner, and xcode-27 images have iOS 27.1, which creates only the iPhone Duo
+          # (https://github.com/actions/runner-images/issues/15000).
+          SDK=$(xcrun --sdk iphonesimulator --show-sdk-version)
+          RUNTIME=$(xcrun simctl list runtimes --json | jq -r --arg sdk "$SDK" '[.runtimes[] | select(.platform == "iOS" and .isAvailable and (.version | split(".")[0:2]) == ($sdk | split(".")[0:2]))] | sort_by(.version | split(".") | map(tonumber)) | last | .identifier')
           if [ -z "$RUNTIME" ] || [ "$RUNTIME" = null ]; then
-            echo "No iOS runtime is installed on this runner." >&2
+            echo "No iOS $SDK runtime is installed on this runner." >&2
             exit 1
           fi
           UDID=$(xcrun simctl create e2e "iPhone 17" "$RUNTIME")

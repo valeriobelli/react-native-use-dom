@@ -21,7 +21,7 @@ export function cell(
 		expo,
 		folder: `examples/expo-${sdk}`,
 		id: `expo-${sdk}`,
-		ios: { runner: 'xcode-27' },
+		ios: { runner: 'xcode-27', xcode: '27.0' },
 		kind: 'expo',
 		ota: false,
 		reactNative,

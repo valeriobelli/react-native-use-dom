@@ -22,6 +22,14 @@ const TESTED_LEVELS = new Set(['End of Cycle', 'Active'])
  */
 const LAST_SCENELESS_SDK = 56
 
+/**
+ * The Xcode each runner's cells select. A runner image changes its default Xcode, and adds simulator
+ * runtimes, on its own schedule: an xcode-27 image that added iOS 27.1, which creates only the iPhone
+ * Duo, broke every cell (https://github.com/actions/runner-images/issues/15000). The workflow boots the
+ * runtime of the selected Xcode's SDK, so this also pins the simulator.
+ */
+const RUNNER_XCODE: Record<string, string> = { 'macos-26': '26.6', 'xcode-27': '27.0' }
+
 /** The prefix every example app's bundle id carries. */
 const BUNDLE_ID_PREFIX = 'dev.reactnativeusedom.'
 
@@ -40,11 +48,10 @@ export interface MatrixCell {
 	/** The cell's id, `bare-0.87` or `expo-57`. */
 	id: string
 	/**
-	 * The GitHub runner its iOS cell builds on, the Xcode version it selects there when the
-	 * runner's default cannot build it, and whether a failure of the iOS cell leaves the merge
+	 * The GitHub runner its iOS cell builds on, the Xcode version it selects there, and whether a failure of the iOS cell leaves the merge
 	 * unblocked, for a cell whose runner fails it for reasons of its own.
 	 */
-	ios: { allowFailure?: boolean; runner: string; xcode?: string }
+	ios: { allowFailure?: boolean; runner: string; xcode: string }
 	/** `bare` or `expo`. */
 	kind: string
 	/** The react-native version the cell pins. */
@@ -290,9 +297,9 @@ function bareCell(
 
 /**
  * How an iOS cell builds: the runner, Xcode 27 unless the cell cannot adopt the UIKit scene life
- * cycle and therefore builds with Xcode 26, and the Xcode version to select on it. The version is
- * only present for a cell whose runner's default Xcode cannot build it. Overrides win over both,
- * and only an override lets the cell fail without blocking a merge.
+ * cycle and therefore builds with Xcode 26, and the Xcode version to select on it, the one pinned for
+ * the runner. Overrides win over both, and only an override lets the cell fail without blocking a
+ * merge.
  *
  * @param id the cell's id, for the overrides
  * @param sceneless whether the cell's SDK cannot adopt the UIKit scene life cycle
@@ -302,13 +309,19 @@ function iosCell(
 	id: string,
 	sceneless: boolean,
 	overrides: Record<string, CellOverrides>,
-): { allowFailure?: boolean; runner: string; xcode?: string } {
+): { allowFailure?: boolean; runner: string; xcode: string } {
 	const override = overrides[id]?.ios
+	const runner = override?.runner ?? (sceneless ? 'macos-26' : 'xcode-27')
+	const xcode = override?.xcode ?? RUNNER_XCODE[runner]
+
+	if (!xcode) {
+		throw new Error(`${id} builds on ${runner}, which has no pinned Xcode: add one to its ios override.`)
+	}
 
 	return {
 		...(override?.allowFailure ? { allowFailure: true } : {}),
-		runner: override?.runner ?? (sceneless ? 'macos-26' : 'xcode-27'),
-		...(override?.xcode === undefined ? {} : { xcode: override.xcode }),
+		runner,
+		xcode,
 	}
 }
 
