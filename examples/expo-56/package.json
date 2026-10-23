@@ -10,7 +10,7 @@
 	},
 	"dependencies": {
 		"@react-native-use-dom/example-app": "workspace:*",
-		"expo": "56.0.23",
+		"expo": "56.0.24",
 		"expo-system-ui": "56.0.5",
 		"react": "19.2.3",
 		"react-dom": "19.2.3",
