@@ -1,5 +1,21 @@
 # react-native-use-dom
 
+## 0.3.0
+
+### Minor Changes
+
+- [`58ac4be`](https://github.com/valeriobelli/react-native-use-dom/commit/58ac4be85b2192c5a4cdadd0c2c9fb29060ff716) Thanks [@valeriobelli](https://github.com/valeriobelli)! - DOM components can show something while they load. `dom.fallback` is shown over the view until the component has painted, including while the dev server builds it. The dev server now starts building a component as soon as it is imported. `dom.onLoad` now fires once the component has painted, rather than when the web view finished loading the page.
+
+### Patch Changes
+
+- [#122](https://github.com/valeriobelli/react-native-use-dom/pull/122) [`8a2f923`](https://github.com/valeriobelli/react-native-use-dom/commit/8a2f9230b94268524663ef2ba845b8135dda3c03) Thanks [@valeriobelli](https://github.com/valeriobelli)! - DOM components load faster in development. The dev server no longer inlines the source map into the bundle of a DOM page, which made it about four times larger on every load and hot reload: the web view's devtools fetch the map from `/_dom/entry.map` when they open, and still show the component's original source.
+
+- [`58ac4be`](https://github.com/valeriobelli/react-native-use-dom/commit/58ac4be85b2192c5a4cdadd0c2c9fb29060ff716) Thanks [@valeriobelli](https://github.com/valeriobelli)! - Release builds with several DOM components bundle faster. The pages share the modules they import, and those are now transformed and minified once per build instead of once per component: on the example apps with 11 components, a cold `react-native bundle` takes about half the time.
+
+- [#118](https://github.com/valeriobelli/react-native-use-dom/pull/118) [`d746afb`](https://github.com/valeriobelli/react-native-use-dom/commit/d746afbb71420ec9bc64300f31e6a88d0a248175) Thanks [@valeriobelli](https://github.com/valeriobelli)! - Release builds find the DOM components of the native bundle from the code Metro already holds, instead of reading every module's source from disk again. On the example apps this removes 0.6 to 1.2 seconds from every `react-native bundle`, warm builds included.
+
+- [#121](https://github.com/valeriobelli/react-native-use-dom/pull/121) [`5dac982`](https://github.com/valeriobelli/react-native-use-dom/commit/5dac9826728ce36268cfde95708a68bd46682a54) Thanks [@valeriobelli](https://github.com/valeriobelli)! - Release builds serialize the native bundle while the DOM component pages build, instead of after them. A page that fails to build still fails the `bundle` command, and the bundle is written only once its pages are. Serialization is short next to the page builds, so on the example apps this saves milliseconds, not seconds.
+
 ## 0.2.0
 
 ### Minor Changes
