@@ -1,23 +1,6 @@
 {
 	"cells": [
 		{
-			"appName": "BareExample085",
-			"bundleId": "dev.reactnativeusedom.bare085",
-			"expo": null,
-			"folder": "examples/bare-0.85",
-			"id": "bare-0.85",
-			"ios": {
-				"runner": "xcode-27",
-				"xcode": "27.0"
-			},
-			"kind": "bare",
-			"ota": false,
-			"reactNative": "0.85.3",
-			"role": "blocking",
-			"slug": "bare085",
-			"support": "End of Cycle"
-		},
-		{
 			"appName": "BareExample086",
 			"bundleId": "dev.reactnativeusedom.bare086",
 			"expo": null,
@@ -32,7 +15,7 @@
 			"reactNative": "0.86.3",
 			"role": "blocking",
 			"slug": "bare086",
-			"support": "Active"
+			"support": "End of Cycle"
 		},
 		{
 			"appName": "BareExample",
@@ -45,7 +28,7 @@
 				"xcode": "27.0"
 			},
 			"kind": "bare",
-			"ota": true,
+			"ota": false,
 			"reactNative": "0.87.1",
 			"role": "blocking",
 			"slug": "bare087",
@@ -62,29 +45,11 @@
 				"xcode": "27.0"
 			},
 			"kind": "bare",
-			"ota": false,
-			"reactNative": "0.88.0-rc.6",
+			"ota": true,
+			"reactNative": "0.88.1",
 			"role": "blocking",
 			"slug": "bare088",
-			"support": "Future"
-		},
-		{
-			"appName": "ExpoExample56",
-			"bundleId": "dev.reactnativeusedom.expo56",
-			"expo": "56.0.24",
-			"folder": "examples/expo-56",
-			"id": "expo-56",
-			"ios": {
-				"allowFailure": true,
-				"runner": "macos-26",
-				"xcode": "26.6"
-			},
-			"kind": "expo",
-			"ota": false,
-			"reactNative": "0.85.3",
-			"role": "blocking",
-			"slug": "expo56",
-			"support": "End of Cycle"
+			"support": "Active"
 		},
 		{
 			"appName": "ReactNativeUseDomExpoExample",
@@ -97,11 +62,11 @@
 				"xcode": "27.0"
 			},
 			"kind": "expo",
-			"ota": true,
+			"ota": false,
 			"reactNative": "0.86.3",
 			"role": "blocking",
 			"slug": "expo57",
-			"support": "Active"
+			"support": "End of Cycle"
 		},
 		{
 			"appName": "ExpoExample58",
@@ -114,12 +79,29 @@
 				"xcode": "27.0"
 			},
 			"kind": "expo",
-			"ota": false,
+			"ota": true,
 			"reactNative": "0.88.0",
 			"role": "blocking",
 			"slug": "expo58",
-			"support": "Future"
+			"support": "Active"
+		},
+		{
+			"appName": "BareExample085",
+			"bundleId": "dev.reactnativeusedom.bare085",
+			"expo": null,
+			"folder": "examples/bare-0.85",
+			"id": "bare-0.85",
+			"ios": {
+				"runner": "xcode-27",
+				"xcode": "27.0"
+			},
+			"kind": "bare",
+			"ota": false,
+			"reactNative": "0.85.3",
+			"role": "floor",
+			"slug": "bare085",
+			"support": "Unsupported"
 		}
 	],
-	"generatedAt": "2026-10-23"
+	"generatedAt": "2026-10-30"
 }

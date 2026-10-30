@@ -3,15 +3,14 @@
 `react-native-use-dom` is tested against these React Native versions and Expo SDKs. The table lists what is
 tested. It does not show whether the tests pass.
 
-| Version                         | Support level              | Example folder       | Tested       |
-| ------------------------------- | -------------------------- | -------------------- | ------------ |
-| React Native 0.85               | End of Cycle               | `examples/bare-0.85` | every change |
-| React Native 0.86               | Active                     | `examples/bare-0.86` | every change |
-| React Native 0.87               | Active                     | `examples/bare-0.87` | every change |
-| React Native 0.88               | Future (release candidate) | `examples/bare-0.88` | every change |
-| Expo SDK 56 (React Native 0.85) | End of Cycle               | `examples/expo-56`   | every change |
-| Expo SDK 57 (React Native 0.86) | Active                     | `examples/expo-57`   | every change |
-| Expo SDK 58 (React Native 0.88) | Future (release candidate) | `examples/expo-58`   | every change |
+| Version                         | Support level               | Example folder       | Tested       |
+| ------------------------------- | --------------------------- | -------------------- | ------------ |
+| React Native 0.86               | End of Cycle                | `examples/bare-0.86` | every change |
+| React Native 0.87               | Active                      | `examples/bare-0.87` | every change |
+| React Native 0.88               | Active                      | `examples/bare-0.88` | every change |
+| Expo SDK 57 (React Native 0.86) | End of Cycle                | `examples/expo-57`   | every change |
+| Expo SDK 58 (React Native 0.88) | Active                      | `examples/expo-58`   | every change |
+| React Native 0.85               | Unsupported by React Native | `examples/bare-0.85` | nightly      |
 
 - **Support level** is the level of the React Native version in the
   [React Native releases overview](https://reactnative.dev/releases/overview).
