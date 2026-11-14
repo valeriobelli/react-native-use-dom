@@ -1,23 +1,6 @@
 {
 	"cells": [
 		{
-			"appName": "BareExample085",
-			"bundleId": "dev.reactnativeusedom.bare085",
-			"expo": null,
-			"folder": "examples/bare-0.85",
-			"id": "bare-0.85",
-			"ios": {
-				"runner": "xcode-27",
-				"xcode": "27.0"
-			},
-			"kind": "bare",
-			"ota": false,
-			"reactNative": "0.85.3",
-			"role": "blocking",
-			"slug": "bare085",
-			"support": "End of Cycle"
-		},
-		{
 			"appName": "BareExample086",
 			"bundleId": "dev.reactnativeusedom.bare086",
 			"expo": null,
@@ -32,7 +15,7 @@
 			"reactNative": "0.86.3",
 			"role": "blocking",
 			"slug": "bare086",
-			"support": "Active"
+			"support": "End of Cycle"
 		},
 		{
 			"appName": "BareExample",
@@ -45,7 +28,7 @@
 				"xcode": "27.0"
 			},
 			"kind": "bare",
-			"ota": true,
+			"ota": false,
 			"reactNative": "0.87.1",
 			"role": "blocking",
 			"slug": "bare087",
@@ -62,34 +45,33 @@
 				"xcode": "27.0"
 			},
 			"kind": "bare",
-			"ota": false,
-			"reactNative": "0.88.0-rc.6",
+			"ota": true,
+			"reactNative": "0.88.1",
 			"role": "blocking",
 			"slug": "bare088",
-			"support": "Future"
+			"support": "Active"
 		},
 		{
-			"appName": "ExpoExample56",
-			"bundleId": "dev.reactnativeusedom.expo56",
-			"expo": "56.0.24",
-			"folder": "examples/expo-56",
-			"id": "expo-56",
+			"appName": "BareExample089",
+			"bundleId": "dev.reactnativeusedom.bare089",
+			"expo": null,
+			"folder": "examples/bare-0.89",
+			"id": "bare-0.89",
 			"ios": {
-				"allowFailure": true,
-				"runner": "macos-26",
-				"xcode": "26.6"
+				"runner": "xcode-27",
+				"xcode": "27.0"
 			},
-			"kind": "expo",
+			"kind": "bare",
 			"ota": false,
-			"reactNative": "0.85.3",
+			"reactNative": "0.89.0-rc.1",
 			"role": "blocking",
-			"slug": "expo56",
-			"support": "End of Cycle"
+			"slug": "bare089",
+			"support": "Future"
 		},
 		{
 			"appName": "ReactNativeUseDomExpoExample",
 			"bundleId": "dev.reactnativeusedom.expo57",
-			"expo": "57.0.31",
+			"expo": "57.0.33",
 			"folder": "examples/expo-57",
 			"id": "expo-57",
 			"ios": {
@@ -97,11 +79,11 @@
 				"xcode": "27.0"
 			},
 			"kind": "expo",
-			"ota": true,
+			"ota": false,
 			"reactNative": "0.86.3",
 			"role": "blocking",
 			"slug": "expo57",
-			"support": "Active"
+			"support": "End of Cycle"
 		},
 		{
 			"appName": "ExpoExample58",
@@ -114,12 +96,29 @@
 				"xcode": "27.0"
 			},
 			"kind": "expo",
-			"ota": false,
+			"ota": true,
 			"reactNative": "0.88.0",
 			"role": "blocking",
 			"slug": "expo58",
-			"support": "Future"
+			"support": "Active"
+		},
+		{
+			"appName": "BareExample085",
+			"bundleId": "dev.reactnativeusedom.bare085",
+			"expo": null,
+			"folder": "examples/bare-0.85",
+			"id": "bare-0.85",
+			"ios": {
+				"runner": "xcode-27",
+				"xcode": "27.0"
+			},
+			"kind": "bare",
+			"ota": false,
+			"reactNative": "0.85.3",
+			"role": "floor",
+			"slug": "bare085",
+			"support": "Unsupported"
 		}
 	],
-	"generatedAt": "2026-10-23"
+	"generatedAt": "2026-11-14"
 }

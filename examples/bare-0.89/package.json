@@ -1,0 +1,38 @@
+{
+	"name": "bare-0.89",
+	"version": "0.0.1",
+	"private": true,
+	"scripts": {
+		"android": "react-native run-android",
+		"ios": "react-native run-ios",
+		"ios:clear-prebuild-caches": "rm -rf $HOME/Library/Caches/ReactNative",
+		"start": "react-native start"
+	},
+	"dependencies": {
+		"@react-native-use-dom/example-app": "workspace:*",
+		"react": "19.3.0",
+		"react-dom": "19.3.0",
+		"react-native": "0.89.0-rc.1",
+		"react-native-nitro-modules": "catalog:",
+		"react-native-safe-area-context": "catalog:",
+		"react-native-use-dom": "workspace:*"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.25.2",
+		"@babel/preset-env": "^7.25.3",
+		"@babel/runtime": "^7.25.0",
+		"@react-native-community/cli": "21.0.0-alpha.1",
+		"@react-native/babel-preset": "0.89.0-rc.1",
+		"@react-native/codegen": "0.89.0-rc.1",
+		"@react-native/community-cli-plugin": "0.89.0-rc.1",
+		"@react-native/gradle-plugin": "0.89.0-rc.1",
+		"@react-native/metro-config": "0.89.0-rc.1",
+		"@react-native/typescript-config": "0.89.0-rc.1",
+		"@types/react": "^19.2.0",
+		"hermes-compiler": "260318099.0.7",
+		"typescript": "^6.0.3"
+	},
+	"engines": {
+		"node": ">= 22.11.0"
+	}
+}
