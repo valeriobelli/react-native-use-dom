@@ -12,7 +12,7 @@
 		"@hot-updater/react-native": "catalog:",
 		"@react-native-use-dom/example-app": "workspace:*",
 		"@react-native-use-dom/ota-app": "workspace:*",
-		"expo": "57.0.31",
+		"expo": "57.0.33",
 		"react": "19.2.3",
 		"react-dom": "19.2.3",
 		"react-native": "0.86.3",
@@ -25,7 +25,7 @@
 		"@hot-updater/standalone": "catalog:",
 		"@types/react": "~19.2.2",
 		"babel-preset-expo": "~57.0.13",
-		"expo-build-properties": "57.0.22",
+		"expo-build-properties": "~57.0.23",
 		"hot-updater": "catalog:",
 		"typescript": "~6.0.3"
 	},
