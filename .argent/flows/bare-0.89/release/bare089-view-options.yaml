@@ -1,0 +1,3 @@
+steps:
+  - launch: { ios: dev.reactnativeusedom.bare089, android: dev.reactnativeusedom.bare089 }
+  - run: ../../shared/view-options
